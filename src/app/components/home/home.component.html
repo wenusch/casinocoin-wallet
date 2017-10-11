@@ -1,24 +1,24 @@
 <div>
     <p-toolbar class="toolbar-height">
-        <div class="ui-toolbar-group-left">
+        <div class="ui-toolbar-group-left">              
             <div class="btn-group" role="group" aria-label="Basic example">
-                <button type="button" class="btn toolbar-button" (click)="onOverview()">
+                <button type="button" class="btn toolbar-button active" (click)="onOverview()">
                   <img class="toolbar-image" [src]="overview_image"/>
                   <div [class]="overview_text_class">Overview</div>
                 </button>
-                <button type="button" class="btn toolbar-button" (click)="onSendCoins()">
+                <button type="button" class="btn toolbar-button" (click)="onSendCoins()" >
                   <img class="toolbar-image" [src]="send_image"/>
                   <div [class]="send_text_class">Send</div>
                 </button>
-                <button type="button" class="btn toolbar-button" (click)="onReceiveCoins()">
+                <button type="button" class="btn toolbar-button" (click)="onReceiveCoins()" >
                   <img class="toolbar-image" [src]="receive_image"/>
                   <div [class]="receive_text_class">Receive</div>
                 </button>
-                <button type="button" class="btn toolbar-button" (click)="onAddressbook()">
+                <button type="button" class="btn toolbar-button" (click)="onAddressbook()" >
                   <img class="toolbar-image" [src]="addressbook_image"/>
                   <div [class]="addressbook_text_class">Addressbook</div>
                 </button>
-                <button type="button" class="btn toolbar-button" (click)="onCoinSwap()">
+                <button type="button" class="btn toolbar-button" (click)="onCoinSwap()" >
                     <img class="toolbar-image" [src]="swap_image"/>
                     <div [class]="swap_text_class">Swap</div>
                   </button>
@@ -63,3 +63,15 @@
     </mat-sidenav-container>
   -->
 </div>
+<p-dialog [visible]="false" [width]="600" [height]="400" [closable]="true" [modal]="true">
+    <p-header>
+        Import Private Key
+    </p-header>
+    <div class="ui-g" style="max-height: 275px; min-height: 275px;">
+        import your private key
+    </div>
+    <div style="text-align: right;">
+        <button pButton type="button" (click)="navigateToPreviousStep()" icon="fa-arrow-left" iconPos="left" label="Previous" 
+                *ngIf="activeIndex > 1 && activeIndex < 4" style="width: 115px;"></button>
+    </div>
+</p-dialog>

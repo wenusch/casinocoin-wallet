@@ -1,5 +1,47 @@
 <div class="ui-g">
-    <div class="ui-g-6">Col1</div>
-    <div class="ui-g-6">Col2</div>
-    <div class="ui-g-12">Row 2</div>
+    <div class="ui-g-3" style="height: 100%;">
+        <p-panel header="Wallet Information">
+            Content
+        </p-panel>
+    </div>
+    <div class="ui-g-3">
+        <p-panel header="Network Information">
+            Content
+        </p-panel>
+    </div>
+    <div class="ui-g-6">
+        <p-panel header="Transactions">
+            <p-dataTable [value]="transactions" expandableRows="true">
+                <p-column expander="true" styleClass="col-icon"></p-column>
+                <p-column field="TxID" header="TxID"></p-column>
+                <p-column field="Time" header="Time"></p-column>
+                <ng-template let-tx pTemplate="rowexpansion">
+                    <div class="ui-grid ui-grid-responsive ui-fluid" style="font-size:16px;padding:20px">
+                        <div class="ui-grid-row">
+                            <div class="ui-grid-col-9">
+                                <div class="ui-grid ui-grid-responsive ui-grid-pad">
+                                    <div class="ui-grid-row">
+                                        <div class="ui-grid-col-2 label">Amount: </div>
+                                        <div class="ui-grid-col-10"></div>
+                                    </div>
+                                    <div class="ui-grid-row">
+                                        <div class="ui-grid-col-2 label">Description: </div>
+                                        <div class="ui-grid-col-10"></div>
+                                    </div>
+                                    <div class="ui-grid-row">
+                                        <div class="ui-grid-col-2 label">Confirmed: </div>
+                                        <div class="ui-grid-col-10"></div>
+                                    </div>
+                                    <div class="ui-grid-row">
+                                        <div class="ui-grid-col-2 label">Ledger: </div>
+                                        <div class="ui-grid-col-10"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+            </p-dataTable>
+        </p-panel>
+    </div>
 </div>

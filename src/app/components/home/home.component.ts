@@ -53,7 +53,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit() {
     this.logger.debug("### HOME currentWallet: " + this.currentWallet);
-    // define menu
+    // define menu 
     this.menu_items = [
         { label: 'Overview', icon: 'fa fa-home fa-2x', command: (event) => { this.onOverview() } },
         { label: 'Send', icon: 'fa fa-sign-out fa-2x', command: (event) => { this.onSendCoins() } },
@@ -64,6 +64,7 @@ export class HomeComponent implements OnInit {
     // define context menu
     this.context_menu_items = [
       { label: 'Settings', icon: 'fa-info-circle', command: (event) => { this.onSettings() } },
+      { label: 'Tools', icon: 'fa-info-circle', command: (event) => { this.onSettings() } },
       { label: 'Quit', icon: 'fa-sign-out', command: (event) => { this.onQuit() } }
     ];
     this.router.navigate(['overview']);
