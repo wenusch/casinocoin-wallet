@@ -1,0 +1,21 @@
+<!-- Wallet Setup Step 2 -->
+<div class="ui-g-12" [@slideInOut]="step2State">
+    <h3 style="text-align: center;">Set Password</h3>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            Please enter a wallet password. This is an obligatory step! Without a password your wallet can not be created. Keep your password in a safe place, 
+            whitout it your wallet can not be opened or used anymore!
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <input type="password" pPassword [(ngModel)]="newWalletPassword" (ngModelChange)="checkPasswordUpdate($event)" 
+                   style="width: 100%;" title="Password must be minmal 8 characters long including letter and numeric characters" 
+                   required [(pattern)]="passwordPattern"/>
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+</div>

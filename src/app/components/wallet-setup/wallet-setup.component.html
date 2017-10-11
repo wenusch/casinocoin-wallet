@@ -1,0 +1,28 @@
+<p-dialog [visible]="true" [width]="600" [height]="400" [closable]="false" [modal]="true">
+    <p-header>
+        Casinocoin Wallet Setup
+    </p-header>
+    <div class="ui-g" style="max-height: 275px; min-height: 275px;">
+        <!-- [@slideInOut]="step1State" -->
+        <setup-step1 [hidden]="activeIndex != 1" 
+                     (walletNetworkChange)="onNetworkUpdated($event)" [(walletTestNetwork)]="walletTestNetwork"></setup-step1>
+        <setup-step2 [hidden]="activeIndex != 2"
+                     (passwordChange)="onPasswordUpdated($event)" [(newWalletPassword)]="walletPassword"></setup-step2>
+        <setup-step3 [hidden]="activeIndex != 3"
+                     (locationChange)="onLocationUpdated($event)" [(newWalletLocation)]="walletLocation"></setup-step3>
+        <setup-step4 [hidden]="activeIndex != 4"></setup-step4>
+    </div>
+    <div style="text-align: right;">
+        <button pButton type="button" (click)="navigateToPreviousStep()" icon="fa-arrow-left" iconPos="left" label="Previous" 
+                *ngIf="activeIndex > 1 && activeIndex < 4" style="width: 115px;"></button>
+        <button pButton type="button" (click)="navigateToNextStep()" icon="fa-arrow-right" iconPos="right" label="Next" 
+                *ngIf="activeIndex < maxActiveIndex" 
+                [disabled]="((activeIndex == 2) && (!enableFinishPassword))" style="width: 115px;"></button>
+        <button pButton type="button" (click)="finishSetup()" icon="fa-check" label="Finish" iconPos="right"
+                *ngIf="activeIndex == maxActiveIndex" style="width: 115px;"
+                [disabled]="((activeIndex == 4) && (!enableFinishCreation))"></button>
+    </div>
+    <p-footer style="text-align: center">
+        <p-steps [model]="steps" styleClass="steps-custom" [activeIndex]="activeIndex-1"></p-steps>
+    </p-footer>
+</p-dialog>

@@ -1,0 +1,76 @@
+$casinocoinRed: #901119;
+$casinocoinRedLighter: #b41e28;
+
+::ng-deep p-toolbar .ui-widget-header {
+  color: #FFFFFF;
+background: $casinocoinRed 0 0 repeat-x;  /* Old browsers */
+background: -moz-linear-gradient(top, $casinocoinRed 0%, $casinocoinRedLighter 100%); /* FF3.6+ */
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,$casinocoinRed), color-stop(100%,$casinocoinRedLighter)); /* Chrome,Safari4+ */
+background: -webkit-linear-gradient(top, $casinocoinRed 0%,$casinocoinRedLighter 100%); /* Chrome10+,Safari5.1+ */
+background: -o-linear-gradient(top, $casinocoinRed 0%,$casinocoinRedLighter 100%); /* Opera11.10+ */
+background: -ms-linear-gradient(top, $casinocoinRed 0%,$casinocoinRedLighter 100%); /* IE10+ */
+background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 100%); /* W3C */
+}
+
+::ng-deep #main_menu .ui-menu {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+::ng-deep #main_menu .ui-menu .ui-menu-list .ui-menuitem {
+    padding-top: 25px;
+    padding-bottom: 25px;
+}
+
+.mat-sidenav {
+  width: 125px;
+  background: #000000;
+}
+
+.mat-list-item {
+  color: #FFFFFF;
+}
+
+.sidenav-height {
+  height: 100%;
+}
+
+.csc-sidenav {
+  padding: 5px;
+}
+
+.toolbar-height {
+  height: 10vh;
+}
+
+.content-height {
+  height: 82vh;
+}
+
+.toolbar-button {
+  background: $casinocoinRed;
+  margin: 10px;
+}
+
+.toolbar-image {
+  width: 80px;
+}
+
+.btn.focus, .btn:focus {
+  outline: 0;
+  box-shadow: 0 0 0 2px $casinocoinRedLighter;
+}
+
+.btn {
+  padding: 2px;
+}
+
+.active_text_color {
+  color: #FFFFFF;
+  font-size: smaller;
+}
+
+.inactive_text_color {
+  color: #661114;
+  font-size: smaller;
+}

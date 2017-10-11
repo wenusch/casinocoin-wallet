@@ -1,0 +1,33 @@
+<!-- Wallet Setup Step 1 -->
+<div class="ui-g-12">
+    <div class="ui-g">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <h3 style="text-align: center;">Welcome to the CSC wallet setup</h3>
+        </div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            A new wallet will be created on your system. If you have a backup of an existing wallet you can do an import after setup completes. 
+            The new wallet will connect to the production network by default. If you need to test you can select the option below. Be aware that coins 
+            send on the production network to an account in a testnetwork wallet will be lost forever!!!
+        </div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <small>
+            <p-checkbox [(ngModel)]="walletTestNetwork" binary="false" (onChange)="onNetworkChanged($event)" label="Connect to the test network"></p-checkbox>
+            </small>
+            <!-- 
+            <input type="text" pInputText [(ngModel)]="newWalletLocation" (ngModelChange)="locationChange.emit($event)"
+                   ngControl="newWalletLocation" style="width: 100%;"/>
+            -->
+        </div>
+        <!--
+        <div class="ui-g-2">
+            <button pButton type="button" (click)="selectWalletLocation()" icon="fa-folder-open"></button>
+        </div>
+    -->
+        <div class="ui-g-1"></div>
+    </div>
+</div>
