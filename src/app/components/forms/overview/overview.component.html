@@ -1,47 +1,67 @@
-<div class="ui-g">
-    <div class="ui-g-3" style="height: 100%;">
-        <p-panel header="Wallet Information">
+<div class="ui-widget ui-g">
+    <div class="ui-g-4">
+        <p-panel header="Wallet">
+            <mat-list>
+                <mat-list-item class="item-header">Balance</mat-list-item>
+                <mat-list-item class="item-value">{{balance}}</mat-list-item>
+                <mat-list-item class="item-header">Estimated Fiat Value</mat-list-item>
+                <mat-list-item class="item-value">{{fiat_balance}}</mat-list-item>
+                <mat-list-item class="item-header">Transactions</mat-list-item>
+                <mat-list-item class="item-value">{{transaction_count}}</mat-list-item>
+                <mat-list-item class="item-header">Last Transaction</mat-list-item>
+                <mat-list-item class="item-value">{{last_transaction | date : 'yyyy-MM-dd HH:mm:ss'}}</mat-list-item>
+                <mat-list-item class="item-value"></mat-list-item>
+            </mat-list>
+        </p-panel>
+    </div>
+    <div class="ui-g-4">
+        <p-panel header="Network">
             Content
         </p-panel>
     </div>
-    <div class="ui-g-3">
-        <p-panel header="Network Information">
+    <div class="ui-g-4">
+        <p-panel header="Ledgers">
             Content
-        </p-panel>
-    </div>
-    <div class="ui-g-6">
-        <p-panel header="Transactions">
-            <p-dataTable [value]="transactions" expandableRows="true">
-                <p-column expander="true" styleClass="col-icon"></p-column>
-                <p-column field="TxID" header="TxID"></p-column>
-                <p-column field="Time" header="Time"></p-column>
-                <ng-template let-tx pTemplate="rowexpansion">
-                    <div class="ui-grid ui-grid-responsive ui-fluid" style="font-size:16px;padding:20px">
-                        <div class="ui-grid-row">
-                            <div class="ui-grid-col-9">
-                                <div class="ui-grid ui-grid-responsive ui-grid-pad">
-                                    <div class="ui-grid-row">
-                                        <div class="ui-grid-col-2 label">Amount: </div>
-                                        <div class="ui-grid-col-10"></div>
-                                    </div>
-                                    <div class="ui-grid-row">
-                                        <div class="ui-grid-col-2 label">Description: </div>
-                                        <div class="ui-grid-col-10"></div>
-                                    </div>
-                                    <div class="ui-grid-row">
-                                        <div class="ui-grid-col-2 label">Confirmed: </div>
-                                        <div class="ui-grid-col-10"></div>
-                                    </div>
-                                    <div class="ui-grid-row">
-                                        <div class="ui-grid-col-2 label">Ledger: </div>
-                                        <div class="ui-grid-col-10"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </ng-template>
-            </p-dataTable>
         </p-panel>
     </div>
 </div>
+<p-panel header="Transactions" [style]="{'height':'275px', 'position': 'fixed', 'bottom':'0'}">
+    <p-dataTable [value]="transactions" expandableRows="true" scrollable="true" scrollHeight="200px">
+        <p-column expander="true" styleClass="col-icon" [style]="{'width':'25px'}"></p-column>
+        <p-column field="time" header="Time" [style]="{'width':'125px'}">
+            <ng-template let-col let-case="rowData" pTemplate="body">
+                <span>{{case[col.field] | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
+            </ng-template>
+        </p-column>
+        <p-column field="account" header="Account" [style]="{'width':'200px'}"></p-column>
+        <p-column field="amount" header="Amount" [style]="{'width':'75px'}"></p-column>
+        <p-column field="ledger" header="Ledger" [style]="{'width':'75px'}"></p-column>
+        <p-column field="validated" header="Confirmed" [style]="{'width':'75px'}"></p-column>
+        <ng-template let-car pTemplate="rowexpansion">
+            <div class="ui-grid ui-grid-responsive ui-fluid" style="padding:20px">
+                <div class="ui-grid-row">
+                    <div class="ui-grid-col-12">
+                        <div class="ui-grid ui-grid-responsive ui-grid-pad">
+                            <div class="ui-grid-row">
+                                <div class="ui-grid-col-2 label item-value">Transaction ID: </div>
+                                <div class="ui-grid-col-10">ASDFASFASF243ASDF23424DSG55757123JKHDF24097HGHHDFHG</div>
+                            </div>
+                            <div class="ui-grid-row">
+                                    <div class="ui-grid-col-2 label item-value">Sender: </div>
+                                    <div class="ui-grid-col-10">cMhWoNXXXBBemk7UuKS2mvZBk355Nbk2YA</div>
+                                </div>
+                            <div class="ui-grid-row">
+                                <div class="ui-grid-col-2 label item-value">Description: </div>
+                                <div class="ui-grid-col-10">This is a test transaction</div>
+                            </div>
+                            <div class="ui-grid-row">
+                                <div class="ui-grid-col-2 label">Ledger: </div>
+                                <div class="ui-grid-col-10">2311</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+    </p-dataTable>
+</p-panel>

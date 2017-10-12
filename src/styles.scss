@@ -1,4 +1,35 @@
-/* You can add global styles to this file, and also import other style files */
+// PrimeNG
+@import "~primeng/resources/primeng.min.css";
+@import "./assets/primeng-csc/theme.css";
+
+// Font Awesome
+@import "~font-awesome/css/font-awesome.min.css";
+
+// Bootstrap
+@import "./assets/bootstrap-4.0.0-beta/scss/functions";
+@import "./assets/bootstrap-4.0.0-beta/scss/variables";
+@import "./assets/bootstrap-4.0.0-beta/scss/mixins";
+@import "./assets/bootstrap-4.0.0-beta/scss/button-group";
+@import "./assets/bootstrap-4.0.0-beta/scss/buttons";
+@import "./assets/bootstrap-4.0.0-beta/scss/utilities/flex";
+
+// Material Design
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
+
+// Global variables
+@import "./assets/variables";
+
+// Components
+// @import "./app/app.component";
+// @import "./app/components/home/home.component";
+// @import "./app/components/login/login.component";
+// @import "./app/components/wallet-setup/wallet-setup.component";
+// @import "./app/components/forms/addressbook/addressbook.component";
+// @import "./app/components/forms/coin-swap/coin-swap.component";
+// @import "./app/components/forms/overview/overview.component";
+// @import "./app/components/forms/receive-coins/receive-coins.component";
+// @import "./app/components/forms/send-coins/send-coins.component";
+
 html, body {
   margin: 0;
   padding: 0;

@@ -1,0 +1,16 @@
+@import "~assets/variables";
+
+::ng-deep .ui-widget-header {
+    color: $casinocoinRed;
+    font-weight: bolder;
+}
+
+::ng-deep .item-header {
+    font-weight: bolder;
+    font-size: smaller;
+    height: 25px;
+}
+
+::ng-deep .item-value {
+    height: 25px;
+}

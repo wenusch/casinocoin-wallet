@@ -1,11 +1,4 @@
-$fontFamily:  "Roboto", "Trebuchet MS", Arial, Helvetica, sans-serif;
-$fontSize: 1em;
-$borderRadius: 3px;
-$disabledOpacity: 0.35;
-
-$casinocoinRed: #901119;
-$casinocoinRedDarker: #7c0810;
-$casinocoinRedLighter: #a71f28;
+@import "../variables";
 
 //Header
 $headerBorderWidth: 1px;
@@ -58,7 +51,7 @@ $inputTextColor: #222222;
 $invalidInputBorderColor: #f44336;
 $inputGroupTextColor: #222222;
 
-@import '../_theme';
+@import '../../../node_modules/primeng/resources/themes/_theme';
 
 /* roboto-regular - latin */
 @font-face {
@@ -570,4 +563,11 @@ $inputGroupTextColor: #222222;
             color: #ffffff;
         }
     }
+}
+
+/* Style to have the dropdown label in an inputgroup rendered correctly */
+.ui-fluid .ui-inputgroup .ui-inputtext {
+    width: 100%;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }

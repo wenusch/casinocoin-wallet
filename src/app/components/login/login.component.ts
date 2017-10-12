@@ -10,7 +10,7 @@ import { Logger } from 'angular2-logger/core';
 @Component({
     moduleId: module.id,
     templateUrl: 'login.component.html',
-    styleUrls: ['./login.component.css'],
+    styleUrls: ['./login.component.scss'],
     providers: [ DatePipe ]
 })
  

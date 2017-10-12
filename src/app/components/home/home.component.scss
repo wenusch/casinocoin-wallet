@@ -1,5 +1,4 @@
-$casinocoinRed: #901119;
-$casinocoinRedLighter: #b41e28;
+@import "~assets/variables";
 
 ::ng-deep p-toolbar .ui-widget-header {
   color: #FFFFFF;
@@ -53,7 +52,7 @@ background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 1
 }
 
 .toolbar-image {
-  width: 80px;
+  width: 70px;
 }
 
 .btn.focus, .btn:focus {
@@ -73,4 +72,8 @@ background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 1
 .inactive_text_color {
   color: #661114;
   font-size: smaller;
+}
+
+::ng-deep .mat-list .mat-list-item, .mat-nav-list .mat-list-item, .mat-selection-list .mat-list-item {
+  font-size: 14px;
 }
