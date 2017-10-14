@@ -18,20 +18,20 @@ import * as LokiTypes from '../domain/lokijs';
 const lfsa = require('../../../node_modules/lokijs/src/loki-fs-structured-adapter.js');
 const walletSubject = new Subject<any>();
 
-let collections = [
-  {
-      name: 'accounts',
-      schema: JSONSchemas.account
-  },
-  {
-    name: 'transactions',
-    schema: JSONSchemas.transaction
-  },
-  {
-    name: 'addressbook',
-    schema: JSONSchemas.address
-  }
-];
+// let collections = [
+//   {
+//       name: 'accounts',
+//       schema: JSONSchemas.account
+//   },
+//   {
+//     name: 'transactions',
+//     schema: JSONSchemas.transaction
+//   },
+//   {
+//     name: 'addressbook',
+//     schema: JSONSchemas.address
+//   }
+// ];
 
 @Injectable()
 export class WalletService {
@@ -45,12 +45,12 @@ export class WalletService {
   private transactions;
   private addressbook;
   private logs;
+  private keys;
 
   constructor(private logger: Logger, 
               private electron: ElectronService,
               private localStorageService: LocalStorageService) {
     this.logger.debug("### INIT WalletService ###");
-    // RxDB.plugin(require('pouchdb-adapter-websql'));
    }
 
   autoLoadCompleted() {
@@ -66,7 +66,10 @@ export class WalletService {
       this.logger.debug("### WalletService DB Created");
     }
     let userPath = this.electron.remote.app.getPath("home");
-    let dbPath = path.join(path.join(userPath, 'Casinocoin'), (walletUUID + '.db'));
+    if(walletLocation.length == 0){
+      walletLocation = path.join(userPath, '.casinocoin');
+    }
+    let dbPath = path.join(walletLocation, (walletUUID + '.db'));
     this.logger.debug("### WalletService Database File: " + dbPath);
     this.localStorageService.set(AppConstants.KEY_WALLET_LOCATION, dbPath);
     let lokiFsAdapter = new lfsa();
@@ -83,6 +86,7 @@ export class WalletService {
       walletDB.addCollection("transactions");
       walletDB.addCollection("addressbook");
       walletDB.addCollection("log");
+      walletDB.addCollection("keys")
       createSubject.next("FINISHED");
     }
     let createSubject = new Subject<any>();
@@ -109,6 +113,7 @@ export class WalletService {
         this.transactions = walletDB.getCollection("transactions");
         this.addressbook = walletDB.getCollection("addressbook");
         this.logs = walletDB.getCollection("log");
+        this.keys = walletDB.getCollection("keys");
         this.subject.next("LOADED");
       }
     });

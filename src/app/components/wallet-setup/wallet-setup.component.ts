@@ -75,7 +75,7 @@ export class WalletSetupComponent implements OnInit {
 
   ngOnInit() {
     let userHome = this.electron.remote.app.getPath("home");
-    this.walletLocation = path.join(userHome, 'Casinocoin');
+    this.walletLocation = path.join(userHome, '.casinocoin');
     this.walletTestNetwork = false;
 
     // if(userHome.indexOf(':\\') > 0) {
@@ -208,6 +208,8 @@ export class WalletSetupComponent implements OnInit {
     this.sessionStorageService.set(AppConstants.KEY_CURRENT_WALLET, this.walletUUID);
     this.localStorageService.set(AppConstants.KEY_CURRENT_WALLET, this.walletUUID);
     this.localStorageService.set(AppConstants.KEY_AVAILABLE_WALLETS, walletArray);
+    this.localStorageService.set(AppConstants.KEY_WALLET_LOCATION, this.walletLocation);
+    this.localStorageService.set(AppConstants.KEY_PRODUCTION_NETWORK, !this.walletTestNetwork);
     this.localStorageService.set(AppConstants.KEY_SETUP_COMPLETED, true);
     this.router.navigate(['']);
   }

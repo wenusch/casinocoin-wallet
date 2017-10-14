@@ -1,3 +1,9 @@
+export interface ServerDefinition {
+    server_id: string,
+    server_url: string,
+    response_time: number
+}
+
 export interface LedgerStreamMessages {
     type: string,
     fee_base: Uint32Array,

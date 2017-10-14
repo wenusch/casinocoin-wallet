@@ -4,6 +4,7 @@ import { Logger } from 'angular2-logger/core';
 import { Router } from '@angular/router';
 import { LocalStorage, SessionStorage } from "ngx-store";
 import { ElectronService } from "../../providers/electron.service";
+import { CasinocoinService } from "../../providers/casinocoin.service";
 import { MenuItem } from 'primeng/primeng';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 // import { ElectronService } from 'ngx-electron';
@@ -49,7 +50,8 @@ export class HomeComponent implements OnInit {
 
   constructor(private logger: Logger, 
               private router: Router,
-              private electron: ElectronService ) { }
+              private electron: ElectronService,
+              private casinocoinService: CasinocoinService ) { }
 
   ngOnInit() {
     this.logger.debug("### HOME currentWallet: " + this.currentWallet);
@@ -68,6 +70,13 @@ export class HomeComponent implements OnInit {
       { label: 'Quit', icon: 'fa-sign-out', command: (event) => { this.onQuit() } }
     ];
     this.router.navigate(['overview']);
+    // connect to the network
+    this.casinocoinService.connect().subscribe((message: any) => {
+      this.logger.debug("### HOME Received Network Message: " + JSON.stringify(message));
+      this.casinocoinService.subscribeToLedgerStream();
+      this.casinocoinService.subscribeToAccountsStream(["cHb9CJAWyB4cj91VRWn96DkukG4bwdtyTh"]);
+    });
+    this.casinocoinService.pingServer();
   }
 
   onMenuClick() {

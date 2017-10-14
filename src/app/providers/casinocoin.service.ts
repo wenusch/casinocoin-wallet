@@ -3,19 +3,26 @@ import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 import { WebsocketService } from './websocket.service';
-import { LedgerStreamMessages, ValidationStreamMessages, TransactionStreamMessages } from '../domain/websocket-messages';
+import { LedgerStreamMessages, ValidationStreamMessages, TransactionStreamMessages } from '../domain/websocket-types';
 import { Logger } from 'angular2-logger/core';
-
-const WS_URL = 'ws://lnx07.jochems.com:7007/';
+import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
 
 @Injectable()
 export class CasinocoinService implements OnDestroy {
 
+    private 
     private socketSubscription: Subscription;
     private subject = new Subject<any>();
   
     constructor(private logger: Logger, private wsService: WebsocketService) {
-        this.logger.debug("### INIT CasinocoinService ###");
+        logger.debug("### INIT CasinocoinService ###");
+
+        const seed = cscKeyAPI.generateSeed();
+        logger.debug("Seed: " + seed);
+        const keypair = cscKeyAPI.deriveKeypair(seed);
+        logger.debug(keypair);
+        const address = cscKeyAPI.deriveAddress(keypair.publicKey);
+        logger.debug("Address: " + address);
     }
     
     ngOnDestroy() {
@@ -25,7 +32,7 @@ export class CasinocoinService implements OnDestroy {
     connect(): Observable<any> {
         this.logger.debug("### CasinocoinService Connect() ###");
         // this.wsService.connect();
-        this.socketSubscription = this.wsService.messages.subscribe((message: any) => {
+        this.socketSubscription = this.wsService.ws_messages.subscribe((message: any) => {
           // this.logger.debug('received message from server: ', JSON.stringify(message));
           if(message['type'] == 'ledgerClosed'){
               this.logger.debug("closed ledger: " + message['ledger_index']);
@@ -45,7 +52,11 @@ export class CasinocoinService implements OnDestroy {
                   // we received a server_state
                   this.logger.debug("Server State: " + JSON.stringify(message.result));
                   this.subject.next(message.result);
-              }
+              } else if(message['wallet_propose']){
+                // we received a wallet_propose
+                this.logger.debug("Wallet Propose: " + JSON.stringify(message.result));
+                this.subject.next(message.result);
+            }
           } else { 
               this.logger.debug("unmapped message: " + JSON.stringify(message));
           }
@@ -53,16 +64,21 @@ export class CasinocoinService implements OnDestroy {
         return this.subject.asObservable();
     }
 
+
     pingServer() {
-        this.wsService.messages.next({id: "ping",command: "ping"});
+        this.wsService.ws_messages.next({id: "ping",command: "ping"});
     }
 
-    serverState() {
-        this.wsService.messages.next({id: "server_state", command: "server_state"})
+    getServerState() {
+        this.wsService.ws_messages.next({id: "server_state", command: "server_state"});
+    }
+
+    getWalletProposal() {
+        this.wsService.ws_messages.next({id: "wallet_propose", command: "wallet_propose"});
     }
 
     subscribeToLedgerStream() {
-        this.wsService.messages.next({
+        this.wsService.ws_messages.next({
             id: "Listen for new validated ledgers",
             command: "subscribe",
             streams: ["ledger","server"]
@@ -70,7 +86,7 @@ export class CasinocoinService implements OnDestroy {
     }
 
     subscribeToAccountsStream(accountArray: Array<string>) {
-        this.wsService.messages.next({
+        this.wsService.ws_messages.next({
             id: "Listen for account updates",
             command: "subscribe",
             accounts: accountArray
