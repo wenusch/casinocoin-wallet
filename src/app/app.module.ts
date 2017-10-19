@@ -15,6 +15,7 @@ import { ElectronService }          from './providers/electron.service';
 import { WalletService }            from './providers/wallet.service';
 import { CasinocoinService }        from './providers/casinocoin.service';
 import { WebsocketService }         from './providers/websocket.service';
+import { SwapService }              from './providers/swap.service';
 
 import { AuthGuard }                from './domain/auth-guard';
 
@@ -81,7 +82,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     AuthGuard,
     WebsocketService,
     WalletService,
-    CasinocoinService
+    CasinocoinService,
+    SwapService
   ],
   bootstrap: [AppComponent]
 })

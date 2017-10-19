@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { CasinocoinService } from '../../../providers/casinocoin.service';
+import { CSCUtil } from '../../../domain/cscutil';
+import { LedgerStreamMessages } from '../../../domain/websocket-types';
+import { Logger } from 'angular2-logger/core';
 
 @Component({
   selector: 'app-overview',
@@ -8,12 +12,15 @@ import { Component, OnInit } from '@angular/core';
 export class OverviewComponent implements OnInit {
 
   transactions: any[];
+  ledgers: LedgerStreamMessages[];
+
   balance: string = "19982.44";
   fiat_balance: string = "$23.75";
   transaction_count: number = 14;
   last_transaction: Date = new Date(1507812301);
 
-  constructor() { 
+  constructor(private casinocoinService: CasinocoinService, private logger: Logger) { 
+    
     this.transactions = [
       {time: Date.now(), amount: 2344, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 245, validated: true},
       {time: Date.now(), amount: 1003, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 215, validated: true},
@@ -26,9 +33,17 @@ export class OverviewComponent implements OnInit {
       {time: Date.now(), amount: 20000, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 61, validated: true},
       {time: Date.now(), amount: 1000, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 32, validated: true}
     ];
+    this.ledgers = [];
   }
 
   ngOnInit() {
+    this.casinocoinService.ledgerSubject.subscribe((ledger: LedgerStreamMessages) => {
+      this.ledgers.splice(0, 0, ledger);
+    });
+  }
+
+  convertCscTimestamp(inputTime) {
+    return CSCUtil.casinocoinToUnixTimestamp(inputTime);
   }
 
 }

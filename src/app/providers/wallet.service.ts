@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Logger } from 'angular2-logger/core';
-import { JSONSchemas } from '../domain/schemas';
+import { LokiAccount, LokiKey, LokiLog } from '../domain/lokijs';
+import { LedgerStreamMessages, TransactionStreamMessages } from '../domain/websocket-types';
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
@@ -29,6 +30,9 @@ export class WalletService {
   private addressbook;
   private logs;
   private keys;
+  private swaps;
+  private ledgers: Array<LedgerStreamMessages>;
+  
   public isWalletOpen: boolean = false;
 
   constructor(private logger: Logger, 
@@ -71,6 +75,8 @@ export class WalletService {
         this.logs = collection;
       else if(collection.name == "keys")
         this.keys = collection;
+      else if(collection.name == "swaps")
+        this.keys = collection;
       this.isWalletOpen = true;
     });
     
@@ -89,6 +95,7 @@ export class WalletService {
       collectionSubject.next(walletDB.addCollection("addressbook"));
       collectionSubject.next(walletDB.addCollection("log"));
       collectionSubject.next(walletDB.addCollection("keys", {unique: ["accountID"]}));
+      collectionSubject.next(walletDB.addCollection("swaps", {unique: ["accountID", "swapID"]}));
       createSubject.next(AppConstants.KEY_FINISHED);
     }
     this.walletDB = walletDB;
@@ -113,6 +120,8 @@ export class WalletService {
         this.logs = collection;
       else if(collection.name == "keys")
         this.keys = collection;
+      else if(collection.name == "swaps")
+        this.keys = collection;
       this.isWalletOpen = true;
     });
 
@@ -131,6 +140,7 @@ export class WalletService {
       collectionSubject.next(walletDB.getCollection("addressbook"));
       collectionSubject.next(walletDB.getCollection("log"));
       collectionSubject.next(walletDB.getCollection("keys"));
+      collectionSubject.next(walletDB.getCollection("swaps"));
       openSubject.next(AppConstants.KEY_LOADED);
     }
     this.walletDB = walletDB;
@@ -141,7 +151,8 @@ export class WalletService {
     this.walletDB.saveDatabase();
   }
 
-  addKeys(newKey: LokiTypes.LokiKey) {
+  // Keys Collection
+  addKey(newKey: LokiTypes.LokiKey) {
     let insertedKey = this.keys.insert(newKey);
     this.saveWallet();
   }
@@ -154,7 +165,21 @@ export class WalletService {
     // find all unencrypted keys and do encryption
   }
 
-  getAllAccounts(): Array<LokiTypes.LokiKey> {
+  getAllKeys(): Array<LokiTypes.LokiKey> {
     return this.keys.find();
   }
+
+  // Swaps Collection
+  addSwap(newSwap: LokiTypes.LokiSwap){
+    this.swaps.insert(newSwap);
+  }
+
+  getSwap(swapID: string): LokiTypes.LokiSwap {
+    return this.swaps.by("swapID", swapID);
+  }
+
+  getAllSwaps(): Array<LokiTypes.LokiSwap> {
+    return this.swaps.find();
+  }
+
 }

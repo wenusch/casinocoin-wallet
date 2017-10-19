@@ -16,6 +16,7 @@ export class CasinocoinService implements OnDestroy {
     private connectedSubscription: Subscription;
     private socketSubscription: Subscription;
     private subject = new Subject<any>();
+    public ledgerSubject = new Subject<LedgerStreamMessages>();
   
     constructor(private logger: Logger, 
                 private wsService: WebsocketService,
@@ -37,13 +38,13 @@ export class CasinocoinService implements OnDestroy {
                 if(connected && !this.isConnected){
                     this.isConnected = true;
                     this.subscribeToMessages();
-                    // get the current server state
-                    this.getServerState();
+                    // get the current ledger
+                    // this.getLedger(-1);
                     // subscribe to ledger stream
                     this.subscribeToLedgerStream();
                     // get accounts and subscribe to accountstream
                     let subscribeAccounts = [];
-                    this.walletService.getAllAccounts().forEach(element => {
+                    this.walletService.getAllKeys().forEach(element => {
                         subscribeAccounts.push(element.accountID);
                     });
                     this.logger.debug("### CasinocoinService Accounts: " + JSON.stringify(subscribeAccounts));
@@ -71,10 +72,9 @@ export class CasinocoinService implements OnDestroy {
         this.logger.debug("### CasinocoinService - subscribeToMessages");
         this.socketSubscription = this.wsService.websocketConnection.messages.subscribe((message: any) => {
             let incommingMessage = JSON.parse(message);
-            this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
+            // this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
             if(incommingMessage['type'] == 'ledgerClosed'){
-                this.logger.debug("closed ledger: " + incommingMessage['ledger_index']);
-                this.subject.next(incommingMessage);
+                this.ledgerSubject.next(incommingMessage);
             } else if(incommingMessage['type'] == 'serverStatus'){
                 this.logger.debug("server state: " + incommingMessage['server_status']);
                 this.subject.next(incommingMessage);
@@ -82,14 +82,22 @@ export class CasinocoinService implements OnDestroy {
                 this.logger.debug("transaction: " + JSON.stringify(incommingMessage['transaction']));
                 this.subject.next(incommingMessage);
             }  else if(incommingMessage['type'] == 'response'){
+                // this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
                 // we received a response on a request
                 if(incommingMessage['id'] == 'ping'){
                     // we received a pong
                     this.logger.debug("Pong");
-                } else if(incommingMessage['server_state']){
+                } else if(incommingMessage['id'] == 'server_state'){
                     // we received a server_state
                     this.logger.debug("Server State: " + JSON.stringify(incommingMessage.result));
                     this.subject.next(incommingMessage.result);
+                } else if(incommingMessage['id'] == 'getLedger'){
+                    // we received a ledger
+                    this.subject.next(incommingMessage.result);
+                } else if(incommingMessage['id'] == 'ValidatedLedgers'){
+                    this.ledgerSubject.next(incommingMessage.result);
+                } else if(incommingMessage['id'] == 'AccountUpdates'){
+                    this.logger.debug("Account: " + JSON.stringify(incommingMessage.result));
                 }
             } else { 
                 this.logger.debug("unmapped message: " + JSON.stringify(incommingMessage));
@@ -109,8 +117,26 @@ export class CasinocoinService implements OnDestroy {
         this.sendCommand({id: "server_state", command: "server_state"});
     }
 
+    getLedger(ledgerIndex: number){
+        let ledgerType = "validated";
+        if(ledgerIndex && ledgerIndex > 0){
+            ledgerType = ledgerIndex.toString();
+        }
+        let ledgerRequest = {
+            id: "getLedger",
+            command: "ledger",
+            ledger_index: ledgerType,
+            full: false,
+            accounts: false,
+            transactions: false,
+            expand: false,
+            owner_funds: false
+        }
+        this.sendCommand(ledgerRequest);
+    }
+
     subscribeToLedgerStream() {
-        this.sendCommand({ id: "ValidatedLedgers", command: "subscribe", streams: ["ledger","server"]});
+        this.sendCommand({ id: "ValidatedLedgers", command: "subscribe", streams: ["ledger"]});
     }
 
     subscribeToAccountsStream(accountArray: Array<string>) {

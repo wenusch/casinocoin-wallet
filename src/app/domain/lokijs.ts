@@ -19,3 +19,9 @@ export interface LokiKey {
     secret: string;
     encrypted: boolean;
 }
+
+export interface LokiSwap {
+    accountID: string;
+    swapID: string;
+    swapObject?: Object;
+}
