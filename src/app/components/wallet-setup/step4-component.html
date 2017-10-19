@@ -6,21 +6,21 @@
         <div class="ui-g-10">
             Create wallet on filesystem:
         </div>
-        <div class="ui-g-1"><i class="fa fa-check" aria-hidden="true"></i></div>
+        <div class="ui-g-1"><i class="fa fa-check" aria-hidden="true" [hidden]="walletCreated==false"></i></div>
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             Create account:
         </div>
-        <div class="ui-g-1"><i class="fa fa-check" aria-hidden="true"></i></div>
+        <div class="ui-g-1"><i class="fa fa-check" aria-hidden="true" [hidden]="!accountCreated==false"></i></div>
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             Encrypt wallet information with password:
         </div>
-        <div class="ui-g-1"><i class="fa fa-check" aria-hidden="true"></i></div>
+        <div class="ui-g-1"><i class="fa fa-check" aria-hidden="true" [hidden]="!keysEncryped==false"></i></div>
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             Connect to the network:
         </div>
-        <div class="ui-g-1"><i class="fa fa-check" aria-hidden="true"></i></div>
+        <div class="ui-g-1"><i class="fa fa-check" aria-hidden="true" [hidden]="!networkConnected==false"></i></div>
     </div>
 </div>

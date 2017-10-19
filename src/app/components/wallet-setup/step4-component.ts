@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Input } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
 import { Logger } from 'angular2-logger/core';
 import { ElectronService } from '../../providers/electron.service';
@@ -22,5 +22,8 @@ import { MenuItem, MessagesModule, Message } from 'primeng/primeng';
     ]
   })
   export class SetupStep4Component {
-
+    @Input() walletCreated:boolean = false;
+    @Input() accountCreated:boolean = false;
+    @Input() keysEncrypted:boolean = false;
+    @Input() connectedToNetwork:boolean = false;
   }

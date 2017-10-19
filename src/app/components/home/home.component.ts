@@ -5,9 +5,10 @@ import { Router } from '@angular/router';
 import { LocalStorage, SessionStorage } from "ngx-store";
 import { ElectronService } from "../../providers/electron.service";
 import { CasinocoinService } from "../../providers/casinocoin.service";
+import { WalletService } from "../../providers/wallet.service";
 import { MenuItem } from 'primeng/primeng';
 import { MatListModule, MatSidenavModule } from '@angular/material';
-// import { ElectronService } from 'ngx-electron';
+import { AppConstants } from '../../domain/app-constants';
 
 @Component({
   selector: 'app-home',
@@ -29,6 +30,7 @@ import { MatListModule, MatSidenavModule } from '@angular/material';
 export class HomeComponent implements OnInit {
 
   @SessionStorage() public currentWallet: string;
+  @LocalStorage() public walletLocation: string;
 
   //show_menu: string = 'shown';
   show_menu: string = 'small';
@@ -51,6 +53,7 @@ export class HomeComponent implements OnInit {
   constructor(private logger: Logger, 
               private router: Router,
               private electron: ElectronService,
+              private walletService: WalletService,
               private casinocoinService: CasinocoinService ) { }
 
   ngOnInit() {
@@ -70,13 +73,18 @@ export class HomeComponent implements OnInit {
       { label: 'Quit', icon: 'fa-sign-out', command: (event) => { this.onQuit() } }
     ];
     this.router.navigate(['overview']);
-    // connect to the network
-    this.casinocoinService.connect().subscribe((message: any) => {
-      this.logger.debug("### HOME Received Network Message: " + JSON.stringify(message));
-      this.casinocoinService.subscribeToLedgerStream();
-      this.casinocoinService.subscribeToAccountsStream(["cHb9CJAWyB4cj91VRWn96DkukG4bwdtyTh"]);
-    });
-    this.casinocoinService.pingServer();
+    // open the wallet if not yet open
+    if(!this.walletService.isWalletOpen){
+      this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
+        if(result == AppConstants.KEY_LOADED){
+          // connect to the network
+          this.casinocoinService.connect();
+        }
+      });
+    } else {
+      // connect to the network
+      this.casinocoinService.connect();
+    }
   }
 
   onMenuClick() {

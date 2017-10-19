@@ -18,7 +18,7 @@ export class AuthGuard implements CanActivate {
         // Check if we have an opened wallet
         if (this.sessionStorageService.get(AppConstants.KEY_CURRENT_WALLET)) {
             // wallet open so return true
-            this.logger.debug('### Wallet Open: ' + this.sessionStorageService.get(AppConstants.KEY_CURRENT_WALLET));
+            this.logger.debug('### AuthGuard - Wallet Selected?: ' + this.sessionStorageService.get(AppConstants.KEY_CURRENT_WALLET));
             return true;
         }
         // Wallet not open, check if setup has been completed

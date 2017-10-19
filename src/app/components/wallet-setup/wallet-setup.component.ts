@@ -6,11 +6,13 @@ import { ElectronService } from '../../providers/electron.service';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { AppConstants } from '../../domain/app-constants';
 import { CSCUtil } from '../../domain/cscutil';
+import { LokiKey } from '../../domain/lokijs';
 import { MenuItem, MessagesModule, Message } from 'primeng/primeng';
 import { UUID } from 'angular2-uuid';
 // import { CasinocoinAPI } from 'casinocoin-libjs';
 import { WalletService } from '../../providers/wallet.service';
 import { CasinocoinService } from '../../providers/casinocoin.service';
+import { WebsocketService } from '../../providers/websocket.service';
 import { SetupStep1Component } from './step1-component';
 
 let path = require('path');
@@ -60,6 +62,11 @@ export class WalletSetupComponent implements OnInit {
   walletUUID: string;
   walletAccount: Object;
 
+  walletCreated: boolean = false;
+  accountCreated:boolean = false;
+  keysEncrypted:boolean = false;
+  connectedToNetwork: boolean = false;
+
   // Create an offline CasinocoinAPI
   // Server connection will be done via native WebSockets instead of casinocoin libjs
   // cscAPI = new CasinocoinAPI({ server: 'ws://158.69.59.142:7007' });
@@ -71,7 +78,8 @@ export class WalletSetupComponent implements OnInit {
                private localStorageService: LocalStorageService,
                private sessionStorageService: SessionStorageService,
                private walletService: WalletService,
-               private casinocoinService: CasinocoinService ) { }
+               private casinocoinService: CasinocoinService,
+               private websocketService: WebsocketService ) { }
 
   ngOnInit() {
     let userHome = this.electron.remote.app.getPath("home");
@@ -177,21 +185,40 @@ export class WalletSetupComponent implements OnInit {
     // this.step3State = 'out';
     // this.step4State = 'in-left';
     this.logger.debug("Wallet Location: " + this.walletLocation);
-    this.walletUUID = UUID.UUID();
     this.logger.debug("### WalletSetup - Create Wallet");
-    this.walletService.createWallet(this.walletLocation, this.walletUUID, this.walletPassword).subscribe(result => {
-      this.logger.debug("Create Wallet: " + result);
-      if(result == 'FINISHED'){
-        this.logger.debug("### WalletSetup - Connect to Network");
-        this.casinocoinService.connect().subscribe((message: any) => {
-          this.logger.debug("### Received Network Message: " + JSON.stringify(message));
-          this.casinocoinService.subscribeToLedgerStream();
-          this.casinocoinService.subscribeToAccountsStream(["cHb9CJAWyB4cj91VRWn96DkukG4bwdtyTh"]);
-        });
-        this.casinocoinService.pingServer();
-      }
-      this.enableFinishCreation = true;
-    });
+    this.walletUUID = UUID.UUID();
+    // this.walletService.createWallet(this.walletLocation, this.walletUUID, this.walletPassword).subscribe(result => {
+    //   if(result == AppConstants.KEY_FINISHED){
+    //     this.walletCreated = true;
+    //     this.logger.debug("### WalletSetup - Create new Account");
+    //     let walletAccount:LokiKey = this.casinocoinService.generateNewKeyPair();
+    //     this.walletService.addKeys(walletAccount);
+    //     this.accountCreated = true;
+    //     this.logger.debug("### WalletSetup - Encrypt Wallet Keys");
+    //     this.walletService.encryptKeys();
+    //     this.keysEncrypted = true;
+    //     this.logger.debug("### WalletSetup - Find Server to connect to");
+    //     let serverFound = false;
+    //     this.websocketService.findBestServer(!this.walletTestNetwork).subscribe( result => {
+    //       if(result && !serverFound){
+    //         serverFound = true;
+    //         // server found to connect to
+    //         this.logger.debug("### WalletSetup - Connect to Network");
+    //         this.websocketService.connect();
+    //         // subscribe to incomming messages
+    //         this.casinocoinService.connect().subscribe((message: any) => {
+    //           this.connectedToNetwork = true;
+    //           this.logger.debug("### Received Network Message: " + JSON.stringify(message));
+    //         });
+    //         // the websocket has a queued subject so send out the messages
+    //         this.casinocoinService.getServerState();
+    //         this.casinocoinService.subscribeToLedgerStream();
+    //         this.casinocoinService.subscribeToAccountsStream([walletAccount.accountID]);
+    //       }
+    //       this.enableFinishCreation = true;
+    //     });
+    //   }
+    // });
   }
 
   cancelStep3() {

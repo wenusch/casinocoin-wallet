@@ -10,7 +10,11 @@
                      (passwordChange)="onPasswordUpdated($event)" [(newWalletPassword)]="walletPassword"></setup-step2>
         <setup-step3 [hidden]="activeIndex != 3"
                      (locationChange)="onLocationUpdated($event)" [(newWalletLocation)]="walletLocation"></setup-step3>
-        <setup-step4 [hidden]="activeIndex != 4"></setup-step4>
+        <setup-step4 [hidden]="activeIndex != 4"
+                     [(walletCreated)]="walletCreated"
+                     [(accountCreated)]="accountCreated"
+                     [(keysEncrypted)]="keysEncrypted"
+                     [(connectedToNetwork)]="connectedToNetwork"></setup-step4>
     </div>
     <div style="text-align: right;">
         <button pButton type="button" (click)="navigateToPreviousStep()" icon="fa-arrow-left" iconPos="left" label="Previous" 

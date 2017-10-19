@@ -5,6 +5,7 @@ import { WalletService } from '../../providers/wallet.service';
 import { LocalStorage, SessionStorage } from "ngx-store";
 import { SelectItem } from 'primeng/primeng';
 import { CSCUtil } from '../../domain/cscutil';
+import { AppConstants } from '../../domain/app-constants';
 import { Logger } from 'angular2-logger/core';
  
 @Component({
@@ -55,8 +56,8 @@ export class LoginComponent implements OnInit {
     doOpenWallet() {
         this.currentWallet = this.selectedWallet;
         this.logger.debug("Open Wallet: " + this.currentWallet);
-        this.walletService.openWallet(this.walletLocation, this.currentWallet, this.walletPassword).subscribe( result => {
-            if(result == 'LOADED'){
+        this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
+            if(result == AppConstants.KEY_LOADED){
                 // Navigate to Home 
                 this.router.navigate([this.returnUrl]);
             } else {
