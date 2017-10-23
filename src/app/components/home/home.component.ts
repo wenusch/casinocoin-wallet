@@ -6,9 +6,11 @@ import { LocalStorage, SessionStorage } from "ngx-store";
 import { ElectronService } from "../../providers/electron.service";
 import { CasinocoinService } from "../../providers/casinocoin.service";
 import { WalletService } from "../../providers/wallet.service";
-import { MenuItem } from 'primeng/primeng';
+import { MenuItem, Message } from 'primeng/primeng';
+import { MessageService } from 'primeng/components/common/messageservice';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { AppConstants } from '../../domain/app-constants';
+import { AlertComponent } from '../alert/alert.component';
 
 @Component({
   selector: 'app-home',
@@ -37,6 +39,9 @@ export class HomeComponent implements OnInit {
   menu_items: MenuItem[];
   context_menu_items: MenuItem[];
 
+  // Growl messages
+  msgs: Message[] = [];
+
   overview_image: string = require("./assets/overview_active.png");
   overview_text_class: string = "active_text_color";
   send_image: string = require("./assets/send.png");
@@ -54,7 +59,8 @@ export class HomeComponent implements OnInit {
               private router: Router,
               private electron: ElectronService,
               private walletService: WalletService,
-              private casinocoinService: CasinocoinService ) { }
+              private casinocoinService: CasinocoinService ,
+              private messageService: MessageService) { }
 
   ngOnInit() {
     this.logger.debug("### HOME currentWallet: " + this.currentWallet);
@@ -77,6 +83,7 @@ export class HomeComponent implements OnInit {
     if(!this.walletService.isWalletOpen){
       this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
         if(result == AppConstants.KEY_LOADED){
+          this.messageService.add({severity:'success', summary:'Service Message', detail:'Succesfully opened the wallet.'});
           // connect to the network
           this.casinocoinService.connect();
         }

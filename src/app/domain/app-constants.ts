@@ -6,4 +6,5 @@ export class AppConstants {
     public static KEY_PRODUCTION_NETWORK = 'productionNetwork';
     public static KEY_LOADED = 'LOADED';
     public static KEY_FINISHED = 'FINISHED';
+    public static KEY_WALLET_PASSWORD = ' walletPassword';
 }

@@ -6,7 +6,8 @@ import { Subject } from 'rxjs/Subject';
 @Injectable()
 export class AlertService {
     
-    private subject = new Subject<any>();
+    private messagesSubject = new Subject<any>();
+    private growlsSubject = new Subject<any>();
     private keepAfterNavigationChange = false;
  
     constructor(private router: Router) {
@@ -18,23 +19,36 @@ export class AlertService {
                     this.keepAfterNavigationChange = false;
                 } else {
                     // clear alert
-                    this.subject.next();
+                    this.messagesSubject.next();
+                    this.growlsSubject.next();
                 }
             }
         });
     }
  
-    success(message: string, keepAfterNavigationChange = false) {
+    success(message: string, keepAfterNavigationChange = false, growl: boolean = true) {
         this.keepAfterNavigationChange = keepAfterNavigationChange;
-        this.subject.next({ type: 'success', text: message });
+        if(growl){
+            this.growlsSubject.next({type: 'success', text: message});
+        } else {
+            this.messagesSubject.next({ type: 'success', text: message });
+        }
     }
  
-    error(message: string, keepAfterNavigationChange = false) {
+    error(message: string, keepAfterNavigationChange = false, growl: boolean = true) {
         this.keepAfterNavigationChange = keepAfterNavigationChange;
-        this.subject.next({ type: 'error', text: message });
+        if(growl){
+            this.growlsSubject.next({type: ' error', text: message});
+        } else {
+            this.messagesSubject.next({ type: 'error', text: message });   
+        }
     }
  
     getMessage(): Observable<any> {
-        return this.subject.asObservable();
+        return this.messagesSubject.asObservable();
+    }
+
+    getGrowls(): Observable<any> {
+        return this.growlsSubject.asObservable();
     }
 }

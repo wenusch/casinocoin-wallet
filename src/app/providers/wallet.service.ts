@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Logger } from 'angular2-logger/core';
-import { LokiAccount, LokiKey, LokiLog } from '../domain/lokijs';
 import { LedgerStreamMessages, TransactionStreamMessages } from '../domain/websocket-types';
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
@@ -57,6 +56,12 @@ export class WalletService {
     if(walletLocation.length == 0){
       walletLocation = path.join(userPath, '.casinocoin');
     }
+    // check if path exists, else create
+    this.logger.debug("### WalletService, check if wallet location exists");
+    if (!fs.existsSync(walletLocation)){
+      this.logger.debug("### WalletService, location does not exist: " + walletLocation);
+      fs.mkdirSync(walletLocation);
+    }
     let dbPath = path.join(walletLocation, (walletUUID + '.db'));
     this.logger.debug("### WalletService Database File: " + dbPath);
     this.localStorageService.set(AppConstants.KEY_WALLET_LOCATION, dbPath);
@@ -76,7 +81,7 @@ export class WalletService {
       else if(collection.name == "keys")
         this.keys = collection;
       else if(collection.name == "swaps")
-        this.keys = collection;
+        this.swaps = collection;
       this.isWalletOpen = true;
     });
     
@@ -110,6 +115,8 @@ export class WalletService {
     let openSubject = new Subject<any>();
 
     collectionSubject.subscribe( collection => {
+      this.logger.debug("openWallet:")
+      this.logger.debug(collection);
       if(collection.name == "accounts")
         this.accounts = collection;
       else if(collection.name == "transactions")
@@ -121,7 +128,7 @@ export class WalletService {
       else if(collection.name == "keys")
         this.keys = collection;
       else if(collection.name == "swaps")
-        this.keys = collection;
+        this.swaps = collection;
       this.isWalletOpen = true;
     });
 
@@ -151,7 +158,40 @@ export class WalletService {
     this.walletDB.saveDatabase();
   }
 
+  // #########################################
+  // Accounts Collection
+  // #########################################
+  addAccount(newAccount: LokiTypes.LokiAccount) {
+    let insertAccount = this.accounts.insert(newAccount);
+    this.saveWallet();
+  }
+
+  getAccount(accountID: string): LokiTypes.LokiAccount {
+    return this.accounts.by("accountID", accountID);
+  }
+
+  getAllAccounts(): Array<LokiTypes.LokiAccount> {
+    return this.accounts.find();
+  }
+
+  getWalletBalance(): number {
+    let totalBalance:number = 0;
+    // loop over all accounts
+    let accounts: Array<LokiTypes.LokiAccount> = this.accounts.find();
+    accounts.forEach(element => {
+      totalBalance = totalBalance + element.balance;
+    });
+    return totalBalance;
+  }
+
+  getAccountBalance(accountID: string): number {
+    let account = this.getAccount(accountID);
+    return account.balance;
+  }
+
+  // #########################################
   // Keys Collection
+  // #########################################
   addKey(newKey: LokiTypes.LokiKey) {
     let insertedKey = this.keys.insert(newKey);
     this.saveWallet();
@@ -161,15 +201,50 @@ export class WalletService {
     return this.keys.by("accountID", accountID);
   }
 
-  encryptKeys() {
-    // find all unencrypted keys and do encryption
-  }
-
   getAllKeys(): Array<LokiTypes.LokiKey> {
     return this.keys.find();
   }
 
+  encryptAllKeys(password: string){
+    // get all keys
+    let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
+    allKeys.forEach( (element, index, array) => {
+      if(!element.encrypted){
+        // encrypt key
+        array[index].privateKey = element.privateKey;
+        array[index].secret = element.secret;
+      }
+    })
+  }
+
+  decryptAllKeys(password: string){
+    // get all keys
+    let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
+    allKeys.forEach( (element, index, array) => {
+      // decrypt key
+      array[index].privateKey = element.privateKey;
+      array[index].secret = element.secret;
+    })
+  }
+
+  encryptWalletPassword(password: string, words:Array<string>){
+    // encrypt the wallet password with the words
+    let encryptedPassword;
+    // store the wallet password
+    this.localStorageService.set(AppConstants.KEY_WALLET_PASSWORD, encryptedPassword);
+  }
+
+  decryptWalletPassword(words: Array<string>): string {
+    // get the encrypted password
+    let encryptedPassword = this.localStorageService.get(AppConstants.KEY_WALLET_PASSWORD);
+    // decrypt the password
+    let decryptedPassword;
+    return decryptedPassword;
+  }
+
+  // #########################################
   // Swaps Collection
+  // #########################################
   addSwap(newSwap: LokiTypes.LokiSwap){
     this.swaps.insert(newSwap);
   }

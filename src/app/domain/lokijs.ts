@@ -25,3 +25,13 @@ export interface LokiSwap {
     swapID: string;
     swapObject?: Object;
 }
+
+export interface LokiTransaction {
+    txID: string;
+    txType: string;
+    sendingAddress: string;
+    receivingAddress: string;
+    amount: number;
+    fees: number;
+    txTimestamp: number;
+}

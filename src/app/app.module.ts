@@ -16,6 +16,7 @@ import { WalletService }            from './providers/wallet.service';
 import { CasinocoinService }        from './providers/casinocoin.service';
 import { WebsocketService }         from './providers/websocket.service';
 import { SwapService }              from './providers/swap.service';
+import { AlertService }             from './providers/alert.service';
 
 import { AuthGuard }                from './domain/auth-guard';
 
@@ -26,6 +27,7 @@ import { WebStorageModule,
 
 import { AppComponent }             from './app.component';
 import { HomeComponent }            from './components/home/home.component';
+import { AlertComponent }           from './components/alert/alert.component';
 import { WalletSetupComponent }     from './components/wallet-setup/wallet-setup.component';
 import { SetupStep1Component }      from './components/wallet-setup/step1-component';
 import { SetupStep2Component }      from './components/wallet-setup/step2-component';
@@ -43,7 +45,8 @@ import { DialogModule, ButtonModule, CheckboxModule,
          MessagesModule, ToolbarModule, AccordionModule,
          MenuModule, PanelModule, CalendarModule,
          DataTableModule, SharedModule, DropdownModule,
-         StepsModule, PasswordModule } from 'primeng/primeng';
+         StepsModule, PasswordModule, GrowlModule } from 'primeng/primeng';
+import { MessageService } from 'primeng/components/common/messageservice';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -59,7 +62,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     ReceiveCoinsComponent,
     AddressbookComponent,
     CoinSwapComponent,
-    OverviewComponent
+    OverviewComponent,
+    AlertComponent
   ],
   imports: [
     BrowserModule,
@@ -73,7 +77,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     MessagesModule, ToolbarModule, AccordionModule,
     MenuModule, PanelModule, CalendarModule,
     DataTableModule, SharedModule, DropdownModule,
-    StepsModule, PasswordModule,
+    StepsModule, PasswordModule, GrowlModule,
     MatListModule, MatSidenavModule
   ],
   providers: [
@@ -83,7 +87,9 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     WebsocketService,
     WalletService,
     CasinocoinService,
-    SwapService
+    SwapService,
+    MessageService,
+    AlertService
   ],
   bootstrap: [AppComponent]
 })

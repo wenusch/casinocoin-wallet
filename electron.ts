@@ -1,5 +1,6 @@
 import { app, BrowserWindow, screen, ipcMain, dialog } from 'electron';
 import * as path from 'path';
+import * as fs from 'fs';
 
 let win, serve;
 const args = process.argv.slice(1);
@@ -12,7 +13,10 @@ if (serve) {
 }
 
 // set the default userData directory
-const defaultCSCPath = path.join(app.getPath('home'), 'Casinocoin');
+const defaultCSCPath = path.join(app.getPath('home'), '.casinocoin');
+if (!fs.existsSync(defaultCSCPath)){
+  fs.mkdirSync(defaultCSCPath);
+}
 app.setPath('userData', defaultCSCPath);
 
 function createWindow() {
