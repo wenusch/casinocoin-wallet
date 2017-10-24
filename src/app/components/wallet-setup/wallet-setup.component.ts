@@ -194,34 +194,47 @@ export class WalletSetupComponent implements OnInit {
         this.walletCreated = true;
         this.logger.debug("### WalletSetup - Create new Account");
         // generate new account key pair
-        let walletKey:LokiTypes.LokiKey = this.casinocoinService.generateNewKeyPair();
-        this.walletService.addKey(walletKey);
-        // create new account
-        let walletAccount: LokiTypes.LokiAccount = { }
-        this.walletService.addAccount(walletAccount);
-        this.accountCreated = true;
-        this.logger.debug("### WalletSetup - Encrypt Wallet Keys");
-        this.walletService.encryptAllKeys(this.walletPassword);
-        this.keysEncrypted = true;
-        this.logger.debug("### WalletSetup - Find Server to connect to");
-        let serverFound = false;
-        this.websocketService.findBestServer(!this.walletTestNetwork).subscribe( result => {
-          if(result && !serverFound){
-            serverFound = true;
-            // server found to connect to
-            this.logger.debug("### WalletSetup - Connect to Network");
-            this.websocketService.connect();
-            // subscribe to incomming messages
-            this.casinocoinService.connect().subscribe((message: any) => {
-              this.connectedToNetwork = true;
-              this.logger.debug("### Received Network Message: " + JSON.stringify(message));
+        let walletKey:LokiTypes.LokiKey;
+        this.casinocoinService.generateNewKeyPair().subscribe(result => {
+          if (result.accountID.length > 0){
+            walletKey = result;
+            this.walletService.addKey(walletKey);
+            // create new account
+            let walletAccount: LokiTypes.LokiAccount = {
+              accountID: walletKey.accountID, 
+              balance: 0, 
+              lastSequence: 0, 
+              label: "Default Account"
+            };
+            this.walletService.addAccount(walletAccount);
+            this.accountCreated = true;
+            this.logger.debug("### WalletSetup - Encrypt Wallet Keys");
+            this.walletService.encryptAllKeys(this.walletPassword).subscribe( result => {
+              if(result == AppConstants.KEY_FINISHED){
+                this.keysEncrypted = true;
+              }
             });
-            // the websocket has a queued subject so send out the messages
-            this.casinocoinService.getServerState();
-            this.casinocoinService.subscribeToLedgerStream();
-            this.casinocoinService.subscribeToAccountsStream([walletAccount.accountID]);
+            this.logger.debug("### WalletSetup - Find Server to connect to");
+            let serverFound = false;
+            this.websocketService.findBestServer(!this.walletTestNetwork).subscribe( result => {
+              if(result && !serverFound){
+                serverFound = true;
+                // server found to connect to
+                this.logger.debug("### WalletSetup - Connect to Network");
+                this.websocketService.connect();
+                // subscribe to incomming messages
+                this.casinocoinService.connect().subscribe((message: any) => {
+                  this.connectedToNetwork = true;
+                  this.logger.debug("### Received Network Message: " + JSON.stringify(message));
+                });
+                // the websocket has a queued subject so send out the messages
+                this.casinocoinService.getServerState();
+                this.casinocoinService.subscribeToLedgerStream();
+                this.casinocoinService.subscribeToAccountsStream([walletAccount.accountID]);
+              }
+              this.enableFinishCreation = true;
+            });
           }
-          this.enableFinishCreation = true;
         });
       }
     });

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Logger } from 'angular2-logger/core';
 import { LedgerStreamMessages, TransactionStreamMessages } from '../domain/websocket-types';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { AppConstants } from '../domain/app-constants';
@@ -31,6 +31,8 @@ export class WalletService {
   private keys;
   private swaps;
   private ledgers: Array<LedgerStreamMessages>;
+
+  private algorithm = "aes-256-gcm";
   
   public isWalletOpen: boolean = false;
 
@@ -39,12 +41,6 @@ export class WalletService {
               private localStorageService: LocalStorageService) {
     this.logger.debug("### INIT WalletService ###");
    }
-
-  autoLoadCompleted() {
-    return new Promise((resolve, reject) => {
-        resolve();
-    });
-  }
 
   createWallet(walletLocation: string, walletUUID: string, walletSecret: string): Observable<any> {
     // create wallet for UUID
@@ -100,7 +96,7 @@ export class WalletService {
       collectionSubject.next(walletDB.addCollection("addressbook"));
       collectionSubject.next(walletDB.addCollection("log"));
       collectionSubject.next(walletDB.addCollection("keys", {unique: ["accountID"]}));
-      collectionSubject.next(walletDB.addCollection("swaps", {unique: ["accountID", "swapID"]}));
+      collectionSubject.next(walletDB.addCollection("swaps", {unique: ["swapID"]}));
       createSubject.next(AppConstants.KEY_FINISHED);
     }
     this.walletDB = walletDB;
@@ -112,58 +108,70 @@ export class WalletService {
     this.logger.debug("### WalletService Open Wallet location: " + dbPath);
 
     let collectionSubject = new Subject<any>();
-    let openSubject = new Subject<any>();
+    let openSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
+    let openError = false;
 
-    collectionSubject.subscribe( collection => {
-      this.logger.debug("openWallet:")
-      this.logger.debug(collection);
-      if(collection.name == "accounts")
-        this.accounts = collection;
-      else if(collection.name == "transactions")
-        this.transactions = collection;
-      else if(collection.name == "addressbook")
-        this.addressbook = collection;
-      else if(collection.name == "log")
-        this.logs = collection;
-      else if(collection.name == "keys")
-        this.keys = collection;
-      else if(collection.name == "swaps")
-        this.swaps = collection;
-      this.isWalletOpen = true;
-    });
+    if (!fs.existsSync(dbPath)){
+      this.logger.debug("### WalletService, DB does not exist: " + dbPath);
+      openSubject.next(AppConstants.KEY_ERRORED);
+    } else {
+      collectionSubject.subscribe( collection => {
+        if(collection != null) {
+          this.logger.debug("### WalletService Open Collection: " + collection.name)
+          if(collection.name == "accounts")
+            this.accounts = collection;
+          else if(collection.name == "transactions")
+            this.transactions = collection;
+          else if(collection.name == "addressbook")
+            this.addressbook = collection;
+          else if(collection.name == "log")
+            this.logs = collection;
+          else if(collection.name == "keys")
+            this.keys = collection;
+          else if(collection.name == "swaps")
+            this.swaps = collection;
+          this.isWalletOpen = true;
+        } else {
+          openError = true;
+          openSubject.next(AppConstants.KEY_ERRORED);
+        }
+      });
+  
+      let lokiFsAdapter = new lfsa();
+      let walletDB = new loki(dbPath, 
+        { adapter: lokiFsAdapter,
+          autoloadCallback: openCollections,
+          autoload: true, 
+          autosave: true, 
+          autosaveInterval: 5000
+      });
+  
+      function openCollections(result){
+        collectionSubject.next(walletDB.getCollection("accounts"));
+        collectionSubject.next(walletDB.getCollection("transactions"));
+        collectionSubject.next(walletDB.getCollection("addressbook"));
+        collectionSubject.next(walletDB.getCollection("log"));
+        collectionSubject.next(walletDB.getCollection("keys"));
+        collectionSubject.next(walletDB.getCollection("swaps"));
+        if(!openError){
+          openSubject.next(AppConstants.KEY_LOADED);
+        }
+      }
 
-    let lokiFsAdapter = new lfsa();
-    let walletDB = new loki(dbPath, 
-      { adapter: lokiFsAdapter,
-        autoloadCallback: openCollections,
-        autoload: true, 
-        autosave: true, 
-        autosaveInterval: 5000
-    });
-
-    function openCollections(result){
-      collectionSubject.next(walletDB.getCollection("accounts"));
-      collectionSubject.next(walletDB.getCollection("transactions"));
-      collectionSubject.next(walletDB.getCollection("addressbook"));
-      collectionSubject.next(walletDB.getCollection("log"));
-      collectionSubject.next(walletDB.getCollection("keys"));
-      collectionSubject.next(walletDB.getCollection("swaps"));
-      openSubject.next(AppConstants.KEY_LOADED);
+      this.walletDB = walletDB;
     }
-    this.walletDB = walletDB;
     return openSubject.asObservable();
   }
   
-  saveWallet(){
-    this.walletDB.saveDatabase();
-  }
+  // saveWallet(){
+  //   this.walletDB.saveDatabase();
+  // }
 
   // #########################################
   // Accounts Collection
   // #########################################
   addAccount(newAccount: LokiTypes.LokiAccount) {
     let insertAccount = this.accounts.insert(newAccount);
-    this.saveWallet();
   }
 
   getAccount(accountID: string): LokiTypes.LokiAccount {
@@ -194,7 +202,6 @@ export class WalletService {
   // #########################################
   addKey(newKey: LokiTypes.LokiKey) {
     let insertedKey = this.keys.insert(newKey);
-    this.saveWallet();
   }
 
   getKey(accountID: string): LokiTypes.LokiKey {
@@ -205,16 +212,35 @@ export class WalletService {
     return this.keys.find();
   }
 
-  encryptAllKeys(password: string){
+  encryptAllKeys(password: string): Observable<string>{
+    this.logger.debug("### WalletService encryptAllKeys ###");
+    let encryptSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
     // get all keys
     let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
+    this.logger.debug(allKeys);
     allKeys.forEach( (element, index, array) => {
       if(!element.encrypted){
+        let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+        passwordHash = passwordHash.slice(0, 32);
+        let cipher = crypto.createCipheriv(this.algorithm, passwordHash, element.initVector);
         // encrypt key
-        array[index].privateKey = element.privateKey;
-        array[index].secret = element.secret;
+        let cryptedKey = cipher.update(element.privateKey, 'utf8', 'hex');
+        cryptedKey += cipher.final("hex");
+        array[index].keyTag = cipher.getAuthTag();
+        array[index].privateKey = cryptedKey;
+        cipher = crypto.createCipheriv(this.algorithm, passwordHash, element.initVector);
+        let cryptedSecret = cipher.update(element.secret, 'utf8', 'hex');
+        cryptedSecret += cipher.final("hex");
+        array[index].secretTag = cipher.getAuthTag();
+        array[index].secret = cryptedSecret;
+        array[index].encrypted = true;
+        this.logger.debug("### WalletService key encrypted: " + JSON.stringify(element));
       }
-    })
+      if(index == (array.length - 1)){
+        encryptSubject.next(AppConstants.KEY_FINISHED);
+      }
+    });
+    return encryptSubject.asObservable();
   }
 
   decryptAllKeys(password: string){
@@ -254,7 +280,12 @@ export class WalletService {
   }
 
   getAllSwaps(): Array<LokiTypes.LokiSwap> {
-    return this.swaps.find();
+    if(this.isWalletOpen){
+      return this.swaps.find();
+    } else {
+      return [];
+    }
+    
   }
 
 }

@@ -35,8 +35,17 @@
         </div>
         <div class="ui-toolbar-group-right">
             <p-menu #contextmenu popup="true" [model]="context_menu_items" appendTo="body"></p-menu>
-            <div (click)="contextmenu.toggle($event)" style="text-align: center; padding-top: 15px; padding-right: 15px;">
-                <i class="fa fa-cog fa-2x"></i>
+            <div class="ui-g">
+                <div class="ui-g-6">
+                    <div (click)="contextmenu.toggle($event)" style="text-align: center; padding-top: 15px; padding-right: 15px;">
+                        <i class="fa fa-cog fa-2x"></i>
+                    </div>
+                </div>
+                <div class="ui-g-6">
+                    <div (click)="onQuit()" style="text-align: center; padding-top: 15px; padding-right: 15px;">
+                        <i class="fa fa-power-off fa-2x"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </p-toolbar>

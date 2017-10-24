@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Input, Output, EventEmitter, ViewChild } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
 import { Logger } from 'angular2-logger/core';
 import { ElectronService } from '../../providers/electron.service';
@@ -31,6 +31,7 @@ import { WalletService } from '../../providers/wallet.service';
       private sessionStorageService: SessionStorageService,
       private walletService: WalletService ) { }
 
+    @ViewChild('inputWalletLocation') inputWalletLocation;
     @Input() newWalletLocation:string;
     @Output() locationChange:EventEmitter<string> = new EventEmitter();
 
@@ -39,12 +40,14 @@ import { WalletService } from '../../providers/wallet.service';
         this.electron.remote.dialog.showOpenDialog(
             { title: 'Wallet Location',
             properties: ['openDirectory','createDirectory']}, (result) => {
-            this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
-            if(result && result.length>0) {
-                this.newWalletLocation = result[0];
-                this.locationChange.emit(this.newWalletLocation);
+              this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
+              if(result && result.length>0) {
+                  this.newWalletLocation = result[0];
+                  this.locationChange.emit(this.newWalletLocation);
+                  this.inputWalletLocation.nativeElement.focus();
+              }
             }
-        });
+        );
     }
 
   }

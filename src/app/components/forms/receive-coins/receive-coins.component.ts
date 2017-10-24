@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { LokiAccount } from '../../../domain/lokijs';
+import { CSCUtil } from '../../../domain/cscutil';
 
 @Component({
   selector: 'app-receive-coins',
@@ -7,9 +9,14 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ReceiveCoinsComponent implements OnInit {
 
+  swaps: LokiAccount[] = [];
+
   constructor() { }
 
   ngOnInit() {
   }
 
+  convertCscTimestamp(inputTime) {
+    return CSCUtil.casinocoinToUnixTimestamp(inputTime);
+  }
 }

@@ -6,6 +6,7 @@ import { BrowserAnimationsModule }  from '@angular/platform-browser/animations';
 import { NgModule }                 from '@angular/core';
 import { FormsModule }              from '@angular/forms';
 import { HttpModule }               from '@angular/http';
+import { HttpClient, HttpClientModule }         from '@angular/common/http';
 import { Logger }                   from 'angular2-logger/core';
 import { environment }              from '../environments/index';
 
@@ -68,6 +69,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
+    HttpClientModule,
     FormsModule,
     HttpModule,
     AppRoutingModule,
@@ -82,6 +84,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
   ],
   providers: [
     Logger, 
+    HttpClient,
     ElectronService,
     AuthGuard,
     WebsocketService,

@@ -12,6 +12,8 @@ import { MatListModule, MatSidenavModule } from '@angular/material';
 import { AppConstants } from '../../domain/app-constants';
 import { AlertComponent } from '../alert/alert.component';
 
+import * as LokiTypes from '../../domain/lokijs';
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
@@ -81,9 +83,13 @@ export class HomeComponent implements OnInit {
     this.router.navigate(['overview']);
     // open the wallet if not yet open
     if(!this.walletService.isWalletOpen){
+      this.logger.debug("### HOME open the wallet ###");
       this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
         if(result == AppConstants.KEY_LOADED){
+          this.logger.debug("### HOME load the accounts ###");
+          let allAccounts: Array<LokiTypes.LokiAccount> = this.walletService.getAllAccounts();
           this.messageService.add({severity:'success', summary:'Service Message', detail:'Succesfully opened the wallet.'});
+          this.logger.debug(allAccounts);
           // connect to the network
           this.casinocoinService.connect();
         }

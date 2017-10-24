@@ -1,4 +1,15 @@
-<div class="ui-widget ui-g">
-    <div class="ui-g-12">Receive Coins !</div>
-    <div class="ui-g-12">Content</div>
-</div>
+<p-panel header="Receive Coins" [style]="{'height':'80vh', 'margin':'10px'}">
+    <div class="ui-widget ui-g">
+        <div class="ui-g-12">
+            <p-dataTable [value]="accounts" [immutable]="false" scrollable="true" scrollHeight="100%">
+                <p-column field="accountID" header="Account" [style]="{'width':'150px'}"></p-column>
+                <p-column field="label" header="Label" [style]="{'width':'150px'}"></p-column>
+                <p-column field="createdTimestamp" header="Created" [style]="{'width':'150px'}">
+                    <ng-template let-col let-swap="rowData" pTemplate="body">
+                        <span>{{convertCscTimestamp(swap[col.field]) | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
+                    </ng-template>
+                </p-column>
+            </p-dataTable>    
+        </div>
+    </div>
+</p-panel>

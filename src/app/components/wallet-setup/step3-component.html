@@ -14,7 +14,7 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-9">
             <input type="text" pInputText [(ngModel)]="newWalletLocation" (ngModelChange)="locationChange.emit($event)"
-                   ngControl="newWalletLocation" style="width: 100%;"/>
+                   style="width: 100%;" #inputWalletLocation />
         </div>
         <div class="ui-g-2">
             <button pButton type="button" (click)="selectWalletLocation()" icon="fa-folder-open"></button>

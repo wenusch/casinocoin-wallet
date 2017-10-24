@@ -7,6 +7,10 @@ import { Component, OnInit } from '@angular/core';
 })
 export class SendCoinsComponent implements OnInit {
 
+  receipient: string;
+  description: string;
+  amount: string;
+  
   constructor() { }
 
   ngOnInit() {

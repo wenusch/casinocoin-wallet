@@ -14,3 +14,11 @@
 ::ng-deep .item-value {
     height: 25px;
 }
+
+.tx_type_color_red {
+    background-color: $casinocoinRed;
+}
+
+.tx_type_color_green {
+    background-color: $casinocoinGreen;
+}

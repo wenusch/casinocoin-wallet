@@ -1,4 +1,26 @@
-<div class="ui-widget ui-g">
-    <div class="ui-g-12">Send Coins</div>
-    <div class="ui-g-12">Content</div>
-</div>
+<p-panel header="Send Coins" [style]="{'height':'80vh', 'margin':'10px'}">
+    <div class="ui-widget ui-g">
+        <div class="ui-g-12">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-address-book"></i></span>
+                <input type="text" pInputText placeholder="Receipient" [(ngModel)]="receipient" (keyup.enter)="focusDescription()">
+                <button pButton type="button" icon="fa-search" class="ui-button-secondary"></button>
+            </div>
+        </div>
+        <div class="ui-g-12">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-comments"></i></span>
+                <input type="text" pInputText placeholder="Description" [(ngModel)]="description" (keyup.enter)="focusAmount()">         
+            </div>
+        </div>
+        <div class="ui-g-12">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-money"></i></span>
+                <input type="text" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="doSentCoins()">         
+            </div>
+        </div>
+        <div class="ui-g-6">
+            <button pButton type="button" (click)="doSendCoins()" icon="fa-sign-out" iconPos="right" label="Send Coins"></button>
+        </div>
+    </div>
+</p-panel>

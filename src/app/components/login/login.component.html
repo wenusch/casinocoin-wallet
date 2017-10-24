@@ -12,9 +12,9 @@
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            <div class="ui-inputgroup">
+            <div class="ui-inputgroup" #inputWallet>
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-suitcase"></i></span>
-                <p-dropdown [style]="{'width':'100%'}" [options]="wallets" [(ngModel)]="selectedWallet" placeholder="Select Wallet"></p-dropdown>
+                <p-dropdown [style]="{'width':'100%'}" [options]="wallets" [(ngModel)]="selectedWallet" placeholder="Select Wallet" autofocus></p-dropdown>
             </div>
         </div>
         <div class="ui-g-1"></div>
@@ -38,7 +38,7 @@
         </div>
         <div class="ui-g-1"></div>
     </div>
-    <p-footer *ngIf="footer_visible" style="text-align: center">
+    <p-footer *ngIf="footer_visible">
         Error: {{error_message}}
     </p-footer>
 </p-dialog>

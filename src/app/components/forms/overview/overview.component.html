@@ -1,7 +1,7 @@
 <div flex layout="row">
     <div class="ui-widget ui-g">
         <div class="ui-g-4">
-            <p-panel header="Wallet">
+            <p-panel header="Wallet" [style]="{'height':'280px'}">
                 <mat-list>
                     <mat-list-item class="item-header">Balance</mat-list-item>
                     <mat-list-item class="item-value">{{balance}}</mat-list-item>
@@ -16,27 +16,33 @@
             </p-panel>
         </div>
         <div class="ui-g-4">
-            <p-panel header="Network">
+            <p-panel header="Network" [style]="{'height':'280px'}">
                 Content
             </p-panel>
         </div>
         <div class="ui-g-4">
-            <p-panel header="Ledgers">
-                <p-dataTable [value]="ledgers" [immutable]="false">
-                    <p-column field="ledger_index" header="Ledger" [style]="{'width':'60px'}"></p-column>
-                    <p-column field="ledger_time" header="Time" [style]="{'width':'150px'}">
+            <p-panel header="Ledgers" [style]="{'height':'280px'}">
+                <p-dataTable [value]="ledgers" [immutable]="false" scrollable="true" scrollHeight="210px">
+                    <p-column field="ledger_index" header="Ledger" [style]="{'width':'75px'}"></p-column>
+                    <p-column field="ledger_time" header="Time" [style]="{'width':'125px'}">
                         <ng-template let-col let-ledger="rowData" pTemplate="body">
                             <span>{{convertCscTimestamp(ledger[col.field]) | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
                         </ng-template>
                     </p-column>
-                    <p-column field="txn_count" header="TX" [style]="{'width':'25px'}"></p-column>
+                    <p-column field="txn_count" header="TX" [style]="{'width':'30px'}"></p-column>
                 </p-dataTable>
             </p-panel>
         </div>
     </div>
 </div>
 <p-panel header="Transactions" [style]="{'height':'275px', 'position': 'fixed', 'bottom':'0'}">
-    <p-dataTable [value]="transactions" expandableRows="true" scrollable="true" scrollHeight="200px">
+    <p-dataTable [value]="transactions" expandableRows="true" scrollable="true" scrollHeight="200px"
+                 [immutable]="false">
+        <p-column [style]="{'width':'7px', 'padding': '0px'}">
+            <ng-template let-data="rowData" pTemplate="body">
+                    <span #amountCol>{{ getTXCellColor(amountCol,data) }}</span>
+            </ng-template>
+        </p-column>
         <p-column expander="true" styleClass="col-icon" [style]="{'width':'25px'}"></p-column>
         <p-column field="time" header="Time" [style]="{'width':'125px'}">
             <ng-template let-col let-case="rowData" pTemplate="body">
@@ -44,9 +50,17 @@
             </ng-template>
         </p-column>
         <p-column field="account" header="Account" [style]="{'width':'200px'}"></p-column>
-        <p-column field="amount" header="Amount" [style]="{'width':'75px'}"></p-column>
+        <p-column field="amount" header="Amount" [style]="{'width':'75px'}">
+            <ng-template let-data="rowData" pTemplate="body">
+                    <span #amountColText>{{ getTXTextColor(amountColText,data) }}{{data.amount}}</span>
+            </ng-template>
+        </p-column>
         <p-column field="ledger" header="Ledger" [style]="{'width':'75px'}"></p-column>
-        <p-column field="validated" header="Confirmed" [style]="{'width':'75px'}"></p-column>
+        <p-column field="validated" header="Confirmed" [style]="{'width':'75px'}">
+            <ng-template let-data="rowData" pTemplate="body">
+                <i [ngClass]="getValidatedIconClasses(data.validated)"></i>
+            </ng-template>
+        </p-column>
         <ng-template let-car pTemplate="rowexpansion">
             <div class="ui-grid ui-grid-responsive ui-fluid" style="padding:20px">
                 <div class="ui-grid-row">

@@ -1,4 +1,27 @@
-<div class="ui-widget ui-g">
-    <div class="ui-g-12">Coin Swap !</div>
-    <div class="ui-g-12">Content</div>
-</div>
+<p-panel header="Swap Coins" [style]="{'height':'80vh', 'margin':'10px'}">
+    <div class="ui-widget ui-g">
+        <div class="ui-g-6">
+            <div class="ui-inputgroup" #inputAccountID>
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
+                <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
+                            placeholder="Select Account" autofocus #accountDropdown></p-dropdown>
+            </div>
+        </div>
+        <div class="ui-g-3">
+            <button pButton type="button" (click)="doCreateSwap()" icon="fa-exchange" iconPos="right" label="Create New Swap"></button>
+        </div>
+        <div class="ui-g-3"></div>
+        <div class="ui-g-12">
+            <p-dataTable [value]="swaps" [immutable]="false" scrollable="true" scrollHeight="100%">
+                <p-column field="swapID" header="Swap ID" [style]="{'width':'150px'}"></p-column>
+                <p-column field="accountID" header="Account" [style]="{'width':'150px'}"></p-column>
+                <p-column field="initiatedTimestamp" header="Initiated" [style]="{'width':'150px'}">
+                    <ng-template let-col let-swap="rowData" pTemplate="body">
+                        <span>{{convertCscTimestamp(swap[col.field]) | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
+                    </ng-template>
+                </p-column>
+                <p-column field="swapStatus" header="Status" [style]="{'width':'50px'}"></p-column>
+            </p-dataTable>
+        </div>
+    </div>
+</p-panel>

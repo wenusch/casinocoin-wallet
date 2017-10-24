@@ -1,5 +1,5 @@
 import { Injectable, OnInit, OnDestroy } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 import { WebsocketService } from './websocket.service';
@@ -9,14 +9,18 @@ import { Logger } from 'angular2-logger/core';
 import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
 import { LokiKey } from '../domain/lokijs';
 
+const crypto = require('crypto');
+
 @Injectable()
 export class CasinocoinService implements OnDestroy {
 
     private isConnected: boolean = false;
+    private ledgersLoaded: boolean = false;
     private connectedSubscription: Subscription;
     private socketSubscription: Subscription;
     private subject = new Subject<any>();
     public ledgerSubject = new Subject<LedgerStreamMessages>();
+    public ledgers: Array<LedgerStreamMessages> = [];
   
     constructor(private logger: Logger, 
                 private wsService: WebsocketService,
@@ -67,6 +71,11 @@ export class CasinocoinService implements OnDestroy {
         return this.subject.asObservable();
     }
 
+    addLedger(ledger: LedgerStreamMessages){
+        // this.ledgerSubject.next(ledger);
+        this.ledgers.splice(0,0,ledger);
+    }
+
     subscribeToMessages() {
         // subscribe to incomming messages
         this.logger.debug("### CasinocoinService - subscribeToMessages");
@@ -74,7 +83,8 @@ export class CasinocoinService implements OnDestroy {
             let incommingMessage = JSON.parse(message);
             // this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
             if(incommingMessage['type'] == 'ledgerClosed'){
-                this.ledgerSubject.next(incommingMessage);
+                this.logger.debug("ledger closed: " + JSON.stringify(incommingMessage));
+                this.addLedger(incommingMessage);
             } else if(incommingMessage['type'] == 'serverStatus'){
                 this.logger.debug("server state: " + incommingMessage['server_status']);
                 this.subject.next(incommingMessage);
@@ -86,17 +96,40 @@ export class CasinocoinService implements OnDestroy {
                 // we received a response on a request
                 if(incommingMessage['id'] == 'ping'){
                     // we received a pong
-                    this.logger.debug("Pong");
+                    this.logger.debug("### CasinocoinService - Pong");
                 } else if(incommingMessage['id'] == 'server_state'){
                     // we received a server_state
-                    this.logger.debug("Server State: " + JSON.stringify(incommingMessage.result));
+                    this.logger.debug("### CasinocoinService - Server State: " + JSON.stringify(incommingMessage.result));
                     this.subject.next(incommingMessage.result);
                 } else if(incommingMessage['id'] == 'getLedger'){
                     // we received a ledger
+                    // this.logger.debug("### CasinocoinService - Get Ledger: " + JSON.stringify(incommingMessage));
+                    let ledgerMessage: LedgerStreamMessages = {
+                        fee_base: 0,
+                        fee_ref: 0,
+                        ledger_index: incommingMessage.result.ledger_index,
+                        ledger_time: incommingMessage.result.ledger.close_time,
+                        txn_count: incommingMessage.result.ledger.transactions.length,
+                        ledger_hash: incommingMessage.result.ledger_hash,
+                        reserve_base: 0,
+                        reserve_inc: 0,
+                        validated_ledgers: incommingMessage.result.ledger.seqNum
+                    }
+                    this.addLedger(ledgerMessage);
                     this.subject.next(incommingMessage.result);
                 } else if(incommingMessage['id'] == 'ValidatedLedgers'){
-                    this.ledgerSubject.next(incommingMessage.result);
+                    this.logger.debug("### CasinocoinService - Validated Ledger: " + JSON.stringify(incommingMessage.result));
+                    if(!this.ledgersLoaded){
+                        // get the last 10 ledgers
+                        let startIndex = incommingMessage.result.ledger_index - 10;
+                        let endIndex = incommingMessage.result.ledger_index;
+                        for (let i=startIndex; i <= endIndex; i++){
+                            this.getLedger(i);
+                        }
+                        this.ledgersLoaded = true;   
+                    }
                 } else if(incommingMessage['id'] == 'AccountUpdates'){
+                    this.logger.debug("### CasinocoinService - Account Update: " + JSON.stringify(incommingMessage.result));
                     this.logger.debug("Account: " + JSON.stringify(incommingMessage.result));
                 }
             } else { 
@@ -119,18 +152,20 @@ export class CasinocoinService implements OnDestroy {
 
     getLedger(ledgerIndex: number){
         let ledgerType = "validated";
-        if(ledgerIndex && ledgerIndex > 0){
-            ledgerType = ledgerIndex.toString();
-        }
         let ledgerRequest = {
             id: "getLedger",
             command: "ledger",
-            ledger_index: ledgerType,
+            ledger_index: null,
             full: false,
             accounts: false,
-            transactions: false,
+            transactions: true,
             expand: false,
             owner_funds: false
+        }
+        if(ledgerIndex && ledgerIndex > 0){
+            ledgerRequest.ledger_index = ledgerIndex;
+        } else {
+            ledgerRequest.ledger_index = ledgerType;
         }
         this.sendCommand(ledgerRequest);
     }
@@ -143,11 +178,35 @@ export class CasinocoinService implements OnDestroy {
         this.sendCommand({ id: "AccountUpdates", command: "subscribe", accounts: accountArray});
     }
 
-    generateNewKeyPair(): LokiKey {
-        const secret = cscKeyAPI.generateSeed();
-        const keypair = cscKeyAPI.deriveKeypair(secret);
-        const address = cscKeyAPI.deriveAddress(keypair.publicKey);
-        let newKeyPair: LokiKey = { privateKey: keypair.privateKey, publicKey: keypair.publicKey, accountID: address, secret: secret, encrypted: false};
-        return newKeyPair;
+    generateNewKeyPair(): Observable<LokiKey> {
+        let newKeyPair: LokiKey = { 
+            privateKey: "", 
+            publicKey: "", 
+            accountID: "", 
+            secret: "", 
+            initVector: "", 
+            keyTag: "",
+            secretTag: "",
+            encrypted: false
+        };
+        let keyPairSubject = new BehaviorSubject<LokiKey>(newKeyPair);
+        const initVector = crypto.randomBytes(16, function(err, buffer) {
+            newKeyPair.secret = cscKeyAPI.generateSeed();
+            const keypair = cscKeyAPI.deriveKeypair(newKeyPair.secret);
+            newKeyPair.privateKey = keypair.privateKey;
+            newKeyPair.publicKey = keypair.publicKey;
+            newKeyPair.accountID = cscKeyAPI.deriveAddress(keypair.publicKey);
+            newKeyPair.initVector = buffer.toString('hex');
+            keyPairSubject.next(newKeyPair);
+        });
+        return keyPairSubject.asObservable();
+    }
+
+    startServerStateJob(){
+        // start job after 1 minute and then repeat every 5 minutes
+        let timer = Observable.timer(60000,300000);
+        timer.subscribe(t => {
+            this.getServerState();
+        });
     }
 }

@@ -22,8 +22,8 @@ import { MenuItem, MessagesModule, Message } from 'primeng/primeng';
     ]
   })
   export class SetupStep4Component {
-    @Input() walletCreated:boolean = false;
-    @Input() accountCreated:boolean = false;
-    @Input() keysEncrypted:boolean = false;
-    @Input() connectedToNetwork:boolean = false;
+    @Input() walletCreated:boolean;
+    @Input() accountCreated:boolean;
+    @Input() keysEncrypted:boolean;
+    @Input() connectedToNetwork:boolean;
   }

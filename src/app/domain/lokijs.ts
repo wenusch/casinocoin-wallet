@@ -1,9 +1,8 @@
 export interface LokiAccount {
-    accountID?: string;
-    secret?: string;
-    label?: string;
-    lastSequence?: number;
-    balance?: number;
+    accountID: string;
+    label: string;
+    lastSequence: number;
+    balance: number;
 }
 
 export interface LokiLog {
@@ -17,12 +16,17 @@ export interface LokiKey {
     publicKey: string;
     accountID: string;
     secret: string;
+    initVector: string;
+    keyTag: string;
+    secretTag: string;
     encrypted: boolean;
 }
 
 export interface LokiSwap {
     accountID: string;
     swapID: string;
+    initiatedTimestamp: number;
+    swapStatus: string;
     swapObject?: Object;
 }
 

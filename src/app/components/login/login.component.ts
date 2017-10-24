@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { WalletService } from '../../providers/wallet.service';
@@ -8,6 +8,7 @@ import { SelectItem } from 'primeng/primeng';
 import { CSCUtil } from '../../domain/cscutil';
 import { AppConstants } from '../../domain/app-constants';
 import { Logger } from 'angular2-logger/core';
+import { MessageService } from 'primeng/components/common/messageservice';
  
 @Component({
     moduleId: module.id,
@@ -18,6 +19,8 @@ import { Logger } from 'angular2-logger/core';
  
 export class LoginComponent implements OnInit {
     
+    @ViewChild('inputWallet') inputWalletElementRef;
+
     @LocalStorage() public availableWallets: Array<Object>;
     @LocalStorage() public walletLocation: string;
     @SessionStorage() public currentWallet: string = "";
@@ -36,6 +39,7 @@ export class LoginComponent implements OnInit {
         private alertService: AlertService,
         private router: Router,
         private walletService: WalletService,
+        private messageService: MessageService,
         private datePipe: DatePipe) { 
             this.wallets = [];
             this.logger.debug("Wallet Count: " + this.availableWallets.length);
@@ -57,16 +61,28 @@ export class LoginComponent implements OnInit {
  
     doOpenWallet() {
         if (this.selectedWallet == null || this.selectedWallet.length == 0){
-            this.alertService.error("Please select a wallet to open.", false);
+            this.footer_visible = true;
+            this.error_message = "Please select a wallet to open!"
+            this.inputWalletElementRef.nativeElement.focus();
+            // this.messageService.add({severity:'error', summary:'Open Wallet Error', detail:'Please select a wallet to open!'});
         } else {
             this.currentWallet = this.selectedWallet;
-            this.logger.debug("Open Wallet: " + this.currentWallet);
+            this.footer_visible = false;
+            this.logger.debug("### Open Wallet: " + this.currentWallet);
             this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
-                if(result == AppConstants.KEY_LOADED){
+                this.logger.debug("### Open Wallet Response: " + result);
+                if(result == AppConstants.KEY_INIT){
+                    this.footer_visible = false;
+                    this.error_message = "";
+                } else if (result == AppConstants.KEY_LOADED){
                     // Navigate to Home 
                     this.router.navigate([this.returnUrl]);
+                } else if (result == AppConstants.KEY_ERRORED) {
+                    // there was an error opening the wallet
+                    this.error_message = "There was an error opening the wallet!!";
+                    this.footer_visible = true;
                 } else {
-                    this.logger.error("Error Opening Wallet !!!!")
+                    this.logger.error("### Error Opening Wallet !!!!");
                 }
             });
         }
