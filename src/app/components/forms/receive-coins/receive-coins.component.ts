@@ -9,7 +9,7 @@ import { CSCUtil } from '../../../domain/cscutil';
 })
 export class ReceiveCoinsComponent implements OnInit {
 
-  swaps: LokiAccount[] = [];
+  accounts: LokiAccount[] = [];
 
   constructor() { }
 

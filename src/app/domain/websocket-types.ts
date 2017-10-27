@@ -24,3 +24,26 @@ export interface ValidationStreamMessages {
 export interface TransactionStreamMessages {
     type: string
 }
+
+export interface ServerStateMessage {
+    build_version: string;
+    complete_ledgers: string;
+    io_latency_ms: number;
+    last_close: {
+        converge_time: number;
+        proposers: number;
+    };
+    peers: number;
+    pubkey_node: string;
+    server_state: string;
+    uptime: number;
+    validated_ledger: {
+        base_fee: number;
+        close_time: number;
+        hash: string;
+        reserve_base: number;
+        reserve_inc: number;
+        seq: number;
+    };
+    validation_quorum: number;
+}

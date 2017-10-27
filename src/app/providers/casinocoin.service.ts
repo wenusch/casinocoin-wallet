@@ -4,10 +4,12 @@ import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 import { WebsocketService } from './websocket.service';
 import { WalletService } from './wallet.service';
-import { LedgerStreamMessages, ValidationStreamMessages, TransactionStreamMessages } from '../domain/websocket-types';
+import { LedgerStreamMessages, ValidationStreamMessages, 
+         TransactionStreamMessages, ServerStateMessage } from '../domain/websocket-types';
 import { Logger } from 'angular2-logger/core';
 import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
 import { LokiKey } from '../domain/lokijs';
+import { AppConstants } from '../domain/app-constants';
 
 const crypto = require('crypto');
 
@@ -21,11 +23,15 @@ export class CasinocoinService implements OnDestroy {
     private subject = new Subject<any>();
     public ledgerSubject = new Subject<LedgerStreamMessages>();
     public ledgers: Array<LedgerStreamMessages> = [];
-  
+    public serverState: ServerStateMessage;
+    public serverStateSubject = new Subject<ServerStateMessage>();
+
     constructor(private logger: Logger, 
                 private wsService: WebsocketService,
                 private walletService: WalletService ) {
         logger.debug("### INIT  CasinocoinService ###");
+        // Initialize server state
+        this.initServerState();
     }
 
     ngOnDestroy() {
@@ -41,34 +47,56 @@ export class CasinocoinService implements OnDestroy {
                 this.logger.debug("### CasinocoinService isConnected: " + connected);
                 if(connected && !this.isConnected){
                     this.isConnected = true;
+                    // subscribe to incomming messages on the websocket
                     this.subscribeToMessages();
-                    // get the current ledger
-                    // this.getLedger(-1);
+                    // get the current server state
+                    this.getServerState();
+                    // subscribe to server stream
+                    this.subscribeToServerStream();
                     // subscribe to ledger stream
                     this.subscribeToLedgerStream();
                     // get accounts and subscribe to accountstream
                     let subscribeAccounts = [];
-                    this.walletService.getAllKeys().forEach(element => {
-                        subscribeAccounts.push(element.accountID);
+                    // make sure the wallet is openend
+                    this.walletService.openWalletSubject.subscribe(result => {
+                        if(result == AppConstants.KEY_LOADED){
+                            this.walletService.getAllKeys().forEach(element => {
+                                subscribeAccounts.push(element.accountID);
+                            });
+                            this.logger.debug("### CasinocoinService Accounts: " + JSON.stringify(subscribeAccounts));
+                            this.subscribeToAccountsStream(subscribeAccounts);
+                        }
                     });
-                    this.logger.debug("### CasinocoinService Accounts: " + JSON.stringify(subscribeAccounts));
-                    this.subscribeToAccountsStream(subscribeAccounts);
-                    // // subscribe to socket connection updates
-                    // const connectionStatusSubscription = this.wsService.websocketConnection.connectionStatus.subscribe(numberConnected => {
-                    //     this.logger.debug('### CasinocoinService, connected websockets:', numberConnected);
-                    //     if(numberConnected > 0) {
-                    //         this.isConnected = true;
-                    //         // get the server state
-                    //         this.getServerState();
-                    //     } else {
-                    //         this.isConnected = false;
-                    //     }
-                    // });
                 }
             });
         }
         // return observable with incomming message
         return this.subject.asObservable();
+    }
+
+    initServerState(){
+        this.serverState = {
+            build_version: "",
+            complete_ledgers: "",
+            io_latency_ms: null,
+            last_close: {
+                converge_time: null,
+                proposers: null,
+            },
+            peers: null,
+            pubkey_node: "",
+            server_state: "",
+            uptime: null,
+            validated_ledger: {
+                base_fee: null,
+                close_time: null,
+                hash: "",
+                reserve_base: null,
+                reserve_inc: null,
+                seq: null,
+            },
+            validation_quorum: null
+        };
     }
 
     addLedger(ledger: LedgerStreamMessages){
@@ -81,10 +109,12 @@ export class CasinocoinService implements OnDestroy {
         this.logger.debug("### CasinocoinService - subscribeToMessages");
         this.socketSubscription = this.wsService.websocketConnection.messages.subscribe((message: any) => {
             let incommingMessage = JSON.parse(message);
-            // this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
+            this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
             if(incommingMessage['type'] == 'ledgerClosed'){
                 this.logger.debug("ledger closed: " + JSON.stringify(incommingMessage));
                 this.addLedger(incommingMessage);
+                // get the new server state
+                this.getServerState();
             } else if(incommingMessage['type'] == 'serverStatus'){
                 this.logger.debug("server state: " + incommingMessage['server_status']);
                 this.subject.next(incommingMessage);
@@ -99,34 +129,43 @@ export class CasinocoinService implements OnDestroy {
                     this.logger.debug("### CasinocoinService - Pong");
                 } else if(incommingMessage['id'] == 'server_state'){
                     // we received a server_state
-                    this.logger.debug("### CasinocoinService - Server State: " + JSON.stringify(incommingMessage.result));
-                    this.subject.next(incommingMessage.result);
+                    if(incommingMessage.status === 'success'){
+                        this.serverState = incommingMessage.result.state;
+                        this.serverStateSubject.next(this.serverState);
+                    } else {
+                        this.logger.debug("### CasinocoinService - Server State: " + JSON.stringify(incommingMessage));
+                    }
                 } else if(incommingMessage['id'] == 'getLedger'){
                     // we received a ledger
-                    // this.logger.debug("### CasinocoinService - Get Ledger: " + JSON.stringify(incommingMessage));
-                    let ledgerMessage: LedgerStreamMessages = {
-                        fee_base: 0,
-                        fee_ref: 0,
-                        ledger_index: incommingMessage.result.ledger_index,
-                        ledger_time: incommingMessage.result.ledger.close_time,
-                        txn_count: incommingMessage.result.ledger.transactions.length,
-                        ledger_hash: incommingMessage.result.ledger_hash,
-                        reserve_base: 0,
-                        reserve_inc: 0,
-                        validated_ledgers: incommingMessage.result.ledger.seqNum
+                    if(incommingMessage.status === 'success'){
+                        let ledgerMessage: LedgerStreamMessages = {
+                            fee_base: 0,
+                            fee_ref: 0,
+                            ledger_index: incommingMessage.result.ledger_index,
+                            ledger_time: incommingMessage.result.ledger.close_time,
+                            txn_count: incommingMessage.result.ledger.transactions.length,
+                            ledger_hash: incommingMessage.result.ledger_hash,
+                            reserve_base: 0,
+                            reserve_inc: 0,
+                            validated_ledgers: incommingMessage.result.ledger.seqNum
+                        }
+                        this.addLedger(ledgerMessage);
+                        this.subject.next(incommingMessage.result);
+                    } else {
+                        this.logger.debug("### CasinocoinService - Get Ledger Error: " + JSON.stringify(incommingMessage));
                     }
-                    this.addLedger(ledgerMessage);
-                    this.subject.next(incommingMessage.result);
                 } else if(incommingMessage['id'] == 'ValidatedLedgers'){
                     this.logger.debug("### CasinocoinService - Validated Ledger: " + JSON.stringify(incommingMessage.result));
-                    if(!this.ledgersLoaded){
-                        // get the last 10 ledgers
-                        let startIndex = incommingMessage.result.ledger_index - 10;
-                        let endIndex = incommingMessage.result.ledger_index;
-                        for (let i=startIndex; i <= endIndex; i++){
-                            this.getLedger(i);
+                    if(incommingMessage.status === 'success'){
+                        if(!this.ledgersLoaded){
+                            // get the last 10 ledgers
+                            let startIndex = incommingMessage.result.ledger_index - 10;
+                            let endIndex = incommingMessage.result.ledger_index;
+                            for (let i=startIndex; i <= endIndex; i++){
+                                this.getLedger(i);
+                            }
+                            this.ledgersLoaded = true;   
                         }
-                        this.ledgersLoaded = true;   
                     }
                 } else if(incommingMessage['id'] == 'AccountUpdates'){
                     this.logger.debug("### CasinocoinService - Account Update: " + JSON.stringify(incommingMessage.result));
@@ -168,6 +207,10 @@ export class CasinocoinService implements OnDestroy {
             ledgerRequest.ledger_index = ledgerType;
         }
         this.sendCommand(ledgerRequest);
+    }
+
+    subscribeToServerStream() {
+        this.sendCommand({ id: "ServerState", command: "subscribe", streams: ["server"]});
     }
 
     subscribeToLedgerStream() {

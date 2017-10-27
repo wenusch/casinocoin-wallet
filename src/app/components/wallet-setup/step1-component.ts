@@ -22,7 +22,7 @@ import { MenuItem, MessagesModule, Message, CheckboxModule } from 'primeng/prime
   })
   export class SetupStep1Component {
 
-    constructor( private logger: Logger ) { }
+    constructor( ) { }
 
     @Input() walletTestNetwork: boolean;
     @Output() walletNetworkChange:EventEmitter<boolean> = new EventEmitter();

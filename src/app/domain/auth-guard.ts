@@ -12,7 +12,7 @@ export class AuthGuard implements CanActivate {
                 private sessionStorageService: SessionStorageService,
                 private localStorageService: LocalStorageService,
                 private logger: Logger
-            ) { logger.debug("AuthGuard");}
+            ) { }
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) : boolean {
         // Check if we have an opened wallet

@@ -51,27 +51,8 @@
     </p-toolbar>
 </div>
 <div class="ui-widget content-height">
-    <div class="main-content">
-        <p-growl [(value)]="msgs"></p-growl>
-        <router-outlet></router-outlet>
-    </div>
-    <!--
-    <mat-sidenav-container class="sidenav-height">
-        <mat-sidenav #sidenav class="csc-sidenav" mode="side" opened="true">
-            <mat-list *ngFor="let item of menu_items">
-                <mat-list-item (click)="selectedMenuItem(item)">
-                    <p matLine style="text-align: center;"><i [class]="item.icon"></i></p>
-                    <h2 matLine style="text-align: center;">{{item.label}}</h2>
-                </mat-list-item>
-            </mat-list>
-        </mat-sidenav>
-        
-        <div class="main-content">
-            <router-outlet></router-outlet>
-        </div>
-        
-    </mat-sidenav-container>
-  -->
+    <p-growl [(value)]="msgs"></p-growl>
+    <router-outlet></router-outlet>
 </div>
 <p-dialog [visible]="false" [width]="600" [height]="400" [closable]="true" [modal]="true">
     <p-header>
@@ -81,7 +62,7 @@
         import your private key
     </div>
     <div style="text-align: right;">
-        <button pButton type="button" (click)="navigateToPreviousStep()" icon="fa-arrow-left" iconPos="left" label="Previous" 
-                *ngIf="activeIndex > 1 && activeIndex < 4" style="width: 115px;"></button>
+        <button pButton type="button" (click)="onImportPrivateKey()" icon="fa-arrow-left" iconPos="left" label="Previous" 
+                style="width: 115px;"></button>
     </div>
 </p-dialog>

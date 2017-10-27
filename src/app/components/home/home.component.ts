@@ -1,7 +1,6 @@
 import { Component, OnInit, trigger, state, animate, transition, style } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { Logger } from 'angular2-logger/core';
 import { Router } from '@angular/router';
+import { Logger } from 'angular2-logger/core';
 import { LocalStorage, SessionStorage } from "ngx-store";
 import { ElectronService } from "../../providers/electron.service";
 import { CasinocoinService } from "../../providers/casinocoin.service";
@@ -204,5 +203,9 @@ export class HomeComponent implements OnInit {
     this.swap_text_class = "active_text_color";
     // navigate to swap
     this.router.navigate(['swap']);
+  }
+
+  onImportPrivateKey(){
+    this.logger.debug("Import Private Key Clicked !!");
   }
 }

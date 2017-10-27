@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { InputText } from 'primeng/primeng';
 
 @Component({
   selector: 'app-send-coins',
@@ -6,6 +7,9 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./send-coins.component.scss']
 })
 export class SendCoinsComponent implements OnInit {
+
+  @ViewChild('accountInput') accountInput;
+  @ViewChild('descriptionInput') descriptionInput;
 
   receipient: string;
   description: string;
@@ -16,4 +20,15 @@ export class SendCoinsComponent implements OnInit {
   ngOnInit() {
   }
 
+  focusDescription(){
+    this.descriptionInput.nativeElement.focus();
+  }
+
+  focusAmount(){
+    this.accountInput.nativeElement.focus();
+  }
+
+  doSendCoins(){
+
+  }
 }

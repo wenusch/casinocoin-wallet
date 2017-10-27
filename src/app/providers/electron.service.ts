@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 // the resulting javascript file will look as if you never imported the module at all.
 import { ipcRenderer, remote, autoUpdater, clipboard } from 'electron';
 import * as childProcess from 'child_process';
+// import { WalletService } from './wallet.service';
 
 @Injectable()
 export class ElectronService {
@@ -14,7 +15,7 @@ export class ElectronService {
   autoUpdater: typeof autoUpdater;
   clipboard: typeof clipboard;
 
-  constructor() {
+  constructor( ) {
     // Conditional imports
     if (this.isElectron()) {
       this.ipcRenderer = window.require('electron').ipcRenderer;
@@ -22,6 +23,13 @@ export class ElectronService {
       this.remote = window.require('electron').remote;
       this.autoUpdater = window.require('electron').autoUpdater;
       this.clipboard = window.require('electron').clipboard;
+
+      // register message listener
+      // Listen for main message
+      this.ipcRenderer.on('wallet-save', (event, arg) => {  
+        // save the database
+        // this.walletService.saveWallet();
+      });
     }
   }
 

@@ -5,14 +5,18 @@
     font-weight: bolder;
 }
 
-::ng-deep .item-header {
+::ng-deep .item-value {
     font-weight: bolder;
     font-size: smaller;
     height: 25px;
 }
 
-::ng-deep .item-value {
+::ng-deep .item-header {
     height: 25px;
+}
+
+::ng-deep .bold-value {
+    font-weight: bolder;
 }
 
 .tx_type_color_red {
@@ -21,4 +25,8 @@
 
 .tx_type_color_green {
     background-color: $casinocoinGreen;
+}
+
+.panel-group-height {
+    height: calc(100% - 265px);
 }

@@ -82,7 +82,7 @@ export class LoginComponent implements OnInit {
                     this.error_message = "There was an error opening the wallet!!";
                     this.footer_visible = true;
                 } else {
-                    this.logger.error("### Error Opening Wallet !!!!");
+                    // this.logger.error("### Error Opening Wallet !!!!");
                 }
             });
         }

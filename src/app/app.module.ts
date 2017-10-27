@@ -6,8 +6,9 @@ import { BrowserAnimationsModule }  from '@angular/platform-browser/animations';
 import { NgModule }                 from '@angular/core';
 import { FormsModule }              from '@angular/forms';
 import { HttpModule }               from '@angular/http';
-import { HttpClient, HttpClientModule }         from '@angular/common/http';
-import { Logger }                   from 'angular2-logger/core';
+import { HttpClient, 
+         HttpClientModule }         from '@angular/common/http';
+import { Logger, Options, Level }   from 'angular2-logger/core';
 import { environment }              from '../environments/index';
 
 import { AppRoutingModule }         from './app-routing.module';
@@ -25,6 +26,9 @@ import { WebStorageModule,
          LocalStorageService, 
          SessionStorageService, 
          CookiesStorageService }    from 'ngx-store';
+
+import { DatePipe }                 from '@angular/common';
+import { CSCDatePipe }              from './app-pipes.module';
 
 import { AppComponent }             from './app.component';
 import { HomeComponent }            from './components/home/home.component';
@@ -46,7 +50,8 @@ import { DialogModule, ButtonModule, CheckboxModule,
          MessagesModule, ToolbarModule, AccordionModule,
          MenuModule, PanelModule, CalendarModule,
          DataTableModule, SharedModule, DropdownModule,
-         StepsModule, PasswordModule, GrowlModule } from 'primeng/primeng';
+         StepsModule, PasswordModule, GrowlModule,
+         ContextMenuModule } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -54,6 +59,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 @NgModule({
   declarations: [
     AppComponent,
+    CSCDatePipe,
     HomeComponent,
     WalletSetupComponent,
     SetupStep1Component, SetupStep2Component, 
@@ -80,10 +86,11 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     MenuModule, PanelModule, CalendarModule,
     DataTableModule, SharedModule, DropdownModule,
     StepsModule, PasswordModule, GrowlModule,
-    MatListModule, MatSidenavModule
+    MatListModule, MatSidenavModule, ContextMenuModule
   ],
   providers: [
-    Logger, 
+    Logger, Options,
+    DatePipe,
     HttpClient,
     ElectronService,
     AuthGuard,

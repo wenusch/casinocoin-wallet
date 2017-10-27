@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { CSCUtil } from '../../../domain/cscutil';
-import { LedgerStreamMessages } from '../../../domain/websocket-types';
+import { LedgerStreamMessages, ServerStateMessage } from '../../../domain/websocket-types';
 import { Logger } from 'angular2-logger/core';
 
 @Component({
@@ -13,13 +13,15 @@ export class OverviewComponent implements OnInit {
 
   transactions: any[];
   ledgers: LedgerStreamMessages[] = [];
+  serverState: ServerStateMessage;
 
   balance: string = "19982.44";
   fiat_balance: string = "$23.75";
   transaction_count: number = 14;
   last_transaction: Date = new Date(1507812301);
 
-  constructor(private casinocoinService: CasinocoinService, private logger: Logger) { 
+  constructor(private logger: Logger,
+              private casinocoinService: CasinocoinService) { 
     this.logger.debug("### INIT Overview ###");
     this.transactions = [
       {time: Date.now(), amount: 2344, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 245, validated: false},
@@ -38,9 +40,10 @@ export class OverviewComponent implements OnInit {
   ngOnInit() {
     this.logger.debug("### Overview ngOnInit() ###");
     this.ledgers = this.casinocoinService.ledgers;
-    // this.casinocoinService.ledgerSubject.subscribe((ledger: LedgerStreamMessages) => {
-    //   this.ledgers.splice(0, 0, ledger);
-    // });
+    this.serverState = this.casinocoinService.serverState;
+    this.casinocoinService.serverStateSubject.subscribe( state => {
+      this.serverState = state;
+    });
   }
 
   convertCscTimestamp(inputTime) {

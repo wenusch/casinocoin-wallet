@@ -1,4 +1,5 @@
 export interface LokiAccount {
+    $loki?: string,
     accountID: string;
     label: string;
     lastSequence: number;
@@ -6,12 +7,15 @@ export interface LokiAccount {
 }
 
 export interface LokiLog {
-    event?: string;
+    $loki?: string,
     timestamp?: number;
+    event?: string;
+    level?: string;
     content?: string;
 }
 
 export interface LokiKey {
+    $loki?: string,
     privateKey: string;
     publicKey: string;
     accountID: string;
@@ -23,14 +27,20 @@ export interface LokiKey {
 }
 
 export interface LokiSwap {
+    $loki?: string,
     accountID: string;
     swapID: string;
     initiatedTimestamp: number;
+    updatedTimestamp: number;
+    depositAddress: string;
     swapStatus: string;
-    swapObject?: Object;
+    swapAmount: number;
+    storage?: Object;
+    deposit?: Object;
 }
 
 export interface LokiTransaction {
+    $loki?: string,
     txID: string;
     txType: string;
     sendingAddress: string;

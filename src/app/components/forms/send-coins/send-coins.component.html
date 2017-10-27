@@ -10,13 +10,13 @@
         <div class="ui-g-12">
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-comments"></i></span>
-                <input type="text" pInputText placeholder="Description" [(ngModel)]="description" (keyup.enter)="focusAmount()">         
+                <input type="text" pInputText placeholder="Description" [(ngModel)]="description" (keyup.enter)="focusAmount()" #descriptionInput>         
             </div>
         </div>
         <div class="ui-g-12">
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-money"></i></span>
-                <input type="text" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="doSentCoins()">         
+                <input type="text" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="doSendCoins()" #accountInput>         
             </div>
         </div>
         <div class="ui-g-6">

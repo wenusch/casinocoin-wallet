@@ -16,6 +16,7 @@ import * as loki from 'lokijs';
 import * as LokiTypes from '../domain/lokijs';
 
 const lfsa = require('../../../node_modules/lokijs/src/loki-fs-structured-adapter.js');
+// const LokiIndexedAdapter = require('../../../node_modules/lokijs/src/loki-indexed-adapter.js');
 const walletSubject = new Subject<any>();
 
 @Injectable()
@@ -35,6 +36,7 @@ export class WalletService {
   private algorithm = "aes-256-gcm";
   
   public isWalletOpen: boolean = false;
+  public openWalletSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
 
   constructor(private logger: Logger, 
               private electron: ElectronService,
@@ -82,6 +84,7 @@ export class WalletService {
     });
     
     let lokiFsAdapter = new lfsa();
+    // let idbAdapter = new LokiIndexedAdapter('casinocoin');
     let walletDB = new loki(dbPath, 
       { adapter: lokiFsAdapter,
         autoloadCallback: createCollections,
@@ -108,7 +111,10 @@ export class WalletService {
     this.logger.debug("### WalletService Open Wallet location: " + dbPath);
 
     let collectionSubject = new Subject<any>();
-    let openSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
+    let openSubject = new Subject<string>();
+    openSubject.subscribe(result => {
+      this.openWalletSubject.next(result);
+    });
     let openError = false;
 
     if (!fs.existsSync(dbPath)){
@@ -138,6 +144,7 @@ export class WalletService {
       });
   
       let lokiFsAdapter = new lfsa();
+      // let idbAdapter = new LokiIndexedAdapter('casinocoin');
       let walletDB = new loki(dbPath, 
         { adapter: lokiFsAdapter,
           autoloadCallback: openCollections,
@@ -163,15 +170,17 @@ export class WalletService {
     return openSubject.asObservable();
   }
   
-  // saveWallet(){
-  //   this.walletDB.saveDatabase();
-  // }
+  // allow for a hard save on app exit
+  saveWallet(){
+    this.walletDB.saveDatabase();
+  }
 
   // #########################################
   // Accounts Collection
   // #########################################
-  addAccount(newAccount: LokiTypes.LokiAccount) {
+  addAccount(newAccount: LokiTypes.LokiAccount): LokiTypes.LokiAccount {
     let insertAccount = this.accounts.insert(newAccount);
+    return insertAccount;
   }
 
   getAccount(accountID: string): LokiTypes.LokiAccount {
@@ -180,6 +189,10 @@ export class WalletService {
 
   getAllAccounts(): Array<LokiTypes.LokiAccount> {
     return this.accounts.find();
+  }
+
+  updateAccount(account: LokiTypes.LokiAccount){
+    this.accounts.update(account);
   }
 
   getWalletBalance(): number {
@@ -200,8 +213,9 @@ export class WalletService {
   // #########################################
   // Keys Collection
   // #########################################
-  addKey(newKey: LokiTypes.LokiKey) {
+  addKey(newKey: LokiTypes.LokiKey): LokiTypes.LokiKey {
     let insertedKey = this.keys.insert(newKey);
+    return insertedKey;
   }
 
   getKey(accountID: string): LokiTypes.LokiKey {
@@ -210,6 +224,10 @@ export class WalletService {
 
   getAllKeys(): Array<LokiTypes.LokiKey> {
     return this.keys.find();
+  }
+
+  updateKey(key: LokiTypes.LokiKey){
+    this.keys.update(key);
   }
 
   encryptAllKeys(password: string): Observable<string>{
@@ -271,8 +289,9 @@ export class WalletService {
   // #########################################
   // Swaps Collection
   // #########################################
-  addSwap(newSwap: LokiTypes.LokiSwap){
-    this.swaps.insert(newSwap);
+  addSwap(newSwap: LokiTypes.LokiSwap): LokiTypes.LokiSwap{
+    let insertedSwap = this.swaps.insert(newSwap);
+    return insertedSwap;
   }
 
   getSwap(swapID: string): LokiTypes.LokiSwap {
@@ -281,11 +300,33 @@ export class WalletService {
 
   getAllSwaps(): Array<LokiTypes.LokiSwap> {
     if(this.isWalletOpen){
-      return this.swaps.find();
+      return this.swaps.chain().find().simplesort("updatedTimestamp", true).data();
     } else {
       return [];
     }
-    
   }
 
+  updateSwap(swap: LokiTypes.LokiSwap){
+    this.swaps.update(swap);
+  }
+
+  // #########################################
+  // Logs Collection
+  // #########################################
+  addLog(newLog: LokiTypes.LokiLog): LokiTypes.LokiLog{
+    let insertedLog = this.logs.insert(newLog);
+    return insertedLog;
+  }
+
+  getLog(timestamp: number): LokiTypes.LokiLog {
+    return this.logs.by("timestamp", timestamp);
+  }
+
+  getAllLogs(): Array<LokiTypes.LokiLog> {
+    if(this.isWalletOpen){
+      return this.logs.find();
+    } else {
+      return [];
+    }
+  }
 }

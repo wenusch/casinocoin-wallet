@@ -26,7 +26,7 @@ import { PasswordModule } from 'primeng/primeng';
 
     passwordPattern: string = "(?=.*[0-9])(?=.*[a-z]).{8,}";
 
-    constructor( private logger: Logger ) { }
+    constructor( ) { }
 
     checkPasswordUpdate(newValue: string) {
       let testResult = newValue.match(this.passwordPattern);

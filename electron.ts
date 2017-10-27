@@ -87,6 +87,11 @@ try {
     }
   });
 
+  app.on('before-quit', () => {
+    console.log('Quiting Casinocoin Wallet, save the database!!!');
+    win.webContents.send('wallet-save');
+  });
+
 } catch (e) {
   // Catch Error
   // throw e;

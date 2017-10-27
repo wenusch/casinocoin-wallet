@@ -1,6 +1,7 @@
 {
   "name": "casinocoin-wallet",
-  "version": "4.0.0",
+  "version": "4.0.0-beta1",
+  "productName": "Casinocoin Wallet",
   "description": "Casinocoin Desktop Wallet",
   "homepage": "https://github.com/casinocoin/casinocoin-wallet",
   "author": {
@@ -30,6 +31,8 @@
     "electron:linux": "npm run build:prod && node package.js --asar --platform=linux --arch=x64",
     "electron:windows": "npm run build:prod && node package.js --asar --platform=win32 --arch=ia32",
     "electron:mac": "npm run build:prod && node package.js --asar --platform=darwin --arch=x64",
+    "installer:windows": "npm run electron:windows && node createWinInstaller.js",
+    "installer:mac": "electron-installer-dmg ./app-builds/casinocoin-wallet-darwin-x64/casinocoin-wallet.app casinocoin-wallet --out=release-builds --overwrite --icon=assets/icons/casinocoin.icns",
     "test": "karma start ./karma.conf.js",
     "pree2e": "webdriver-manager update --standalone false --gecko false --quiet && npm run build",
     "e2e": "protractor ./protractor.conf.js"
@@ -47,7 +50,7 @@
     "@angular/platform-browser-dynamic": "4.4.4",
     "@angular/router": "4.4.4",
     "@ng-bootstrap/ng-bootstrap": "^1.0.0-beta.5",
-    "angular2-logger": "0.6.0",
+    "angular2-logger": "^0.6.0",
     "angular2-uuid": "1.1.1",
     "bignumber": "^1.1.0",
     "casinocoin-libjs-keypairs": "^1.0.0",
@@ -75,8 +78,10 @@
     "css-loader": "0.28.7",
     "cssnano": "3.10.0",
     "electron": "1.7.9",
+    "electron-installer-dmg": "^0.2.1",
     "electron-packager": "9.1.0",
     "electron-reload": "1.2.1",
+    "electron-winstaller": "^2.6.3",
     "exports-loader": "0.6.4",
     "file-loader": "0.11.2",
     "html-loader": "0.5.1",
@@ -109,8 +114,8 @@
     "typescript": "2.5.2",
     "url-loader": "0.5.9",
     "webdriver-manager": "12.0.6",
-    "webpack": "3.6.0",
-    "webpack-dev-server": "2.8.2"
+    "webpack": "3.8.1",
+    "webpack-dev-server": "2.9.2"
   },
   "license": "SEE LICENSE IN LICENSE.md"
 }

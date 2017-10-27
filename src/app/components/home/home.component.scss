@@ -43,7 +43,7 @@ background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 1
 }
 
 .content-height {
-  height: 82vh;
+  height: calc(100% - 125px);
 }
 
 .toolbar-button {

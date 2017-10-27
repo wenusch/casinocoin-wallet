@@ -1,38 +1,45 @@
-<div flex layout="row">
-    <div class="ui-widget ui-g">
-        <div class="ui-g-4">
-            <p-panel header="Wallet" [style]="{'height':'280px'}">
-                <mat-list>
-                    <mat-list-item class="item-header">Balance</mat-list-item>
-                    <mat-list-item class="item-value">{{balance}}</mat-list-item>
-                    <mat-list-item class="item-header">Estimated Fiat Value</mat-list-item>
-                    <mat-list-item class="item-value">{{fiat_balance}}</mat-list-item>
-                    <mat-list-item class="item-header">Transactions</mat-list-item>
-                    <mat-list-item class="item-value">{{transaction_count}}</mat-list-item>
-                    <mat-list-item class="item-header">Last Transaction</mat-list-item>
-                    <mat-list-item class="item-value">{{last_transaction | date : 'yyyy-MM-dd HH:mm:ss'}}</mat-list-item>
-                    <mat-list-item class="item-value"></mat-list-item>
-                </mat-list>
-            </p-panel>
-        </div>
-        <div class="ui-g-4">
-            <p-panel header="Network" [style]="{'height':'280px'}">
-                Content
-            </p-panel>
-        </div>
-        <div class="ui-g-4">
-            <p-panel header="Ledgers" [style]="{'height':'280px'}">
-                <p-dataTable [value]="ledgers" [immutable]="false" scrollable="true" scrollHeight="210px">
-                    <p-column field="ledger_index" header="Ledger" [style]="{'width':'75px'}"></p-column>
-                    <p-column field="ledger_time" header="Time" [style]="{'width':'125px'}">
-                        <ng-template let-col let-ledger="rowData" pTemplate="body">
-                            <span>{{convertCscTimestamp(ledger[col.field]) | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
-                        </ng-template>
-                    </p-column>
-                    <p-column field="txn_count" header="TX" [style]="{'width':'30px'}"></p-column>
-                </p-dataTable>
-            </p-panel>
-        </div>
+<div class="ui-widget ui-g panel-group-height">
+    <div class="ui-g-4">
+        <p-panel header="Wallet" [style]="{'height':'100%'}">
+            <mat-list>
+                <mat-list-item class="item-header">Balance</mat-list-item>
+                <mat-list-item class="item-value">{{balance}}</mat-list-item>
+                <mat-list-item class="item-header">Estimated Fiat Value</mat-list-item>
+                <mat-list-item class="item-value">{{fiat_balance}}</mat-list-item>
+                <mat-list-item class="item-header">Transactions</mat-list-item>
+                <mat-list-item class="item-value">{{transaction_count}}</mat-list-item>
+                <mat-list-item class="item-header">Last Transaction</mat-list-item>
+                <mat-list-item class="item-value">{{last_transaction | date : 'yyyy-MM-dd HH:mm:ss'}}</mat-list-item>
+                <mat-list-item class="item-value"></mat-list-item>
+            </mat-list>
+        </p-panel>
+    </div>
+    <div class="ui-g-4">
+        <p-panel header="Network" [style]="{'height':'100%'}">
+            <div class="ui-g">
+                <div class="ui-g-8">Server Version</div><div class="ui-g-4 bold-value">{{serverState.build_version}}</div>
+                <div class="ui-g-8">Available Ledgers</div><div class="ui-g-4 bold-value">{{serverState.complete_ledgers}}</div>
+                <div class="ui-g-8">Server Latency (ms)</div><div class="ui-g-4 bold-value">{{serverState.io_latency_ms}}</div>
+                <div class="ui-g-8">Connected Peers</div><div class="ui-g-4 bold-value">{{serverState.peers}}</div>
+                <div class="ui-g-8">Last Closing Time</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.close_time | cscDate: 'HH:mm:ss'}}</div>
+                <div class="ui-g-8">Close Duration (ms)</div><div class="ui-g-4 bold-value">{{serverState.last_close.converge_time}}</div>
+                <div class="ui-g-8">Last Close Proposers</div><div class="ui-g-4 bold-value">{{serverState.last_close.proposers}}</div>
+                <div class="ui-g-8">Current Fee</div><div class="ui-g-4 bold-value">{{serverState.last_close.proposers}}</div>
+            </div>
+        </p-panel>
+    </div>
+    <div class="ui-g-4">
+        <p-panel header="Ledgers" [style]="{'height':'100%'}">
+            <p-dataTable [value]="ledgers" [immutable]="false" scrollable="true" scrollHeight="210px">
+                <p-column field="ledger_index" header="Ledger" [style]="{'width':'75px'}"></p-column>
+                <p-column field="ledger_time" header="Time" [style]="{'width':'125px'}">
+                    <ng-template let-col let-ledger="rowData" pTemplate="body">
+                        <span>{{convertCscTimestamp(ledger[col.field]) | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
+                    </ng-template>
+                </p-column>
+                <p-column field="txn_count" header="TX" [style]="{'width':'30px'}"></p-column>
+            </p-dataTable>
+        </p-panel>
     </div>
 </div>
 <p-panel header="Transactions" [style]="{'height':'275px', 'position': 'fixed', 'bottom':'0'}">
