@@ -2,8 +2,12 @@ export interface LokiAccount {
     $loki?: string,
     accountID: string;
     label: string;
+    balance: string;
+    activated: boolean;
+    ownerCount: number;
+    lastTxID: string;
+    lastTxLedger: number;
     lastSequence: number;
-    balance: number;
 }
 
 export interface LokiLog {
@@ -42,10 +46,24 @@ export interface LokiSwap {
 export interface LokiTransaction {
     $loki?: string,
     txID: string;
-    txType: string;
-    sendingAddress: string;
-    receivingAddress: string;
+    account: string;
     amount: number;
-    fees: number;
-    txTimestamp: number;
+    destination: string;
+    fee: number;
+    flags: number;
+    lastLedgerSequence: number;
+    memos: [
+        {
+            memo: {
+                memoData: string;
+                memoFormat: string;
+            }
+        }
+    ],
+    sequence: number;
+    signingPubKey: string;
+    transactionType: string;
+    txnSignature: string;
+    timestamp: number;
+    hash: string;
 }

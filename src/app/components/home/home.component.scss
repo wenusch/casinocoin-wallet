@@ -77,3 +77,7 @@ background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 1
 ::ng-deep .mat-list .mat-list-item, .mat-nav-list .mat-list-item, .mat-selection-list .mat-list-item {
   font-size: 14px;
 }
+
+:host input {
+  width: 100%; padding-left: 5px;
+}

@@ -4,7 +4,7 @@ import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { WalletService } from './wallet.service';
 import { LokiSwap } from '../domain/lokijs';
-import { CSCUtil } from '../domain/cscutil';
+import { CSCUtil } from '../domain/csc-util';
 import { environment } from '../../environments';
 import { AppConstants } from '../domain/app-constants';
 

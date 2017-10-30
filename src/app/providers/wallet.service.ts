@@ -6,6 +6,9 @@ import { Subject } from 'rxjs/Subject';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { AppConstants } from '../domain/app-constants';
 import { ElectronService } from '../providers/electron.service';
+import { MessageService } from 'primeng/components/common/messageservice';
+import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
+import Big from 'big.js';
 
 const path = require('path');
 const fs = require('fs');
@@ -40,7 +43,8 @@ export class WalletService {
 
   constructor(private logger: Logger, 
               private electron: ElectronService,
-              private localStorageService: LocalStorageService) {
+              private localStorageService: LocalStorageService,
+              private messageService: MessageService) {
     this.logger.debug("### INIT WalletService ###");
    }
 
@@ -195,17 +199,17 @@ export class WalletService {
     this.accounts.update(account);
   }
 
-  getWalletBalance(): number {
-    let totalBalance:number = 0;
+  getWalletBalance(): string {
+    let totalBalance = new Big("0");
     // loop over all accounts
     let accounts: Array<LokiTypes.LokiAccount> = this.accounts.find();
     accounts.forEach(element => {
-      totalBalance = totalBalance + element.balance;
+      totalBalance = totalBalance + new Big(element.balance);
     });
-    return totalBalance;
+    return totalBalance.toString();
   }
 
-  getAccountBalance(accountID: string): number {
+  getAccountBalance(accountID: string): string {
     let account = this.getAccount(accountID);
     return account.balance;
   }
@@ -230,63 +234,7 @@ export class WalletService {
     this.keys.update(key);
   }
 
-  encryptAllKeys(password: string): Observable<string>{
-    this.logger.debug("### WalletService encryptAllKeys ###");
-    let encryptSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
-    // get all keys
-    let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
-    this.logger.debug(allKeys);
-    allKeys.forEach( (element, index, array) => {
-      if(!element.encrypted){
-        let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-        passwordHash = passwordHash.slice(0, 32);
-        let cipher = crypto.createCipheriv(this.algorithm, passwordHash, element.initVector);
-        // encrypt key
-        let cryptedKey = cipher.update(element.privateKey, 'utf8', 'hex');
-        cryptedKey += cipher.final("hex");
-        array[index].keyTag = cipher.getAuthTag();
-        array[index].privateKey = cryptedKey;
-        cipher = crypto.createCipheriv(this.algorithm, passwordHash, element.initVector);
-        let cryptedSecret = cipher.update(element.secret, 'utf8', 'hex');
-        cryptedSecret += cipher.final("hex");
-        array[index].secretTag = cipher.getAuthTag();
-        array[index].secret = cryptedSecret;
-        array[index].encrypted = true;
-        this.logger.debug("### WalletService key encrypted: " + JSON.stringify(element));
-      }
-      if(index == (array.length - 1)){
-        encryptSubject.next(AppConstants.KEY_FINISHED);
-      }
-    });
-    return encryptSubject.asObservable();
-  }
-
-  decryptAllKeys(password: string){
-    // get all keys
-    let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
-    allKeys.forEach( (element, index, array) => {
-      // decrypt key
-      array[index].privateKey = element.privateKey;
-      array[index].secret = element.secret;
-    })
-  }
-
-  encryptWalletPassword(password: string, words:Array<string>){
-    // encrypt the wallet password with the words
-    let encryptedPassword;
-    // store the wallet password
-    this.localStorageService.set(AppConstants.KEY_WALLET_PASSWORD, encryptedPassword);
-  }
-
-  decryptWalletPassword(words: Array<string>): string {
-    // get the encrypted password
-    let encryptedPassword = this.localStorageService.get(AppConstants.KEY_WALLET_PASSWORD);
-    // decrypt the password
-    let decryptedPassword;
-    return decryptedPassword;
-  }
-
-  // #########################################
+    // #########################################
   // Swaps Collection
   // #########################################
   addSwap(newSwap: LokiTypes.LokiSwap): LokiTypes.LokiSwap{
@@ -329,4 +277,142 @@ export class WalletService {
       return [];
     }
   }
+
+  // #########################################
+  // Wallet Methods
+  // #########################################
+  generateWalletPasswordHash(walletUUID:string, password:string): string{
+    let passwordHash = crypto.createHmac('sha256', password).update(walletUUID).digest('hex');
+    return passwordHash;
+  }
+
+  checkWalletPasswordHash(walletUUID:string, password:string, walletHash: string): boolean {
+    let passwordHash = crypto.createHmac('sha256', password).update(walletUUID).digest('hex');
+    this.logger.debug("### WalletService - Hashed password: " + passwordHash);
+    return (walletHash == passwordHash);
+  }
+
+  encryptAllKeys(password: string): Observable<string>{
+    this.logger.debug("### WalletService encryptAllKeys ###");
+    let encryptSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
+    // get all keys
+    let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
+    this.logger.debug(allKeys);
+    allKeys.forEach( (element, index, array) => {
+      if(!element.encrypted){
+        let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+        passwordHash = passwordHash.slice(0, 32);
+        let initVectorBuffer = Buffer.from(element.initVector, 'hex');
+        let cipher = crypto.createCipheriv(this.algorithm, passwordHash, initVectorBuffer);
+        // encrypt key
+        let cryptedKey = cipher.update(element.privateKey, 'utf8', 'hex');
+        cryptedKey += cipher.final("hex");
+        array[index].keyTag = cipher.getAuthTag().toString('hex');
+        array[index].privateKey = cryptedKey;
+        cipher = crypto.createCipheriv(this.algorithm, passwordHash, initVectorBuffer);
+        let cryptedSecret = cipher.update(element.secret, 'utf8', 'hex');
+        cryptedSecret += cipher.final("hex");
+        array[index].secretTag = cipher.getAuthTag().toString('hex');
+        array[index].secret = cryptedSecret;
+        array[index].encrypted = true;
+        this.logger.debug("### WalletService key encrypted: " + JSON.stringify(element));
+      }
+      if(index == (array.length - 1)){
+        encryptSubject.next(AppConstants.KEY_FINISHED);
+      }
+    });
+    return encryptSubject.asObservable();
+  }
+
+  decryptAllKeys(password: string){
+    // get all keys
+    let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
+    allKeys.forEach( (element, index, array) => {
+      // decrypt key
+      array[index].privateKey = element.privateKey;
+      array[index].secret = element.secret;
+    })
+  }
+
+  getDecryptPrivateKey(password: string, walletKey: LokiTypes.LokiKey): string {
+    let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    passwordHash = passwordHash.slice(0, 32);
+    let initVectorBuffer = Buffer.from(walletKey.initVector, 'hex');
+    this.logger.debug("### Buffer Length: " + initVectorBuffer.length);
+    let decipher = crypto.createDecipheriv(this.algorithm, password, initVectorBuffer);
+    let secretTagBuffer = Buffer.from(walletKey.secretTag, 'hex');
+    decipher.setAuthTag(secretTagBuffer);
+    let decodedSecret:string = decipher.update(walletKey.secret, 'hex', 'utf8');
+    decodedSecret += decipher.final('utf8');
+    const decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+    if(decodedKeypair.publicKey == walletKey.publicKey){
+      // password was correct, return decoded private key
+      return decodedKeypair.privateKey;
+    } else {
+      return AppConstants.KEY_ERRORED;
+    }
+  }
+
+  encryptWalletPassword(password: string, words:Array<string>){
+    // encrypt the wallet password with the words
+    let encryptedPassword;
+    // store the wallet password
+    this.localStorageService.set(AppConstants.KEY_WALLET_PASSWORD, encryptedPassword);
+  }
+
+  decryptWalletPassword(words: Array<string>): string {
+    // get the encrypted password
+    let encryptedPassword = this.localStorageService.get(AppConstants.KEY_WALLET_PASSWORD);
+    // decrypt the password
+    let decryptedPassword;
+    return decryptedPassword;
+  }
+
+  importPrivateKey(keySeed:string, password:string){
+    let newKeyPair: LokiTypes.LokiKey = { 
+      privateKey: "", 
+      publicKey: "", 
+      accountID: "", 
+      secret: "", 
+      initVector: "", 
+      keyTag: "",
+      secretTag: "",
+      encrypted: false
+    };
+    let keyPairSubject = new Subject<LokiTypes.LokiKey>();
+    keyPairSubject.subscribe(keyPair => {
+      // save the new private key
+      this.logger.debug(keyPair);
+      this.addKey(keyPair);
+      // add new account
+      let walletAccount: LokiTypes.LokiAccount = {
+        accountID: keyPair.accountID, 
+        balance: "0", 
+        lastSequence: 0, 
+        label: "Imported Private Key",
+        activated: false,
+        ownerCount: 0,
+        lastTxID: "",
+        lastTxLedger: 0
+      };
+      this.addAccount(walletAccount);
+      // encrypt the keys
+      this.encryptAllKeys(password).subscribe(result => {
+        this.messageService.add( {severity:'info', 
+                                  summary:'Private Key Import', 
+                                  detail:'The Private Key import is complete.'
+                                });
+      });
+    });
+    const initVector = crypto.randomBytes(16, function(err, buffer) {
+      const keypair = cscKeyAPI.deriveKeypair(keySeed);
+      newKeyPair.privateKey = keypair.privateKey;
+      newKeyPair.publicKey = keypair.publicKey;
+      newKeyPair.accountID = cscKeyAPI.deriveAddress(keypair.publicKey);
+      newKeyPair.initVector = buffer.toString('hex');
+      newKeyPair.secret = keySeed;
+      keyPairSubject.next(newKeyPair);
+    });
+  }
+  
 }

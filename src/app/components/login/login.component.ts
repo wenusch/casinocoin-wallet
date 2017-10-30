@@ -5,7 +5,7 @@ import { WalletService } from '../../providers/wallet.service';
 import { AlertService } from '../../providers/alert.service';
 import { LocalStorage, SessionStorage } from "ngx-store";
 import { SelectItem } from 'primeng/primeng';
-import { CSCUtil } from '../../domain/cscutil';
+import { CSCUtil } from '../../domain/csc-util';
 import { AppConstants } from '../../domain/app-constants';
 import { Logger } from 'angular2-logger/core';
 import { MessageService } from 'primeng/components/common/messageservice';
@@ -20,6 +20,7 @@ import { MessageService } from 'primeng/components/common/messageservice';
 export class LoginComponent implements OnInit {
     
     @ViewChild('inputWallet') inputWalletElementRef;
+    @ViewChild('inputPassword') inputPasswordElementRef;
 
     @LocalStorage() public availableWallets: Array<Object>;
     @LocalStorage() public walletLocation: string;
@@ -65,26 +66,44 @@ export class LoginComponent implements OnInit {
             this.error_message = "Please select a wallet to open!"
             this.inputWalletElementRef.nativeElement.focus();
             // this.messageService.add({severity:'error', summary:'Open Wallet Error', detail:'Please select a wallet to open!'});
+        } else if (this.walletPassword == null || this.walletPassword.length == 0){
+            this.footer_visible = true;
+            this.error_message = "Please enter the wallet password!"
+            this.inputPasswordElementRef.nativeElement.focus();
+            // this.messageService.add({severity:'error', summary:'Open Wallet Error', detail:'Please select a wallet to open!'});
         } else {
             this.currentWallet = this.selectedWallet;
+            // get the complete wallet object
+            let walletIndex = this.availableWallets.findIndex( item => item['walletUUID'] == this.selectedWallet);
+            let walletObject = this.availableWallets[walletIndex];
             this.footer_visible = false;
-            this.logger.debug("### Open Wallet: " + this.currentWallet);
-            this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
-                this.logger.debug("### Open Wallet Response: " + result);
-                if(result == AppConstants.KEY_INIT){
-                    this.footer_visible = false;
-                    this.error_message = "";
-                } else if (result == AppConstants.KEY_LOADED){
-                    // Navigate to Home 
-                    this.router.navigate([this.returnUrl]);
-                } else if (result == AppConstants.KEY_ERRORED) {
-                    // there was an error opening the wallet
-                    this.error_message = "There was an error opening the wallet!!";
-                    this.footer_visible = true;
-                } else {
-                    // this.logger.error("### Error Opening Wallet !!!!");
-                }
-            });
+            this.logger.debug("### Check Wallet Password: " + JSON.stringify(walletObject));
+            if(this.walletService.checkWalletPasswordHash(this.selectedWallet, this.walletPassword, walletObject['hash'])){
+                this.walletLocation = walletObject['location'];
+                this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
+                    this.logger.debug("### Open Wallet Response: " + result);
+                    if(result == AppConstants.KEY_INIT){
+                        this.footer_visible = false;
+                        this.error_message = "";
+                    } else if (result == AppConstants.KEY_LOADED){
+                        // Navigate to Home 
+                        this.router.navigate([this.returnUrl]);
+                    } else if (result == AppConstants.KEY_ERRORED) {
+                        // there was an error opening the wallet
+                        this.error_message = "There was an error opening the wallet!!";
+                        this.footer_visible = true;
+                    } else {
+                        // this.logger.error("### Error Opening Wallet !!!!");
+                    }
+                });
+            } else {
+                // Invalid Wallet Password !!!
+                this.footer_visible = true;
+                this.error_message = "You entered the wrong wallet password!"
+                this.inputPasswordElementRef.nativeElement.value = "";
+                this.inputPasswordElementRef.nativeElement.focus();
+            }
+            
         }
     }
 }

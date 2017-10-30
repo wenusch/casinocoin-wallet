@@ -1,11 +1,11 @@
-import { Component, OnInit, trigger, state, animate, transition, style } from '@angular/core';
+import { Component, OnInit, trigger, state, animate, transition, style, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Logger } from 'angular2-logger/core';
 import { LocalStorage, SessionStorage } from "ngx-store";
 import { ElectronService } from "../../providers/electron.service";
 import { CasinocoinService } from "../../providers/casinocoin.service";
 import { WalletService } from "../../providers/wallet.service";
-import { MenuItem, Message } from 'primeng/primeng';
+import { MenuItem, Message, ContextMenu } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { AppConstants } from '../../domain/app-constants';
@@ -35,10 +35,16 @@ export class HomeComponent implements OnInit {
   @SessionStorage() public currentWallet: string;
   @LocalStorage() public walletLocation: string;
 
+  @ViewChild('contextMenu') contextMenu: ContextMenu;
+
   //show_menu: string = 'shown';
   show_menu: string = 'small';
   menu_items: MenuItem[];
   context_menu_items: MenuItem[];
+
+  showPrivateKeyImportDialog:boolean = false;
+  privateKeySeed:string;
+  walletPassword:string;
 
   // Growl messages
   msgs: Message[] = [];
@@ -76,7 +82,12 @@ export class HomeComponent implements OnInit {
     // define context menu
     this.context_menu_items = [
       { label: 'Settings', icon: 'fa-info-circle', command: (event) => { this.onSettings() } },
-      { label: 'Tools', icon: 'fa-info-circle', command: (event) => { this.onSettings() } },
+      { label: 'Tools', icon: 'fa-wrench', items: 
+        [
+          {label: 'Import Private Key', icon: 'fa-download', command: (event) => {this.showPrivateKeyImportDialog = true;} }
+        ]
+      },
+      { separator:true },
       { label: 'Quit', icon: 'fa-sign-out', command: (event) => { this.onQuit() } }
     ];
     this.router.navigate(['overview']);
@@ -87,7 +98,7 @@ export class HomeComponent implements OnInit {
         if(result == AppConstants.KEY_LOADED){
           this.logger.debug("### HOME load the accounts ###");
           let allAccounts: Array<LokiTypes.LokiAccount> = this.walletService.getAllAccounts();
-          this.messageService.add({severity:'success', summary:'Service Message', detail:'Succesfully opened the wallet.'});
+          this.messageService.add({severity:'info', summary:'Service Message', detail:'Succesfully opened the wallet.'});
           this.logger.debug(allAccounts);
           // connect to the network
           this.casinocoinService.connect();
@@ -102,6 +113,11 @@ export class HomeComponent implements OnInit {
   onMenuClick() {
     this.logger.debug("Menu Clicked !!");
     this.show_menu = this.show_menu == 'small' ? 'wide' : 'small';
+  }
+
+  onContextMenuClick(event) {
+    this.logger.debug("ContextMenu Clicked !! ");
+    this.contextMenu.show(event);
   }
 
   selectedMenuItem(item) {
@@ -206,6 +222,8 @@ export class HomeComponent implements OnInit {
   }
 
   onImportPrivateKey(){
-    this.logger.debug("Import Private Key Clicked !!");
+    this.logger.debug("Import Private Key: " + this.privateKeySeed);
+    this.walletService.importPrivateKey(this.privateKeySeed, this.walletPassword);
+    this.showPrivateKeyImportDialog = false;
   }
 }

@@ -24,7 +24,7 @@
                 <div class="ui-g-8">Last Closing Time</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.close_time | cscDate: 'HH:mm:ss'}}</div>
                 <div class="ui-g-8">Close Duration (ms)</div><div class="ui-g-4 bold-value">{{serverState.last_close.converge_time}}</div>
                 <div class="ui-g-8">Last Close Proposers</div><div class="ui-g-4 bold-value">{{serverState.last_close.proposers}}</div>
-                <div class="ui-g-8">Current Fee</div><div class="ui-g-4 bold-value">{{serverState.last_close.proposers}}</div>
+                <div class="ui-g-8">Current Fee</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.base_fee | cscAmount}}</div>
             </div>
         </p-panel>
     </div>

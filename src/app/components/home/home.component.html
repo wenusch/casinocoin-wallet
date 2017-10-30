@@ -18,7 +18,7 @@
                   <img class="toolbar-image" [src]="addressbook_image"/>
                   <div [class]="addressbook_text_class">Addressbook</div>
                 </button>
-                <button type="button" class="btn toolbar-button" (click)="onCoinSwap()" >
+                <button type="button" class="btn toolbar-button" (click)="onCoinSwap()">
                     <img class="toolbar-image" [src]="swap_image"/>
                     <div [class]="swap_text_class">Swap</div>
                   </button>
@@ -34,10 +34,10 @@
           -->
         </div>
         <div class="ui-toolbar-group-right">
-            <p-menu #contextmenu popup="true" [model]="context_menu_items" appendTo="body"></p-menu>
+            <p-tieredMenu #contextMenu [appendTo]="body" [model]="context_menu_items" [popup]="true"></p-tieredMenu >
             <div class="ui-g">
                 <div class="ui-g-6">
-                    <div (click)="contextmenu.toggle($event)" style="text-align: center; padding-top: 15px; padding-right: 15px;">
+                    <div #cog (click)="onContextMenuClick($event)" style="text-align: center; padding-top: 15px; padding-right: 15px;">
                         <i class="fa fa-cog fa-2x"></i>
                     </div>
                 </div>
@@ -54,15 +54,35 @@
     <p-growl [(value)]="msgs"></p-growl>
     <router-outlet></router-outlet>
 </div>
-<p-dialog [visible]="false" [width]="600" [height]="400" [closable]="true" [modal]="true">
-    <p-header>
-        Import Private Key
-    </p-header>
-    <div class="ui-g" style="max-height: 275px; min-height: 275px;">
-        import your private key
+<p-dialog [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="300" [closable]="true" [modal]="true">
+    <p-header>Import Private Key</p-header>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <p>Enter the Seed for the Private Key you wish to import.</p>
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
+                <input type="text" pInputText placeholder="Private Key Seed" [(ngModel)]="privateKeySeed">         
+            </div>
+        </div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
+                <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" (keyup.enter)="onImportPrivateKey()">         
+            </div>
+        </div>
+        <div class="ui-g-1"></div>
     </div>
     <div style="text-align: right;">
-        <button pButton type="button" (click)="onImportPrivateKey()" icon="fa-arrow-left" iconPos="left" label="Previous" 
+        <button pButton type="button" (click)="onImportPrivateKey()" icon="fa-arrow-right" iconPos="right" label="Import" 
                 style="width: 115px;"></button>
     </div>
 </p-dialog>

@@ -5,7 +5,7 @@ import { MessageService } from 'primeng/components/common/messageservice';
 import { WalletService } from '../../../providers/wallet.service';
 import { SwapService } from '../../../providers/swap.service';
 import { ElectronService } from '../../../providers/electron.service';
-import { CSCUtil } from '../../../domain/cscutil';
+import { CSCUtil } from '../../../domain/csc-util';
 import { LokiSwap } from '../../../domain/lokijs';
 import { environment } from '../../../../environments';
 

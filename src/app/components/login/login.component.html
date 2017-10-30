@@ -22,7 +22,7 @@
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            <div class="ui-inputgroup">
+            <div class="ui-inputgroup" #inputPassword>
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
                 <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" (keyup.enter)="doOpenWallet()">         
             </div>

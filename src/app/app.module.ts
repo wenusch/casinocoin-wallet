@@ -28,7 +28,8 @@ import { WebStorageModule,
          CookiesStorageService }    from 'ngx-store';
 
 import { DatePipe }                 from '@angular/common';
-import { CSCDatePipe }              from './app-pipes.module';
+import { CSCDatePipe, 
+         CSCAmountPipe }            from './app-pipes.module';
 
 import { AppComponent }             from './app.component';
 import { HomeComponent }            from './components/home/home.component';
@@ -51,7 +52,7 @@ import { DialogModule, ButtonModule, CheckboxModule,
          MenuModule, PanelModule, CalendarModule,
          DataTableModule, SharedModule, DropdownModule,
          StepsModule, PasswordModule, GrowlModule,
-         ContextMenuModule } from 'primeng/primeng';
+         ContextMenuModule, TieredMenuModule } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -59,7 +60,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 @NgModule({
   declarations: [
     AppComponent,
-    CSCDatePipe,
+    CSCDatePipe, CSCAmountPipe,
     HomeComponent,
     WalletSetupComponent,
     SetupStep1Component, SetupStep2Component, 
@@ -86,7 +87,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     MenuModule, PanelModule, CalendarModule,
     DataTableModule, SharedModule, DropdownModule,
     StepsModule, PasswordModule, GrowlModule,
-    MatListModule, MatSidenavModule, ContextMenuModule
+    MatListModule, MatSidenavModule, ContextMenuModule,
+    TieredMenuModule
   ],
   providers: [
     Logger, Options,

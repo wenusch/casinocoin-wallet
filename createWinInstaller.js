@@ -20,7 +20,7 @@ function getInstallerConfig () {
     noMsi: false,
     outputDirectory: path.join(outPath, 'windows-installer'),
     exe: 'casinocoin-wallet.exe',
-    setupExe: 'CasinocoinWalletInstaller.exe',
+    setupExe: 'casinocoin-wallet-setup.exe',
     setupIcon: path.join(rootPath, 'src', 'assets', 'icons', 'casinocoin.ico')
   })
 }

@@ -8,8 +8,10 @@ import { LedgerStreamMessages, ValidationStreamMessages,
          TransactionStreamMessages, ServerStateMessage } from '../domain/websocket-types';
 import { Logger } from 'angular2-logger/core';
 import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
-import { LokiKey } from '../domain/lokijs';
+import * as cscBinaryAPI from 'casinocoin-libjs-binary-codec';
+import { LokiKey, LokiAccount, LokiTransaction } from '../domain/lokijs';
 import { AppConstants } from '../domain/app-constants';
+import { CasinocoinTxObject } from '../domain/csc-types';
 
 const crypto = require('crypto');
 
@@ -25,6 +27,10 @@ export class CasinocoinService implements OnDestroy {
     public ledgers: Array<LedgerStreamMessages> = [];
     public serverState: ServerStateMessage;
     public serverStateSubject = new Subject<ServerStateMessage>();
+    public accounts: Array<LokiAccount> = [];
+    public accountSubject = new Subject<LokiAccount>();
+    public transactions: Array<LokiTransaction> = [];
+    public transactionSubject = new Subject<LokiTransaction>();
 
     constructor(private logger: Logger, 
                 private wsService: WebsocketService,
@@ -51,8 +57,6 @@ export class CasinocoinService implements OnDestroy {
                     this.subscribeToMessages();
                     // get the current server state
                     this.getServerState();
-                    // subscribe to server stream
-                    this.subscribeToServerStream();
                     // subscribe to ledger stream
                     this.subscribeToLedgerStream();
                     // get accounts and subscribe to accountstream
@@ -65,6 +69,8 @@ export class CasinocoinService implements OnDestroy {
                             });
                             this.logger.debug("### CasinocoinService Accounts: " + JSON.stringify(subscribeAccounts));
                             this.subscribeToAccountsStream(subscribeAccounts);
+                            // update all accounts from the network
+                            this.checkAllAccounts();
                         }
                     });
                 }
@@ -109,14 +115,14 @@ export class CasinocoinService implements OnDestroy {
         this.logger.debug("### CasinocoinService - subscribeToMessages");
         this.socketSubscription = this.wsService.websocketConnection.messages.subscribe((message: any) => {
             let incommingMessage = JSON.parse(message);
-            this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
+            // this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
             if(incommingMessage['type'] == 'ledgerClosed'){
-                this.logger.debug("ledger closed: " + JSON.stringify(incommingMessage));
+                // this.logger.debug("ledger closed: " + JSON.stringify(incommingMessage));
                 this.addLedger(incommingMessage);
                 // get the new server state
                 this.getServerState();
             } else if(incommingMessage['type'] == 'serverStatus'){
-                this.logger.debug("server state: " + incommingMessage['server_status']);
+                // this.logger.debug("server state: " + incommingMessage['server_status']);
                 this.subject.next(incommingMessage);
             } else if(incommingMessage['type'] == 'transaction'){
                 this.logger.debug("transaction: " + JSON.stringify(incommingMessage['transaction']));
@@ -154,6 +160,35 @@ export class CasinocoinService implements OnDestroy {
                     } else {
                         this.logger.debug("### CasinocoinService - Get Ledger Error: " + JSON.stringify(incommingMessage));
                     }
+                } else if (incommingMessage['id'] == 'getAccountInfo'){
+                    // we received account info
+                    if(incommingMessage.status === 'success'){
+                        let account_result = incommingMessage.result.account_data;
+                        // get the account from the wallet
+                        let walletAccount: LokiAccount = this.walletService.getAccount(account_result.Account);
+
+                        if(walletAccount.lastSequence < account_result.Sequence){
+                            // we need to get the missing transactions
+
+                        }
+                        // update the info
+                        walletAccount.activated = true;
+                        walletAccount.balance = account_result.Balance;
+                        walletAccount.lastSequence = account_result.Sequence;
+                        walletAccount.lastTxID = account_result.PreviousTxnID;
+                        walletAccount.lastTxLedger = account_result.PreviousTxnLgrSeq;
+                        // save back to the wallet
+                        this.walletService.updateAccount(walletAccount);
+                        // update accounts array
+                        this.accounts = this.walletService.getAllAccounts();
+                        // notify change
+                        this.accountSubject.next(walletAccount);
+                    } else {
+                        // there was an error
+                        if(incommingMessage.error == "actNotFound"){
+                            this.logger.error("Account " + incommingMessage.account + "does not yet exist on the ledger.")
+                        }
+                    }
                 } else if(incommingMessage['id'] == 'ValidatedLedgers'){
                     this.logger.debug("### CasinocoinService - Validated Ledger: " + JSON.stringify(incommingMessage.result));
                     if(incommingMessage.status === 'success'){
@@ -170,6 +205,8 @@ export class CasinocoinService implements OnDestroy {
                 } else if(incommingMessage['id'] == 'AccountUpdates'){
                     this.logger.debug("### CasinocoinService - Account Update: " + JSON.stringify(incommingMessage.result));
                     this.logger.debug("Account: " + JSON.stringify(incommingMessage.result));
+                } else if(incommingMessage['id'] == 'submitTx'){
+                    this.logger.debug("### CasinocoinService - TX Submitted: " + JSON.stringify(incommingMessage));
                 }
             } else { 
                 this.logger.debug("unmapped message: " + JSON.stringify(incommingMessage));
@@ -207,6 +244,26 @@ export class CasinocoinService implements OnDestroy {
             ledgerRequest.ledger_index = ledgerType;
         }
         this.sendCommand(ledgerRequest);
+    }
+
+    getAccountInfo(accountID: string){
+        let accountInfoRequest = {
+            id: "getAccountInfo",
+            command: "account_info",
+            account: accountID
+        }
+        this.sendCommand(accountInfoRequest);
+    }
+
+    getAccountTx(accountID: string){
+        let accountTxRequest = {
+            id: "getAccountTx",
+            command: "account_tx",
+            account: accountID,
+            ledger_index_min: -1,
+            ledger_index_max: -1
+        }
+        this.sendCommand(accountTxRequest);
     }
 
     subscribeToServerStream() {
@@ -251,5 +308,80 @@ export class CasinocoinService implements OnDestroy {
         timer.subscribe(t => {
             this.getServerState();
         });
+    }
+
+    checkAllAccounts(){
+        // loop over all accounts
+        let accounts:Array<LokiAccount> = this.walletService.getAllAccounts();
+        accounts.forEach((account, index, arr) => {
+            // get the account info for every account
+            // accounts are already updated in the wallet on receiving
+            this.getAccountInfo(account.accountID);
+        });
+    }
+
+    handleIncommingTransaction(){
+
+    }
+
+    createPaymentTx(source:string, 
+                    destination:string, 
+                    amountDrops:string,
+                    invoiceID?: string,
+                    sourceTag?: string,
+                    destinationTag?: string): CasinocoinTxObject {
+        // get server transaction fee
+        let txFee = this.ledgers[0].fee_base;
+        // get account sequence
+        let txWalletAccount:LokiAccount = this.walletService.getAccount(source);
+        let txJSON: CasinocoinTxObject = {
+            TransactionType: 'Payment',
+            Account: source,
+            Destination: destination,
+            Amount: amountDrops,
+            Fee: txFee.toString(),
+            Flags: 0,
+            Sequence: txWalletAccount.lastSequence
+        }
+    
+        if (invoiceID !== undefined) {
+            txJSON.InvoiceID = invoiceID;
+        }
+        if (sourceTag !== undefined) {
+            txJSON.SourceTag = sourceTag;
+        }
+        if (destinationTag !== undefined) {
+            txJSON.DestinationTag = destinationTag;
+        }
+        return txJSON;
+    }
+
+    signTx(tx: CasinocoinTxObject, password: string): string{
+        // get keypair for sending account
+        let accountKey: LokiKey = this.walletService.getKey(tx.Account);
+        this.logger.debug("### CasinocoinService - signTx with key: " + JSON.stringify(accountKey));
+        // decrypt private key
+        let privateKey = this.walletService.getDecryptPrivateKey(password, accountKey);
+        this.logger.debug("### CasinocoinService - signTx privateKey: " + privateKey);
+        if(privateKey != AppConstants.KEY_ERRORED){
+            // sign transaction
+            tx['TxnSignature'] = cscKeyAPI.sign(cscBinaryAPI.encodeForSigning(tx), privateKey);
+            // set the linked public key
+            tx['SigningPubKey'] = accountKey.publicKey;
+            return cscBinaryAPI.encode(tx);   
+        } else {
+            // something went wrong, probably a wrong password
+            return AppConstants.KEY_ERRORED;
+        }
+    }
+
+    submitTx(txBlob: string){
+        this.logger.debug("### CasinocoinService - txBlob: " + txBlob);
+        let submitRequest = {
+            id: "submitTx",
+            command: "submit",
+            tx_blob: txBlob
+        }
+        this.sendCommand(submitRequest);
     }
 }

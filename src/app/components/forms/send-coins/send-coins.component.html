@@ -2,6 +2,13 @@
     <div class="ui-widget ui-g">
         <div class="ui-g-12">
             <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
+                <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
+                            placeholder="Select Account to send from ..." autofocus #accountDropdown></p-dropdown>
+            </div>
+        </div>
+        <div class="ui-g-12">
+            <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-address-book"></i></span>
                 <input type="text" pInputText placeholder="Receipient" [(ngModel)]="receipient" (keyup.enter)="focusDescription()">
                 <button pButton type="button" icon="fa-search" class="ui-button-secondary"></button>
@@ -24,3 +31,40 @@
         </div>
     </div>
 </p-panel>
+<p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="250" [closable]="true" [modal]="true">
+    <p-header>
+        Casinocoin Wallet Password
+    </p-header>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <p>Please enter your wallet password to sign your transaction.</p>
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup" #inputPassword>
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
+                <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" (keyup.enter)="doSignAndSubmitTx()">         
+            </div>
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-5">
+        </div>
+        <div class="ui-g-5">
+            <span>
+                <button pButton type="button" (click)="doSignAndSubmitTx()" icon="fa-check" iconPos="right" 
+                        label="Sign And Submit" style="width: 200px;"></button>
+            </span>
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+    <p-footer *ngIf="footer_visible">
+        Error: {{error_message}}
+    </p-footer>
+</p-dialog>

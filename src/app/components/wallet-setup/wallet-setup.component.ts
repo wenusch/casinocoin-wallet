@@ -5,7 +5,7 @@ import { Logger } from 'angular2-logger/core';
 import { ElectronService } from '../../providers/electron.service';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { AppConstants } from '../../domain/app-constants';
-import { CSCUtil } from '../../domain/cscutil';
+import { CSCUtil } from '../../domain/csc-util';
 import * as LokiTypes from '../../domain/lokijs';
 import { MenuItem, MessagesModule, Message } from 'primeng/primeng';
 import { UUID } from 'angular2-uuid';
@@ -66,6 +66,8 @@ export class WalletSetupComponent implements OnInit {
   accountCreated:boolean = false;
   keysEncrypted:boolean = false;
   connectedToNetwork: boolean = false;
+
+  private walletHash: string;
 
   // Create an offline CasinocoinAPI
   // Server connection will be done via native WebSockets instead of casinocoin libjs
@@ -160,30 +162,21 @@ export class WalletSetupComponent implements OnInit {
 
   finishStep1() {
     // toggle to step 2
-
-    // this.step1State = 'out';
-    // this.step2State = 'in-left';
     this.logger.debug("Wallet Testnetwork: " + this.walletTestNetwork);
   }
 
   finishStep2() {
     // toggle to step 3
-
-    // this.step2State = 'out';
-    // this.step3State = 'in-left';
     this.logger.debug("User Password: " + this.walletPassword);
   }
 
   cancelStep2() {
     // toggle to step 1
-    this.step2State = 'out';
-    this.step1State = 'in-right';
+
   }
 
   finishStep3() {
     // toggle to step 4
-    // this.step3State = 'out';
-    // this.step4State = 'in-left';
     this.logger.debug("Wallet Location: " + this.walletLocation);
     this.logger.debug("### WalletSetup - Create Wallet");
     // generate wallet UUID
@@ -202,12 +195,18 @@ export class WalletSetupComponent implements OnInit {
             // create new account
             let walletAccount: LokiTypes.LokiAccount = {
               accountID: walletKey.accountID, 
-              balance: 0, 
+              balance: "0", 
               lastSequence: 0, 
-              label: "Default Account"
+              label: "Default Account",
+              activated: false,
+              ownerCount: 0,
+              lastTxID: "",
+              lastTxLedger: 0
             };
             this.walletService.addAccount(walletAccount);
             this.accountCreated = true;
+            this.logger.debug("### WalletSetup - Encrypt Wallet Password");
+            this.walletHash = this.walletService.generateWalletPasswordHash(this.walletUUID, this.walletPassword);
             this.logger.debug("### WalletSetup - Encrypt Wallet Keys");
             this.walletService.encryptAllKeys(this.walletPassword).subscribe( result => {
               if(result == AppConstants.KEY_FINISHED){
@@ -250,7 +249,13 @@ export class WalletSetupComponent implements OnInit {
     // Close dialog and wallet setup and go to Home screen
     this.logger.debug("Setup Finished");
     this.logger.debug("Current Timestamp CSC: " + CSCUtil.unixToCasinocoinTimestamp(Date.now()));
-    let walletArray = [{"walletUUID": this.walletUUID, "creationDate": CSCUtil.iso8601ToCasinocoinTime(new Date().toISOString())}];
+    let walletArray = [
+      { "walletUUID": this.walletUUID, 
+        "creationDate": CSCUtil.iso8601ToCasinocoinTime(new Date().toISOString()),
+        "location": this.walletLocation,
+        "hash": this.walletHash
+      }
+    ];
     this.sessionStorageService.set(AppConstants.KEY_CURRENT_WALLET, this.walletUUID);
     this.localStorageService.set(AppConstants.KEY_CURRENT_WALLET, this.walletUUID);
     this.localStorageService.set(AppConstants.KEY_AVAILABLE_WALLETS, walletArray);

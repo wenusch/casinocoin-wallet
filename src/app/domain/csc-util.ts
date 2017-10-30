@@ -1,4 +1,5 @@
-import BigNumber from 'bignumber';
+import Big from 'big.js';
+import { Amount, CasinocoindAmount }  from './csc-types';
 
 export class CSCUtil {
 
@@ -19,12 +20,31 @@ export class CSCUtil {
     }
 
     static dropsToCsc(drops: string): string {
-        return (new BigNumber(drops)).dividedBy(100000000.0).toString()
+        let bigDrops = new Big(drops);
+        if(bigDrops > 0){
+            return (bigDrops).div(100000000.0).toString();
+        } else {
+            return "0.00";
+        }
+        
     }
 
     static cscToDrops(csc: string): string {
-        let csc_drops = (new BigNumber(csc)).times(100000000.0);
-        return csc_drops.floor().toString();
+        let csc_drops = (new Big(csc)).times(100000000.0);
+        return csc_drops.toString();
+    }
+
+    static toCasinocoindAmount(amount: Amount): CasinocoindAmount {
+        if (amount.currency === 'CSC') {
+            let csc_drops = this.cscToDrops(amount.value);
+            return csc_drops;
+        }
+        let default_object: CasinocoindAmount = {
+            currency: amount.currency,
+            issuer: amount.counterparty ? amount.counterparty :  undefined,
+            value: amount.value
+        };
+        return default_object;
     }
 
     static decodeMemos(memos: Array<Object>) : Array<Object> {
@@ -49,7 +69,7 @@ export class CSCUtil {
         });
     }
 
-    static encodetMemo(memo: Object): Object {
+    static encodeMemo(memo: Object): Object {
         function removeUndefined(obj: Object): Object {
             // return _.omit(obj, _.isUndefined)
             Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key]);
@@ -67,5 +87,11 @@ export class CSCUtil {
         };
     }
 
+    
+    private bytesToHex(byteArray) {
+        return Array.from(byteArray, function(byte: number) {
+          return ('0' + (byte & 0xFF).toString(16).toUpperCase()).slice(-2);
+        }).join('')
+    }
 
 }

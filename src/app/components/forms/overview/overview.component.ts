@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
-import { CSCUtil } from '../../../domain/cscutil';
+import { CSCUtil } from '../../../domain/csc-util';
 import { LedgerStreamMessages, ServerStateMessage } from '../../../domain/websocket-types';
 import { Logger } from 'angular2-logger/core';
 
