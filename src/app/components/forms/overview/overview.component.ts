@@ -51,8 +51,8 @@ export class OverviewComponent implements OnInit {
     this.walletService.openWalletSubject.subscribe( result => {
       if(result == AppConstants.KEY_LOADED){
         this.logger.debug("### Overview Wallet Open ###");
-        this.balance = this.walletService.getWalletBalance();
-        this.transaction_count = this.walletService.getWalletTxCount();
+        this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
+        this.transaction_count = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
         let lastTX = this.walletService.getWalletLastTx();
         if(lastTX != null){
           this.last_transaction = lastTX.timestamp;

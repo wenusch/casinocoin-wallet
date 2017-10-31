@@ -21,13 +21,21 @@ export class CSCDatePipe implements PipeTransform {
 export class CSCAmountPipe implements PipeTransform {
     constructor(){}
 
-    transform(value): string {
+    transform(value, includeCurrency: boolean): string {
         if(value == null){
             return "-";
         } else if(isNaN(value)){
-            return CSCUtil.dropsToCsc(value);
+            let amount = CSCUtil.dropsToCsc(value);
+            if(includeCurrency){
+                amount = amount + " CSC";
+            }
+            return amount;
         } else {
-            return CSCUtil.dropsToCsc(value.toString());
+            let amount = CSCUtil.dropsToCsc(value.toString());
+            if(includeCurrency){
+                amount = amount + " CSC";
+            }
+            return amount;
         }
     }
 }

@@ -3,7 +3,7 @@
         <p-panel header="Wallet" [style]="{'height':'100%'}">
             <mat-list>
                 <mat-list-item class="item-header">Balance</mat-list-item>
-                <mat-list-item class="item-value">{{balance | cscAmount}} CSC</mat-list-item>
+                <mat-list-item class="item-value">{{balance | cscAmount: true}}</mat-list-item>
                 <mat-list-item class="item-header">Estimated Fiat Value</mat-list-item>
                 <mat-list-item class="item-value">{{fiat_balance}}</mat-list-item>
                 <mat-list-item class="item-header">Transactions</mat-list-item>
@@ -72,6 +72,9 @@
                 <i [ngClass]="getValidatedIconClasses(data.validated)"></i>
             </ng-template>
         </p-column>
+        <ng-template pTemplate="emptymessage">
+            <p class="color_red">There are no transactions in the wallet.</p>
+        </ng-template>
         <ng-template let-data pTemplate="rowexpansion">
             <div class="ui-grid ui-grid-responsive ui-fluid" style="padding:20px">
                 <div class="ui-grid-row">
