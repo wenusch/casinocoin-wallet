@@ -5,6 +5,10 @@
     font-weight: bolder;
 }
 
+::ng-deep .item-label {
+    font-size: smaller;
+}
+
 ::ng-deep .item-value {
     font-weight: bolder;
     font-size: smaller;
@@ -29,4 +33,12 @@
 
 .panel-group-height {
     height: calc(100% - 265px);
+}
+
+::ng-deep .color_red {
+    color: $casinocoinRed;
+}
+
+::ng-deep .color_green {
+    color: $casinocoinGreen;
 }

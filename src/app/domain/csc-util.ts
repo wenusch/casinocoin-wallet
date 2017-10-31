@@ -1,5 +1,5 @@
 import Big from 'big.js';
-import { Amount, CasinocoindAmount }  from './csc-types';
+import { Amount, Memo, CasinocoindAmount, CasinocoinMemo }  from './csc-types';
 
 export class CSCUtil {
 
@@ -17,6 +17,10 @@ export class CSCUtil {
     
     static iso8601ToCasinocoinTime(iso8601: string): number {
         return this.unixToCasinocoinTimestamp(Date.parse(iso8601))
+    }
+
+    static casinocoinTimeNow(): number {
+        return this.unixToCasinocoinTimestamp(Date.now());
     }
 
     static dropsToCsc(drops: string): string {
@@ -47,7 +51,7 @@ export class CSCUtil {
         return default_object;
     }
 
-    static decodeMemos(memos: Array<Object>) : Array<Object> {
+    static decodeMemos(memos: Array<CasinocoinMemo>) : Array<Memo> {
         function removeUndefined(obj: Object): Object {
             // return _.omit(obj, _.isUndefined)
             Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key]);
@@ -61,28 +65,32 @@ export class CSCUtil {
             return undefined;
         }
         return memos.map(m => {
-            return removeUndefined({
-                type: hexToString(m['Memo'].MemoType),
-                format: hexToString(m['Memo'].MemoFormat),
-                data: hexToString(m['Memo'].MemoData)
-            });
+            let memoObject = { memo:
+                removeUndefined({
+                    memoType: hexToString(m['Memo'].MemoType),
+                    memoFormat: hexToString(m['Memo'].MemoFormat),
+                    memoData: hexToString(m['Memo'].MemoData)
+                })
+            };
+            return memoObject;
         });
     }
 
-    static encodeMemo(memo: Object): Object {
+    static encodeMemo(inputMemo: Memo): CasinocoinMemo {
         function removeUndefined(obj: Object): Object {
             // return _.omit(obj, _.isUndefined)
             Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key]);
             return obj;
         }
         function stringToHex(string: string) : string {
-            return string ? (new Buffer(string, 'utf8')).toString('hex').toUpperCase() : undefined;
+            // limit data to 256 bytes
+            return string ? (new Buffer(string.substring(0,256), 'utf8')).toString('hex').toUpperCase() : undefined;
         }
         return {
             Memo: removeUndefined({
-                MemoData: stringToHex(memo['data']),
-                MemoType: stringToHex(memo['type']),
-                MemoFormat: stringToHex(memo['format'])
+                MemoData: stringToHex(inputMemo.memo.memoData), 
+                MemoType: stringToHex(inputMemo.memo.memoType),
+                MemoFormat: stringToHex(inputMemo.memo.memoFormat)
             })
         };
     }

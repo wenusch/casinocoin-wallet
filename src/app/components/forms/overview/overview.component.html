@@ -3,13 +3,13 @@
         <p-panel header="Wallet" [style]="{'height':'100%'}">
             <mat-list>
                 <mat-list-item class="item-header">Balance</mat-list-item>
-                <mat-list-item class="item-value">{{balance}}</mat-list-item>
+                <mat-list-item class="item-value">{{balance | cscAmount}} CSC</mat-list-item>
                 <mat-list-item class="item-header">Estimated Fiat Value</mat-list-item>
                 <mat-list-item class="item-value">{{fiat_balance}}</mat-list-item>
                 <mat-list-item class="item-header">Transactions</mat-list-item>
                 <mat-list-item class="item-value">{{transaction_count}}</mat-list-item>
                 <mat-list-item class="item-header">Last Transaction</mat-list-item>
-                <mat-list-item class="item-value">{{last_transaction | date : 'yyyy-MM-dd HH:mm:ss'}}</mat-list-item>
+                <mat-list-item class="item-value">{{last_transaction | cscDate : 'yyyy-MM-dd HH:mm:ss'}}</mat-list-item>
                 <mat-list-item class="item-value"></mat-list-item>
             </mat-list>
         </p-panel>
@@ -51,43 +51,59 @@
             </ng-template>
         </p-column>
         <p-column expander="true" styleClass="col-icon" [style]="{'width':'25px'}"></p-column>
-        <p-column field="time" header="Time" [style]="{'width':'125px'}">
+        <p-column field="timestamp" header="Time" [style]="{'width':'125px'}">
             <ng-template let-col let-case="rowData" pTemplate="body">
-                <span>{{case[col.field] | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
+                <span>{{case[col.field] | cscDate : 'yyyy-MM-dd HH:mm:ss'}}</span>
             </ng-template>
         </p-column>
-        <p-column field="account" header="Account" [style]="{'width':'200px'}"></p-column>
+        <p-column header="Account" [style]="{'width':'200px'}">
+            <ng-template let-data="rowData" pTemplate="body">
+                <span>{{ getTXAccount(data) }}</span>
+            </ng-template>
+        </p-column>
         <p-column field="amount" header="Amount" [style]="{'width':'75px'}">
             <ng-template let-data="rowData" pTemplate="body">
-                    <span #amountColText>{{ getTXTextColor(amountColText,data) }}{{data.amount}}</span>
+                    <span #amountColText>{{ getTXTextColor(amountColText,data) }}{{data.amount | cscAmount}}</span>
             </ng-template>
         </p-column>
-        <p-column field="ledger" header="Ledger" [style]="{'width':'75px'}"></p-column>
+        <p-column field="inLedger" header="Ledger" [style]="{'width':'75px'}"></p-column>
         <p-column field="validated" header="Confirmed" [style]="{'width':'75px'}">
             <ng-template let-data="rowData" pTemplate="body">
                 <i [ngClass]="getValidatedIconClasses(data.validated)"></i>
             </ng-template>
         </p-column>
-        <ng-template let-car pTemplate="rowexpansion">
+        <ng-template let-data pTemplate="rowexpansion">
             <div class="ui-grid ui-grid-responsive ui-fluid" style="padding:20px">
                 <div class="ui-grid-row">
                     <div class="ui-grid-col-12">
                         <div class="ui-grid ui-grid-responsive ui-grid-pad">
                             <div class="ui-grid-row">
-                                <div class="ui-grid-col-2 label item-value">Transaction ID: </div>
-                                <div class="ui-grid-col-10">ASDFASFASF243ASDF23424DSG55757123JKHDF24097HGHHDFHG</div>
+                                <div class="ui-grid-col-2 label item-label">Transaction ID: </div>
+                                <div class="ui-grid-col-10 item-value">{{data.txID}}</div>
                             </div>
                             <div class="ui-grid-row">
-                                    <div class="ui-grid-col-2 label item-value">Sender: </div>
-                                    <div class="ui-grid-col-10">cMhWoNXXXBBemk7UuKS2mvZBk355Nbk2YA</div>
-                                </div>
-                            <div class="ui-grid-row">
-                                <div class="ui-grid-col-2 label item-value">Description: </div>
-                                <div class="ui-grid-col-10">This is a test transaction</div>
+                                <div class="ui-grid-col-2 label item-label">Sender: </div>
+                                <div class="ui-grid-col-10 item-value">{{data.accountID}}</div>
                             </div>
                             <div class="ui-grid-row">
-                                <div class="ui-grid-col-2 label">Ledger: </div>
-                                <div class="ui-grid-col-10">2311</div>
+                                <div class="ui-grid-col-2 label item-label">Receiver: </div>
+                                <div class="ui-grid-col-10 item-value">{{data.destination}}</div>
+                            </div>
+                            <div class="ui-grid-row">
+                                <div class="ui-grid-col-2 label item-label">Amount: </div>
+                                <div class="ui-grid-col-10 item-value">{{data.amount | cscAmount}}</div>
+                            </div>
+                            <div class="ui-grid-row">
+                                <div class="ui-grid-col-2 label item-label">Description: </div>
+                                <div class="ui-grid-col-10 item-value">{{getDescription(data)}}</div>
+                            </div>
+                            <div class="ui-grid-row">
+                                <div class="ui-grid-col-2 label item-label">Ledger: </div>
+                                <div class="ui-grid-col-10 item-value">{{data.inLedger}}</div>
+                            </div>
+                            <div class="ui-grid-row">
+                                <div class="ui-grid-col-2 label item-label">Transaction Type: </div>
+                                <div class="ui-grid-col-10 item-value">{{data.transactionType}}</div>
                             </div>
                         </div>
                     </div>

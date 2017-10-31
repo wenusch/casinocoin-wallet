@@ -1,3 +1,5 @@
+import { Memo } from './csc-types';
+
 export interface LokiAccount {
     $loki?: string,
     accountID: string;
@@ -46,24 +48,27 @@ export interface LokiSwap {
 export interface LokiTransaction {
     $loki?: string,
     txID: string;
-    account: string;
-    amount: number;
+    accountID: string;
+    amount: string;
     destination: string;
-    fee: number;
+    fee: string;
     flags: number;
     lastLedgerSequence: number;
-    memos: [
-        {
-            memo: {
-                memoData: string;
-                memoFormat: string;
-            }
-        }
-    ],
+    memos?: Array<Memo>,
     sequence: number;
     signingPubKey: string;
     transactionType: string;
     txnSignature: string;
     timestamp: number;
-    hash: string;
+    direction: string;
+    validated: boolean;
+    status: string;
+    inLedger?: number;
+}
+
+export interface LokiAddress {
+    $loki?: string,
+    accountID: string;
+    label: string;
+    owner: boolean;
 }

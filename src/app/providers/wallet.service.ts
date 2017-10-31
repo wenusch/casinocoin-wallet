@@ -41,6 +41,10 @@ export class WalletService {
   public isWalletOpen: boolean = false;
   public openWalletSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
 
+  public balance:string = this.getWalletBalance();
+  public txCount:number = this.getWalletTxCount();
+  public lastTx:LokiTypes.LokiTransaction = this.getWalletLastTx();
+
   constructor(private logger: Logger, 
               private electron: ElectronService,
               private localStorageService: LocalStorageService,
@@ -99,8 +103,8 @@ export class WalletService {
 
     function createCollections() {
       collectionSubject.next(walletDB.addCollection("accounts", {unique: ["accountID"]}));
-      collectionSubject.next(walletDB.addCollection("transactions"));
-      collectionSubject.next(walletDB.addCollection("addressbook"));
+      collectionSubject.next(walletDB.addCollection("transactions", {unique: ["txID"]}));
+      collectionSubject.next(walletDB.addCollection("addressbook", {unique: ["accountID"]}));
       collectionSubject.next(walletDB.addCollection("log"));
       collectionSubject.next(walletDB.addCollection("keys", {unique: ["accountID"]}));
       collectionSubject.next(walletDB.addCollection("swaps", {unique: ["swapID"]}));
@@ -199,19 +203,13 @@ export class WalletService {
     this.accounts.update(account);
   }
 
-  getWalletBalance(): string {
-    let totalBalance = new Big("0");
-    // loop over all accounts
-    let accounts: Array<LokiTypes.LokiAccount> = this.accounts.find();
-    accounts.forEach(element => {
-      totalBalance = totalBalance + new Big(element.balance);
-    });
-    return totalBalance.toString();
-  }
-
   getAccountBalance(accountID: string): string {
     let account = this.getAccount(accountID);
     return account.balance;
+  }
+
+  isAccountMine(accountID: string): boolean {
+    return (this.accounts.by("accountID", accountID) != null);
   }
 
   // #########################################
@@ -234,7 +232,7 @@ export class WalletService {
     this.keys.update(key);
   }
 
-    // #########################################
+  // #########################################
   // Swaps Collection
   // #########################################
   addSwap(newSwap: LokiTypes.LokiSwap): LokiTypes.LokiSwap{
@@ -279,6 +277,50 @@ export class WalletService {
   }
 
   // #########################################
+  // Transactions Collection
+  // #########################################
+  addTransaction(newTransaction: LokiTypes.LokiTransaction): LokiTypes.LokiTransaction {
+    let insertedTx = this.transactions.insert(newTransaction);
+    return insertedTx;
+  }
+
+  getTransaction(txID: string): LokiTypes.LokiTransaction {
+    return this.transactions.by("txID", txID);
+  }
+
+  getAllTransactions(): Array<LokiTypes.LokiTransaction> {
+    return this.transactions.chain().find().simplesort("timestamp", true).data();
+  }
+
+  getUnvalidatedTransactions(): Array<LokiTypes.LokiTransaction> {
+    return this.transactions.find({ validated:  false });
+  }
+
+  updateTransaction(transaction: LokiTypes.LokiTransaction){
+    this.transactions.update(transaction);
+  }
+
+  // #########################################
+  // Addressbook Collection
+  // #########################################
+  addAddress(newAddress: LokiTypes.LokiAddress): LokiTypes.LokiAddress{
+    let insertedAddress = this.addressbook.insert(newAddress);
+    return insertedAddress;
+  }
+
+  getAddress(accountID: string): LokiTypes.LokiAddress {
+    return this.addressbook.by("accountID", accountID);
+  }
+
+  getAllAddresses(): Array<LokiTypes.LokiAddress> {
+      return this.addressbook.find();
+  }
+
+  updateAddress(address: LokiTypes.LokiAddress){
+    this.addressbook.update(address);
+  }
+
+  // #########################################
   // Wallet Methods
   // #########################################
   generateWalletPasswordHash(walletUUID:string, password:string): string{
@@ -288,7 +330,6 @@ export class WalletService {
 
   checkWalletPasswordHash(walletUUID:string, password:string, walletHash: string): boolean {
     let passwordHash = crypto.createHmac('sha256', password).update(walletUUID).digest('hex');
-    this.logger.debug("### WalletService - Hashed password: " + passwordHash);
     return (walletHash == passwordHash);
   }
 
@@ -302,20 +343,18 @@ export class WalletService {
       if(!element.encrypted){
         let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
         passwordHash = passwordHash.slice(0, 32);
-        let initVectorBuffer = Buffer.from(element.initVector, 'hex');
-        let cipher = crypto.createCipheriv(this.algorithm, passwordHash, initVectorBuffer);
+        let cipher = crypto.createCipheriv(this.algorithm, passwordHash, element.initVector);
         // encrypt key
         let cryptedKey = cipher.update(element.privateKey, 'utf8', 'hex');
         cryptedKey += cipher.final("hex");
         array[index].keyTag = cipher.getAuthTag().toString('hex');
         array[index].privateKey = cryptedKey;
-        cipher = crypto.createCipheriv(this.algorithm, passwordHash, initVectorBuffer);
+        cipher = crypto.createCipheriv(this.algorithm, passwordHash, element.initVector);
         let cryptedSecret = cipher.update(element.secret, 'utf8', 'hex');
         cryptedSecret += cipher.final("hex");
         array[index].secretTag = cipher.getAuthTag().toString('hex');
         array[index].secret = cryptedSecret;
         array[index].encrypted = true;
-        this.logger.debug("### WalletService key encrypted: " + JSON.stringify(element));
       }
       if(index == (array.length - 1)){
         encryptSubject.next(AppConstants.KEY_FINISHED);
@@ -337,14 +376,12 @@ export class WalletService {
   getDecryptPrivateKey(password: string, walletKey: LokiTypes.LokiKey): string {
     let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
     passwordHash = passwordHash.slice(0, 32);
-    let initVectorBuffer = Buffer.from(walletKey.initVector, 'hex');
-    this.logger.debug("### Buffer Length: " + initVectorBuffer.length);
-    let decipher = crypto.createDecipheriv(this.algorithm, password, initVectorBuffer);
+    let decipher = crypto.createDecipheriv(this.algorithm, passwordHash, walletKey.initVector);
     let secretTagBuffer = Buffer.from(walletKey.secretTag, 'hex');
     decipher.setAuthTag(secretTagBuffer);
     let decodedSecret:string = decipher.update(walletKey.secret, 'hex', 'utf8');
     decodedSecret += decipher.final('utf8');
-    const decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+    let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
     if(decodedKeypair.publicKey == walletKey.publicKey){
       // password was correct, return decoded private key
       return decodedKeypair.privateKey;
@@ -379,40 +416,66 @@ export class WalletService {
       secretTag: "",
       encrypted: false
     };
-    let keyPairSubject = new Subject<LokiTypes.LokiKey>();
-    keyPairSubject.subscribe(keyPair => {
-      // save the new private key
-      this.logger.debug(keyPair);
-      this.addKey(keyPair);
-      // add new account
-      let walletAccount: LokiTypes.LokiAccount = {
-        accountID: keyPair.accountID, 
-        balance: "0", 
-        lastSequence: 0, 
-        label: "Imported Private Key",
-        activated: false,
-        ownerCount: 0,
-        lastTxID: "",
-        lastTxLedger: 0
-      };
-      this.addAccount(walletAccount);
-      // encrypt the keys
-      this.encryptAllKeys(password).subscribe(result => {
-        this.messageService.add( {severity:'info', 
-                                  summary:'Private Key Import', 
-                                  detail:'The Private Key import is complete.'
-                                });
-      });
-    });
-    const initVector = crypto.randomBytes(16, function(err, buffer) {
-      const keypair = cscKeyAPI.deriveKeypair(keySeed);
-      newKeyPair.privateKey = keypair.privateKey;
-      newKeyPair.publicKey = keypair.publicKey;
-      newKeyPair.accountID = cscKeyAPI.deriveAddress(keypair.publicKey);
-      newKeyPair.initVector = buffer.toString('hex');
-      newKeyPair.secret = keySeed;
-      keyPairSubject.next(newKeyPair);
+    let keypair = cscKeyAPI.deriveKeypair(keySeed);
+    newKeyPair.privateKey = keypair.privateKey;
+    newKeyPair.publicKey = keypair.publicKey;
+    newKeyPair.accountID = cscKeyAPI.deriveAddress(keypair.publicKey);
+    newKeyPair.initVector = crypto.randomBytes(32).toString('hex');
+    newKeyPair.secret = keySeed;
+    // save the new private key
+    this.addKey(newKeyPair);
+    // add new account
+    let walletAccount: LokiTypes.LokiAccount = {
+      accountID: newKeyPair.accountID, 
+      balance: "0", 
+      lastSequence: 0, 
+      label: "Imported Private Key",
+      activated: false,
+      ownerCount: 0,
+      lastTxID: "",
+      lastTxLedger: 0
+    };
+    this.addAccount(walletAccount);
+    // encrypt the keys
+    this.encryptAllKeys(password).subscribe(result => {
+      this.messageService.add( {severity:'info', 
+                                summary:'Private Key Import', 
+                                detail:'The Private Key import is complete.'
+                              });
     });
   }
   
+  getWalletBalance(): string {
+    let totalBalance = new Big("0");
+    this.logger.debug("### WalletService getWalletBalance, isWalletOpen: " + this.isWalletOpen);
+    if(this.isWalletOpen){
+      // loop over all accounts
+      let accounts: Array<LokiTypes.LokiAccount> = this.accounts.find();
+      accounts.forEach(element => {
+        totalBalance = totalBalance.plus(element.balance);
+      });
+    }
+    return totalBalance.toString();
+  }
+
+  getWalletTxCount(): number {
+    if(this.isWalletOpen){
+      return this.transactions.count();
+    } else {
+      return 0;
+    }
+  }
+
+  getWalletLastTx(): LokiTypes.LokiTransaction {
+    if(this.isWalletOpen){
+      let txArray: Array<LokiTypes.LokiTransaction> = this.transactions.chain().find().simplesort("timestamp", true).data();
+      if(txArray.length > 0){
+        return txArray[0];
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
 }

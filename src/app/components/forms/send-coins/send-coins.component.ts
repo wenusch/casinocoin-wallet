@@ -17,9 +17,10 @@ export class SendCoinsComponent implements OnInit {
 
   @ViewChild('receipientInput') receipientInput;
   @ViewChild('descriptionInput') descriptionInput;
-  @ViewChild('amountInput') amounttInput;
+  @ViewChild('amountInput') amountInput;
   @ViewChild('accountDropdown') accountDropdown: Dropdown;
-  
+  @ViewChild('inputPassword') inputPassword;
+
   accounts: SelectItem[] = [];
   selectedAccount: string;
   receipient: string;
@@ -27,11 +28,12 @@ export class SendCoinsComponent implements OnInit {
   amount: string;
   walletPassword: string;
   showPasswordDialog:boolean = false;
+  signAndSubmitIcon:string = "fa-check";
   
   constructor(private logger:Logger, 
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
-              private messageSerice: MessageService ) { }
+              private messageService: MessageService ) { }
 
   ngOnInit() {
     // get accounts from wallet
@@ -51,7 +53,7 @@ export class SendCoinsComponent implements OnInit {
   }
 
   focusAmount(){
-    this.amounttInput.nativeElement.focus();
+    this.amountInput.nativeElement.focus();
   }
 
   doCancelSignAndSubmitTx(){
@@ -59,20 +61,35 @@ export class SendCoinsComponent implements OnInit {
   }
 
   doSignAndSubmitTx(){
-    this.showPasswordDialog = false;
-    let txObject = this.casinocoinService.createPaymentTx(this.selectedAccount, this.receipient, CSCUtil.cscToDrops(this.amount));
+    this.signAndSubmitIcon = "fa-refresh";
+    let txObject = this.casinocoinService.createPaymentTx(
+      this.selectedAccount, 
+      this.receipient, 
+      CSCUtil.cscToDrops(this.amount),
+      this.description
+    );
     this.logger.debug("### Sign: " + JSON.stringify(txObject));
     let txBlob:string = this.casinocoinService.signTx(txObject, this.walletPassword);
     if(txBlob == AppConstants.KEY_ERRORED){
       // probably a wrong password!
-      this.messageSerice.add({severity:'error', summary:'Transaction Signing', detail:'There was an error signing the transactions. Verify your password.'});
+      this.messageService.add({severity:'error', summary:'Transaction Signing', detail:'There was an error signing the transactions. Verify your password.'});
     } else {
       this.casinocoinService.submitTx(txBlob);
+      // reset form and dialog fields
+      this.selectedAccount = "";
+      this.receipient = "";
+      this.description = "";
+      this.walletPassword = "";
+      this.amount = "";
+      this.accountDropdown.resetFilter();
     }
+    this.showPasswordDialog = false;
+    this.signAndSubmitIcon = "fa-check";
   }
 
   doSendCoins(){
     this.logger.debug("### SendCoinsComponent - doSendCoins ###");
     this.showPasswordDialog = true;
+    this.inputPassword.nativeElement.focus();
   }
 }

@@ -10,4 +10,12 @@ export class AppConstants {
     public static KEY_FINISHED = 'FINISHED';
     public static KEY_ERRORED = 'ERRORED';
     public static KEY_WALLET_PASSWORD = ' walletPassword';
+    public static KEY_WALLET_TX_IN = 'incommingTX';
+    public static KEY_WALLET_TX_OUT = 'outgoingTX';
+    public static KEY_WALLET_TX_BOTH = 'walletInternalTX';
+    public static KEY_TX_STATUS_NEW = 'txNEW';
+    public static KEY_TX_STATUS_SEND = 'txSEND';
+    public static KEY_TX_STATUS_ERROR = 'txERROR';
+    public static KEY_TX_STATUS_RECEIVED = 'txRECEIVED';
+    public static KEY_TX_STATUS_VALIDATED = 'txVALIDATED';
 }

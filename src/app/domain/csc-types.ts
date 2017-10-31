@@ -6,9 +6,21 @@ export type CasinocoinTxObject = {
     Fee: string,
     Flags: number,
     Sequence: number,
+    LastLedgerSequence : number,
     InvoiceID?: string,
+    Memos?: Array<CasinocoinMemo>,
     SourceTag?: string,
-    DestinationTag?: string
+    DestinationTag?: string,
+    TxnSignature?: string,
+    SigningPubKey?: string
+}
+
+export type CasinocoinMemo = {
+    Memo: {
+        MemoData?: string;
+        MemoFormat?: string;
+        MemoType?: string;
+    }
 }
 
 export type CasinocoindAmountIOU = {
@@ -58,9 +70,11 @@ export type MinAdjustment = {
 }
 
 export type Memo = {
-    type ? : string,
-    format ? : string,
-    data ? : string
+    memo: {
+        memoType ? : string,
+        memoFormat ? : string,
+        memoData ? : string
+    }
 }
 
 export type PaymentFlags = {
