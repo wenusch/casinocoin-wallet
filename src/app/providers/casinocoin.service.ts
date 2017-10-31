@@ -142,7 +142,7 @@ export class CasinocoinService implements OnDestroy {
                 // check if we already have the TX
                 let dbTX: LokiTransaction = this.walletService.getTransaction(msg_tx.hash);
                 this.logger.debug("### CasinocoinService - Incomming TX Current: " + JSON.stringify(dbTX));
-                if(dbTX == null){
+                if(dbTX == undefined){
                     let txDirection:string;
                     if(this.walletService.isAccountMine(msg_tx.Destination)){
                         txDirection = AppConstants.KEY_WALLET_TX_IN;

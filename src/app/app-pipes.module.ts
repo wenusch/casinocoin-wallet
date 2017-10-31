@@ -23,7 +23,7 @@ export class CSCAmountPipe implements PipeTransform {
 
     transform(value, includeCurrency: boolean): string {
         if(value == null){
-            return "-";
+            return "";
         } else if(isNaN(value)){
             let amount = CSCUtil.dropsToCsc(value);
             if(includeCurrency){
