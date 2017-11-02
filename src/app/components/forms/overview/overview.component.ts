@@ -27,18 +27,6 @@ export class OverviewComponent implements OnInit {
               private casinocoinService: CasinocoinService,
               private walletService: WalletService) { 
     this.logger.debug("### INIT Overview ###");
-    // this.transactions = [
-    //   {time: Date.now(), amount: 2344, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 245, validated: false},
-    //   {time: Date.now(), amount: 1003, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 215, validated: true},
-    //   {time: Date.now(), amount: -200, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 195, validated: true},
-    //   {time: Date.now(), amount: 23, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 165, validated: true},
-    //   {time: Date.now(), amount: 1644, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 154, validated: true},
-    //   {time: Date.now(), amount: -3, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 125, validated: true},
-    //   {time: Date.now(), amount: -1988, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 92, validated: true},
-    //   {time: Date.now(), amount: 23275, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 88, validated: true},
-    //   {time: Date.now(), amount: 20000, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 61, validated: true},
-    //   {time: Date.now(), amount: 1000, account: "cpcPqHu4TpXwF34LN5TGvB31QE5L3bNYWy", ledger: 32, validated: true}
-    // ];
   }
 
   ngOnInit() {

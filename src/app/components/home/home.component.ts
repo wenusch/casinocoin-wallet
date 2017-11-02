@@ -14,6 +14,9 @@ import { AlertComponent } from '../alert/alert.component';
 
 import * as LokiTypes from '../../domain/lokijs';
 
+const path = require('path');
+const fs = require('fs');
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
@@ -185,7 +188,19 @@ export class HomeComponent implements OnInit {
           properties: ['openDirectory','createDirectory']}, (result) => {
           this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
           if(result && result.length>0) {
-              this.privateKeyExportLocation = result[0];
+            this.privateKeyExportLocation = result[0];
+            // get all decrypted private keys
+            let allPrivateKeys = this.walletService.decryptAllKeys("test1234");
+            // create a filename
+            let keyFilePath = path.join(result[0], (this.currentWallet + '.keys'));
+            // Write the JSON array to the file 
+            fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
+              if(err){
+                  alert("An error ocurred creating the file "+ err.message)
+              }
+                          
+              alert("The file has been succesfully saved");
+            });
           }
         }
     );

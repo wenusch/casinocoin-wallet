@@ -219,17 +219,20 @@ export class WalletSetupComponent implements OnInit {
               // server found to connect to
               this.logger.debug("### WalletSetup - Connect to Network");
               this.websocketService.connect();
-              // subscribe to incomming messages
+              // connect and subscribe to Casinocoin Service messages
               this.casinocoinService.connect().subscribe((message: any) => {
-                this.connectedToNetwork = true;
-                this.logger.debug("### Received Network Message: " + JSON.stringify(message));
+                this.logger.debug("### WalletSetup - Connect Message: " + message);
+                if(message == AppConstants.KEY_CONNECTED){
+                  this.connectedToNetwork = true;
+                  this.enableFinishCreation = true;
+                }
+                
               });
               // the websocket has a queued subject so send out the messages
               this.casinocoinService.getServerState();
               this.casinocoinService.subscribeToLedgerStream();
               this.casinocoinService.subscribeToAccountsStream([walletAccount.accountID]);
             }
-            this.enableFinishCreation = true;
           });
         }
       }

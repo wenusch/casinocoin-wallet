@@ -49,8 +49,9 @@ export class CasinocoinService implements OnDestroy {
 
     connect(): Observable<any> {
         this.logger.debug("### CasinocoinService Connect() - isConnected: " + this.isConnected);
-        let connectSubject = new Subject<string>();
+        let connectSubject;
         if(!this.isConnected){
+            connectSubject = new BehaviorSubject<string>(AppConstants.KEY_DISCONNECTED);
             // check if websocket is open, otherwise wait till it is
             const connectedSubscription = this.wsService.isConnected$.subscribe(connected => {
                 this.logger.debug("### CasinocoinService isConnected: " + connected);
@@ -85,6 +86,8 @@ export class CasinocoinService implements OnDestroy {
                     this.isConnected = false;
                 }
             });
+        } else {
+           connectSubject = new BehaviorSubject<string>(AppConstants.KEY_CONNECTED);
         }
         // return observable with incomming message
         return connectSubject.asObservable();

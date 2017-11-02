@@ -74,6 +74,11 @@ export class WalletService {
 
     let collectionSubject = new Subject<any>();
     let createSubject = new Subject<any>();
+    createSubject.subscribe(result => {
+      if(result == AppConstants.KEY_FINISHED){
+        this.openWalletSubject.next(AppConstants.KEY_LOADED);
+      }
+    });
 
     collectionSubject.subscribe( collection => {
       if(collection.name == "accounts")
@@ -363,14 +368,40 @@ export class WalletService {
     return encryptSubject.asObservable();
   }
 
-  decryptAllKeys(password: string){
-    // get all keys
-    let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
-    allKeys.forEach( (element, index, array) => {
-      // decrypt key
-      array[index].privateKey = element.privateKey;
-      array[index].secret = element.secret;
-    })
+  decryptAllKeys(password: string): Array<LokiTypes.LokiKey>{
+    // check the wallet password
+    let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
+    let currentWallet = this.localStorageService.get(AppConstants.KEY_CURRENT_WALLET);
+    let walletIndex = availableWallets.findIndex( item => item['walletUUID'] == currentWallet);
+    let walletObject = availableWallets[walletIndex];
+    this.logger.debug("### Check Wallet Password: " + JSON.stringify(walletObject));
+    if(this.checkWalletPasswordHash(currentWallet, password, walletObject['hash'])){
+      // get all keys
+      let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
+      allKeys.forEach( (element, index, array) => {
+        // decrypt key
+        this.logger.debug("Decrypt["+index+"]: " + JSON.stringify(element));
+        let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+        passwordHash = passwordHash.slice(0, 32);
+        let decipher = crypto.createDecipheriv(this.algorithm, passwordHash, element.initVector);
+        let secretTagBuffer = Buffer.from(element.secretTag, 'hex');
+        decipher.setAuthTag(secretTagBuffer);
+        let decodedSecret:string = decipher.update(element.secret, 'hex', 'utf8');
+        decodedSecret += decipher.final('utf8');
+        this.logger.debug("decoded secret: " + decodedSecret);
+        let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+        // check if public key is the same
+        if(decodedKeypair.publicKey == element.publicKey){
+          // save decrypted values onto object
+          array[index].privateKey = decodedKeypair.privateKey;
+          array[index].secret = decodedSecret;
+          array[index].encrypted = false;
+        }
+      });
+      return allKeys;
+    } else {
+      return [];
+    }
   }
 
   getDecryptPrivateKey(password: string, walletKey: LokiTypes.LokiKey): string {
