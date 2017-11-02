@@ -12,6 +12,9 @@ serve = args.some(val => val === '--serve');
 const version = app.getVersion();
 const platform = os.platform() + '_' + os.arch();
 
+// set property for exit dialog
+let showExitPrompt = true;
+
 let updaterFeedURL = 'http://download.casinocoin.org/update/' + platform + '/' + version;
 if(version.indexOf("beta") !== -1){
 	updaterFeedURL = updaterFeedURL + '/' + 'beta';
@@ -118,12 +121,22 @@ function createWindow() {
   }
 
   // Emitted when the window is closed.
-  win.on('closed', () => {
-    // Dereference the window object, usually you would store window
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    win = null;
-  });
+  win.on('close', (e) => {
+    if (showExitPrompt) {
+        e.preventDefault() // Prevents the window from closing 
+        dialog.showMessageBox({
+            type: 'question',
+            buttons: ['Yes', 'No'],
+            title: 'Confirm',
+            message: 'Are you sure you want to close the wallet?'
+        }, function (response) {
+            if (response === 0) { // Runs the following if 'Yes' is clicked
+                showExitPrompt = false;
+                win.close();
+            }
+        })
+    }
+  })
 
   // Disable menu bar
   win.setMenu(null);
@@ -161,6 +174,7 @@ try {
   app.on('before-quit', () => {
     console.log('Quiting Casinocoin Wallet, save the database!!!');
     win.webContents.send('wallet-save');
+    showExitPrompt = true;
   });
 
 } catch (e) {

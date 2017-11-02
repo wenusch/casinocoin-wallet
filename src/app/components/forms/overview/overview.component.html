@@ -67,7 +67,7 @@
             </ng-template>
         </p-column>
         <p-column field="inLedger" header="Ledger" [style]="{'width':'75px'}"></p-column>
-        <p-column field="validated" header="Confirmed" [style]="{'width':'75px'}">
+        <p-column field="validated" header="Confirmed" [style]="{'width':'60px', 'text-align':'center'}">
             <ng-template let-data="rowData" pTemplate="body">
                 <i [ngClass]="getValidatedIconClasses(data.validated)"></i>
             </ng-template>

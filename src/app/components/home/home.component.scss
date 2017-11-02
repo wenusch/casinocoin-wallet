@@ -74,6 +74,10 @@ background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 1
   font-size: smaller;
 }
 
+::ng-deep p-dialog .ui-widget-header {
+  color: #000000;
+}
+
 ::ng-deep .mat-list .mat-list-item, .mat-nav-list .mat-list-item, .mat-selection-list .mat-list-item {
   font-size: 14px;
 }

@@ -3,9 +3,10 @@ import { Router } from '@angular/router';
 import { Logger } from 'angular2-logger/core';
 import { LocalStorage, SessionStorage } from "ngx-store";
 import { ElectronService } from "../../providers/electron.service";
+import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron"; 
 import { CasinocoinService } from "../../providers/casinocoin.service";
 import { WalletService } from "../../providers/wallet.service";
-import { MenuItem, Message, ContextMenu } from 'primeng/primeng';
+import { MenuItem as PrimeMenuItem, Message, ContextMenu } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { AppConstants } from '../../domain/app-constants';
@@ -39,12 +40,14 @@ export class HomeComponent implements OnInit {
 
   //show_menu: string = 'shown';
   show_menu: string = 'small';
-  menu_items: MenuItem[];
-  context_menu_items: MenuItem[];
+  menu_items: PrimeMenuItem[];
+  context_menu: ElectronMenu;
 
   showPrivateKeyImportDialog:boolean = false;
   privateKeySeed:string;
   walletPassword:string;
+
+  privateKeyExportLocation: string = "";
 
   // Growl messages
   msgs: Message[] = [];
@@ -79,17 +82,44 @@ export class HomeComponent implements OnInit {
         { label: 'Addressbook', icon: 'fa fa-address-book fa-2x', command: (event) => { this.onAddressbook() } },
         { label: 'Swap', icon: 'fa fa-exchange fa-2x', command: (event) => { this.onCoinSwap() } }
     ];
-    // define context menu
-    this.context_menu_items = [
-      { label: 'Settings', icon: 'fa-info-circle', command: (event) => { this.onSettings() } },
-      { label: 'Tools', icon: 'fa-wrench', items: 
-        [
-          {label: 'Import Private Key', icon: 'fa-download', command: (event) => {this.showPrivateKeyImportDialog = true;} }
-        ]
+
+    
+    // define context menu when COG is clicked
+    let context_menu_template = [
+      { label: 'Settings', click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('context-menu-event', 'settings'); }
       },
-      { separator:true },
-      { label: 'Quit', icon: 'fa-sign-out', command: (event) => { this.onQuit() } }
+      { label: 'Tools', submenu: [
+          {label: 'Import Private Key', click(menuItem, browserWindow, event) { 
+            browserWindow.webContents.send('context-menu-event', 'import-priv-key'); }
+          },
+          {label: 'Export Private Keys', click(menuItem, browserWindow, event) { 
+            browserWindow.webContents.send('context-menu-event', 'export-priv-keys'); }
+          }
+        ]
+      }
     ];
+    this.context_menu = this.electron.remote.Menu.buildFromTemplate(context_menu_template);
+    this.context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
+    this.context_menu.append(new this.electron.remote.MenuItem(
+      { label: 'Quit', click(menuItem, browserWindow, event) { 
+        browserWindow.webContents.send('context-menu-event', 'quit'); }
+      })
+    );
+    // listen to context menu events
+    this.electron.ipcRenderer.on('context-menu-event', (event, arg) => {
+      if(arg == 'settings')
+        this.onSettings();
+      else if(arg == 'import-priv-key')
+        this.onPrivateKeyImport();
+      else if(arg == 'export-priv-keys')
+        this.onPrivateKeysExport();
+      else if(arg == 'quit')
+        this.onQuit();
+      else
+        this.logger.debug("### Context menu not implemented: " + arg);
+    });
+    // navigate to the overview
     this.router.navigate(['overview']);
     // open the wallet if not yet open
     if(!this.walletService.isWalletOpen){
@@ -99,12 +129,24 @@ export class HomeComponent implements OnInit {
           this.logger.debug("### HOME load the accounts ###");
           this.messageService.add({severity:'info', summary:'Service Message', detail:'Succesfully opened the wallet.'});
           // connect to the network
-          this.casinocoinService.connect();
+          this.casinocoinService.connect().subscribe( connectResult => {
+            if(connectResult == AppConstants.KEY_CONNECTED){
+              this.messageService.add({severity:'info', summary:'Service Message', detail:'Connected to the Casinocoin network.'});
+            } else if (connectResult == AppConstants.KEY_DISCONNECTED){
+              this.messageService.add({severity:'info', summary:'Service Message', detail:'Disconnected from the Casinocoin network!'});
+            }
+          });
         }
       });
     } else {
       // connect to the network
-      this.casinocoinService.connect();
+      this.casinocoinService.connect().subscribe( connectResult => {
+        if(connectResult == AppConstants.KEY_CONNECTED){
+          this.messageService.add({severity:'info', summary:'Service Message', detail:'Connected to the Casinocoin network.'});
+        } else if (connectResult == AppConstants.KEY_DISCONNECTED){
+          this.messageService.add({severity:'info', summary:'Service Message', detail:'Disconnected from the Casinocoin network!'});
+        }
+      });
     }
   }
 
@@ -114,8 +156,7 @@ export class HomeComponent implements OnInit {
   }
 
   onContextMenuClick(event) {
-    this.logger.debug("ContextMenu Clicked !! ");
-    this.contextMenu.show(event);
+    this.context_menu.popup(this.electron.remote.getCurrentWindow());
   }
 
   selectedMenuItem(item) {
@@ -128,10 +169,26 @@ export class HomeComponent implements OnInit {
 
   onQuit() {
     this.logger.debug("Quit Clicked !!");
-    // save the wallet
+    // Close the windows to cause an application exit
+    this.electron.remote.getCurrentWindow.call( close() );
+  }
 
-    // call application exit
-    this.electron.remote.app.exit();
+  onPrivateKeyImport() {
+    this.showPrivateKeyImportDialog = true;
+  }
+
+  onPrivateKeysExport() {
+    this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("documents"));
+    this.electron.remote.dialog.showOpenDialog(
+        { title: 'Private Key Export Location',
+          defaultPath: this.electron.remote.app.getPath("documents"), 
+          properties: ['openDirectory','createDirectory']}, (result) => {
+          this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
+          if(result && result.length>0) {
+              this.privateKeyExportLocation = result[0];
+          }
+        }
+    );
   }
 
   onOverview() {

@@ -24,7 +24,6 @@ export class CasinocoinService implements OnDestroy {
     private ledgersLoaded: boolean = false;
     private connectedSubscription: Subscription;
     private socketSubscription: Subscription;
-    private subject = new Subject<any>();
     public ledgerSubject = new Subject<LedgerStreamMessages>();
     public ledgers: Array<LedgerStreamMessages> = [];
     public serverState: ServerStateMessage;
@@ -50,11 +49,14 @@ export class CasinocoinService implements OnDestroy {
 
     connect(): Observable<any> {
         this.logger.debug("### CasinocoinService Connect() - isConnected: " + this.isConnected);
+        let connectSubject = new Subject<string>();
         if(!this.isConnected){
             // check if websocket is open, otherwise wait till it is
             const connectedSubscription = this.wsService.isConnected$.subscribe(connected => {
                 this.logger.debug("### CasinocoinService isConnected: " + connected);
                 if(connected && !this.isConnected){
+                    // inform listeners we are connected
+                    connectSubject.next(AppConstants.KEY_CONNECTED);
                     this.isConnected = true;
                     // subscribe to incomming messages on the websocket
                     this.subscribeToMessages();
@@ -78,12 +80,14 @@ export class CasinocoinService implements OnDestroy {
                     });
                 } else if(this.isConnected && !connected) {
                     this.logger.debug("### CasinocoinService Connect Closed !! - isConnected: " + connected);
+                    // inform listeners we are disconnected
+                    connectSubject.next(AppConstants.KEY_DISCONNECTED);
                     this.isConnected = false;
                 }
             });
         }
         // return observable with incomming message
-        return this.subject.asObservable();
+        return connectSubject.asObservable();
     }
 
     initServerState(){
@@ -112,7 +116,7 @@ export class CasinocoinService implements OnDestroy {
     }
 
     addLedger(ledger: LedgerStreamMessages){
-        // this.ledgerSubject.next(ledger);
+        this.ledgerSubject.next(ledger);
         this.ledgers.splice(0,0,ledger);
     }
 
@@ -134,8 +138,7 @@ export class CasinocoinService implements OnDestroy {
                     this.getTransaction(tx.txID);
                 });
             } else if(incommingMessage['type'] == 'serverStatus'){
-                // this.logger.debug("server state: " + incommingMessage['server_status']);
-                this.subject.next(incommingMessage);
+                this.logger.debug("server state: " + incommingMessage['server_status']);
             } else if(incommingMessage['type'] == 'transaction'){
                 let msg_tx = incommingMessage['transaction'];
                 this.logger.debug("### CasinocoinService - Incomming TX: " + JSON.stringify(msg_tx));
@@ -223,7 +226,7 @@ export class CasinocoinService implements OnDestroy {
                             validated_ledgers: incommingMessage.result.ledger.seqNum
                         }
                         this.addLedger(ledgerMessage);
-                        this.subject.next(incommingMessage.result);
+                        this.ledgerSubject.next(ledgerMessage);
                     } else {
                         this.logger.debug("### CasinocoinService - Get Ledger Error: " + JSON.stringify(incommingMessage));
                     }

@@ -9,6 +9,8 @@ export class AppConstants {
     public static KEY_LOADED = 'LOADED';
     public static KEY_FINISHED = 'FINISHED';
     public static KEY_ERRORED = 'ERRORED';
+    public static KEY_CONNECTED = 'CONNECTED';
+    public static KEY_DISCONNECTED = 'DISCONNECTED';
     public static KEY_WALLET_PASSWORD = ' walletPassword';
     public static KEY_WALLET_TX_IN = 'incommingTX';
     public static KEY_WALLET_TX_OUT = 'outgoingTX';

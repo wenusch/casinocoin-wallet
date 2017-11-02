@@ -7,6 +7,7 @@ import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { AppConstants } from '../../../domain/app-constants';
+import Big from 'big.js';
 
 @Component({
   selector: 'app-send-coins',
@@ -39,11 +40,10 @@ export class SendCoinsComponent implements OnInit {
     // get accounts from wallet
     if(this.walletService.isWalletOpen){
       this.walletService.getAllAccounts().forEach( element => {
-        let accountLabel = element.accountID;
-        if(element.label.length > 0){
-          accountLabel = accountLabel + " [Balance: " + CSCUtil.dropsToCsc(element.balance) + "]";
+        if(new Big(element.balance) > 0){
+          let accountLabel = element.accountID + " [Balance: " + CSCUtil.dropsToCsc(element.balance) + "]";
+          this.accounts.push({label: accountLabel, value: element.accountID});
         }
-        this.accounts.push({label: accountLabel, value: element.accountID});
       });
     }
   }

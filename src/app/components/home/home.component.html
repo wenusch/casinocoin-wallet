@@ -54,8 +54,8 @@
     <p-growl [(value)]="msgs"></p-growl>
     <router-outlet></router-outlet>
 </div>
-<p-dialog [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="300" [closable]="true" [modal]="true">
-    <p-header>Import Private Key</p-header>
+<p-dialog class="dialog-header" [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="300" [closable]="true" [modal]="true">
+    <p-header>Import private key</p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
