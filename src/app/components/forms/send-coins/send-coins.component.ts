@@ -19,7 +19,7 @@ export class SendCoinsComponent implements OnInit {
   @ViewChild('descriptionInput') descriptionInput;
   @ViewChild('amountInput') amountInput;
   @ViewChild('accountDropdown') accountDropdown: Dropdown;
-  @ViewChild('inputPassword') inputPassword;
+  @ViewChild('passwordInput') passwordInput;
 
   accounts: SelectItem[] = [];
   selectedAccount: string;
@@ -90,6 +90,6 @@ export class SendCoinsComponent implements OnInit {
   doSendCoins(){
     this.logger.debug("### SendCoinsComponent - doSendCoins ###");
     this.showPasswordDialog = true;
-    this.inputPassword.nativeElement.focus();
+    this.passwordInput.nativeElement.focus();
   }
 }

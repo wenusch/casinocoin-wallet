@@ -23,7 +23,7 @@
         <div class="ui-g-12">
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-money"></i></span>
-                <input type="text" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="doSendCoins()" #accountInput>         
+                <input type="number" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="doSendCoins()" #accountInput>         
             </div>
         </div>
         <div class="ui-g-6">
@@ -48,7 +48,7 @@
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
                 <input type="password" pInputText placeholder="Wallet Password" 
-                       [(ngModel)]="walletPassword" (keyup.enter)="doSignAndSubmitTx()" #inputPassword>         
+                       [(ngModel)]="walletPassword" (keyup.enter)="doSignAndSubmitTx()" #passwordInput>         
             </div>
         </div>
         <div class="ui-g-1"></div>
@@ -65,7 +65,4 @@
         </div>
         <div class="ui-g-1"></div>
     </div>
-    <p-footer *ngIf="footer_visible">
-        Error: {{error_message}}
-    </p-footer>
 </p-dialog>

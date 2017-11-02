@@ -62,6 +62,13 @@ export class OverviewComponent implements OnInit {
         // subcribe to transaction updates
         this.casinocoinService.transactionSubject.subscribe( tx => {
           this.logger.debug("### Overview TX Update: " + JSON.stringify(tx));
+          let updateTxIndex = this.transactions.findIndex( item => item.txID == tx.txID);
+          if( updateTxIndex >= 0 ){
+            this.transactions[updateTxIndex] = tx;
+          } else {
+            this.transactions.splice(0,0,tx);
+          }
+          
         });
       }
     });

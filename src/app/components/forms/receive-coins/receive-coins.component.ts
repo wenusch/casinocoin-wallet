@@ -9,6 +9,8 @@ import { CSCUtil } from '../../../domain/csc-util';
 })
 export class ReceiveCoinsComponent implements OnInit {
 
+  accounts: Array<LokiAccount> = [];
+
   constructor() { }
 
   ngOnInit() {
