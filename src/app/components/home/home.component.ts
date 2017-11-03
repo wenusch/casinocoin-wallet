@@ -89,14 +89,14 @@ export class HomeComponent implements OnInit {
     
     // define context menu when COG is clicked
     let context_menu_template = [
-      { label: 'Settings', click(menuItem, browserWindow, event) { 
+      { label: 'Settings', icon: __dirname+ '/assets/icons/cogs_black_16.png', click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'settings'); }
       },
       { label: 'Tools', submenu: [
-          {label: 'Import Private Key', click(menuItem, browserWindow, event) { 
+          {label: 'Import Private Key', icon: __dirname+'/assets/icons/sign-in_black_16.png', click(menuItem, browserWindow, event) { 
             browserWindow.webContents.send('context-menu-event', 'import-priv-key'); }
           },
-          {label: 'Export Private Keys', click(menuItem, browserWindow, event) { 
+          {label: 'Export Private Keys', icon: __dirname+'/assets/icons/sign-out_black_16.png', click(menuItem, browserWindow, event) { 
             browserWindow.webContents.send('context-menu-event', 'export-priv-keys'); }
           }
         ]

@@ -4,10 +4,13 @@
             <button pButton type="button" (click)="showCreateAccount()" icon="fa-check" iconPos="right" label="Create New Account"></button>
         </div>
         <div class="ui-g-12">
+            <p-contextMenu #cm [model]="receiveMenuItems" [style]="{'width':'200px'}"></p-contextMenu>
             <p-dataTable [value]="accounts" [immutable]="false" scrollable="true" scrollHeight="100%"
-                         selectionMode="single">
+                         [contextMenu]="cm" (onRowClick)="onReceiveRowClick($event)" (onContextMenuSelect)="onContextMenu($event)"
+                         [(selection)]="selectedReceiveRow" editable="true" (onEditComplete)="onLabelEditComplete($event)"
+                         (onEditCancel)="onLabelEditCancel($event)">
                 <p-column field="accountID" header="Account" [style]="{'width':'160px'}"></p-column>
-                <p-column field="label" header="Label" [style]="{'width':'160px'}"></p-column>
+                <p-column field="label" header="Label" [style]="{'width':'160px'}" editable="true"></p-column>
                 <p-column field="balance" header="Balance" [style]="{'width':'90px'}">
                     <ng-template let-data="rowData" pTemplate="body">
                         <span>{{data.balance | cscAmount}}</span>
@@ -23,7 +26,7 @@
                         <i [ngClass]="getActivatedIconClasses(data.activated)"></i>
                     </ng-template>
                 </p-column>
-            </p-dataTable>    
+            </p-dataTable>
         </div>
     </div>
 </p-panel>

@@ -35,4 +35,14 @@ html, body {
   padding: 0;
 
   height: 100%;
+  width: 100%;
+}
+
+.centered-image {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
+  width: calc(100% - 30rem);
 }

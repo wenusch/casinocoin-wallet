@@ -6,7 +6,9 @@ import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
 import { Logger } from 'angular2-logger/core';
 import { AppConstants } from '../../../domain/app-constants';
-
+import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron"; 
+import { ElectronService } from '../../../providers/electron.service';
+import { SelectItem, MenuItem } from 'primeng/primeng';
 
 @Component({
   selector: 'app-receive-coins',
@@ -24,10 +26,13 @@ export class ReceiveCoinsComponent implements OnInit {
   accountLabel: string = "";
   showDialogFooter: boolean = false;
   errorMessage: string = "";
+  receiveMenuItems: MenuItem[];
+  selectedReceiveRow: LokiAccount;
 
   constructor(private logger: Logger,
               private casinocoinService: CasinocoinService,
-              private walletService: WalletService) { 
+              private walletService: WalletService,
+              private electronService: ElectronService) { 
           this.logger.debug("### INIT ReceiveCoins ###");
   }
 
@@ -39,10 +44,46 @@ export class ReceiveCoinsComponent implements OnInit {
         this.logger.debug("Created [0]: " + this.accounts[0].meta.created);
       }
     });
+
+    // init swap context menu
+    this.receiveMenuItems = [
+      {label: 'Copy Address', icon: 'fa-copy', command: (event) => this.copyAddress()}
+    ];
+
   }
 
   convertCscTimestamp(inputTime) {
     return CSCUtil.casinocoinToUnixTimestamp(inputTime);
+  }
+
+  onReceiveRowClick(e:any) {
+    this.logger.debug("### onReceiveRowClick: " + JSON.stringify(e));
+    this.selectedReceiveRow = e.data;
+  }
+
+  onLabelEditComplete(event){
+    this.logger.debug("### onLabelEditComplete: " + JSON.stringify(event.data));
+    // save changed account to database
+    this.walletService.updateAccount(event.data);
+  }
+
+  onLabelEditCancel(event){
+    this.logger.debug("### onLabelEditCancel: " + JSON.stringify(event));
+  }
+
+  onContextMenu(event){
+    this.logger.debug("### onContextMenu: " + JSON.stringify(event));
+    this.selectedReceiveRow = event.data;
+  }
+
+  copyAddress(){
+    this.logger.debug("Copy to clipboard: " + this.selectedReceiveRow.accountID);
+    this.electronService.clipboard.writeText(this.selectedReceiveRow.accountID);
+  }
+
+  editLabel(){
+    this.logger.debug("Copy to clipboard: " + this.selectedReceiveRow.accountID);
+    this.electronService.clipboard.writeText(this.selectedReceiveRow.accountID);
   }
 
   showCreateAccount(){

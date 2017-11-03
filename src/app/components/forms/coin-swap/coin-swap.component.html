@@ -4,7 +4,7 @@
             Swap your old casinocoins to new coins by initiating a swap. As soon as you send an amount to 
             the deposit address the swap will be started. A minimal confirmation time of 200 blocks is needed 
             and it can take up to 24 hours to receive your new coins. <p>Do not sent coins multiple times to the 
-            same swap deposit address but rather create a new one.</p><p>Right-Click on a swap to copy the Deposit 
+            same swap deposit address but rather create a new one.</p><p>Select and swap and Right-Click to copy the Deposit 
             Address or Swap ID.</p>
         </div>
         <div class="ui-g-4"></div>
@@ -25,8 +25,9 @@
         </div>
         <div class="ui-g-12">
             <p-contextMenu #cm [model]="swapMenuItems" [style]="{'width':'200px'}"></p-contextMenu>
-            <p-dataTable [value]="swaps" [immutable]="false" scrollable="true" scrollHeight="200px" [contextMenu]="cm"
-                         selectionMode="single" [(selection)]="selectedSwap" (onRowSelect)="onSwapRowSelect($event)">
+            <p-dataTable [value]="swaps" [immutable]="false" scrollable="true" scrollHeight="200px" 
+                         [contextMenu]="cm" selectionMode="single" [(selection)]="selectedSwap" 
+                         (onRowSelect)="onSwapRowSelect($event)">
                 <p-column field="swapID" header="Swap ID" [style]="{'width':'50px'}">
                     <ng-template let-col let-swap="rowData" pTemplate="body">
                         <span>{{swap[col.field].substring(0,10) + '...'}}</span>
