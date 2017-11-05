@@ -38,12 +38,23 @@
             <p-tieredMenu #contextMenu [model]="context_menu_items" [popup]="true"></p-tieredMenu >
             -->
             <div class="ui-g">
-                <div class="ui-g-6">
-                    <div #cog (click)="onContextMenuClick($event)" style="text-align: center; padding-top: 15px; padding-right: 15px;">
-                        <i class="fa fa-cog fa-2x"></i>
+                <div class="ui-g-4">
+                    <div #connection (click)="onConnectionContextMenuClick($event)" 
+                         style="text-align: center; padding-top: 15px; padding-right: 15px;">
+                         <!--   
+                         <i class="fa fa-wifi fa-2x"></i>
+                         -->
+                         <span [matTooltip]="connected_tooltip">
+                            <i [class]="connected_icon"></i>
+                         </span>
                     </div>
                 </div>
-                <div class="ui-g-6">
+                <div class="ui-g-4">
+                    <div #cog (click)="onContextMenuClick($event)" style="text-align: center; padding-top: 15px; padding-right: 15px;">
+                            <i class="fa fa-cog fa-2x"></i>
+                    </div>
+                </div>
+                <div class="ui-g-4">
                     <div (click)="onQuit()" style="text-align: center; padding-top: 15px; padding-right: 15px;">
                         <i class="fa fa-power-off fa-2x"></i>
                     </div>

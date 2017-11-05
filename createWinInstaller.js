@@ -4,7 +4,7 @@ const appVersion = require('./package.json').version;
 const argv = require('minimist')(process.argv.slice(1));
 const arch = argv.arch || 'ia32';
 
-const iconUrlPath = "https://raw.githubusercontent.com/casinocoin/CasinoCoin-Assets/master/casinocoin-icon-32x32.png";
+const iconUrlPath = "https://raw.githubusercontent.com/casinocoin/CasinoCoin-Assets/master/casinocoin-icon-64x64.png";
 
 getInstallerConfig(arch)
   .then(createWindowsInstaller)
@@ -28,6 +28,6 @@ function getInstallerConfig (arch) {
     setupExe: 'casinocoin-wallet-'+arch+'-'+appVersion+'.exe',
     setupIcon: path.join(rootPath, 'src', 'assets', 'icons', 'casinocoin.ico'),
     iconUrl: iconUrlPath,
-    loadingGif: path.join(rootPath, 'src', 'assets', 'casinocoin-icon-64-spinning.gif')
+    loadingGif: path.join(rootPath, 'src', 'assets', 'setup.gif')
   })
 }

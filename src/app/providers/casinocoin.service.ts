@@ -52,38 +52,48 @@ export class CasinocoinService implements OnDestroy {
         let connectSubject;
         if(!this.isConnected){
             connectSubject = new BehaviorSubject<string>(AppConstants.KEY_DISCONNECTED);
-            // check if websocket is open, otherwise wait till it is
-            const connectedSubscription = this.wsService.isConnected$.subscribe(connected => {
-                this.logger.debug("### CasinocoinService isConnected: " + connected);
-                if(connected && !this.isConnected){
-                    // inform listeners we are connected
-                    connectSubject.next(AppConstants.KEY_CONNECTED);
-                    this.isConnected = true;
-                    // subscribe to incomming messages on the websocket
-                    this.subscribeToMessages();
-                    // get the current server state
-                    this.getServerState();
-                    // subscribe to ledger stream
-                    this.subscribeToLedgerStream();
-                    // get accounts and subscribe to accountstream
-                    let subscribeAccounts = [];
-                    // make sure the wallet is openend
-                    this.walletService.openWalletSubject.subscribe(result => {
-                        if(result == AppConstants.KEY_LOADED){
-                            this.walletService.getAllKeys().forEach(element => {
-                                subscribeAccounts.push(element.accountID);
+            // check if the server is found, otherwise wait till it is
+            const serverFoundSubscription = this.wsService.isServerFindComplete$.subscribe(serverFound => {
+                if(serverFound){
+                    // check if websocket is open, otherwise wait till it is
+                    const connectedSubscription = this.wsService.isConnected$.subscribe(connected => {
+                        this.logger.debug("### CasinocoinService isConnected: " + connected);
+                        if(!connected && !this.isConnected){
+                            // subscribe to incomming messages on the websocket to initiate connection
+                            this.subscribeToMessages();
+                        } else if(connected && !this.isConnected){
+                            // inform listeners we are connected
+                            connectSubject.next(AppConstants.KEY_CONNECTED);
+                            this.isConnected = true;
+                            // start KeepAlive messages
+                            // this.keepAlive();
+                            // get the current server state
+                            this.getServerState();
+                            // subscribe to ledger stream
+                            this.subscribeToLedgerStream();
+                            // get accounts and subscribe to accountstream
+                            let subscribeAccounts = [];
+                            // make sure the wallet is openend
+                            this.walletService.openWalletSubject.subscribe(result => {
+                                if(result == AppConstants.KEY_LOADED){
+                                    this.walletService.getAllKeys().forEach(element => {
+                                        subscribeAccounts.push(element.accountID);
+                                    });
+                                    this.logger.debug("### CasinocoinService Accounts: " + JSON.stringify(subscribeAccounts));
+                                    this.subscribeToAccountsStream(subscribeAccounts);
+                                    // update all accounts from the network
+                                    this.checkAllAccounts();
+                                }
                             });
-                            this.logger.debug("### CasinocoinService Accounts: " + JSON.stringify(subscribeAccounts));
-                            this.subscribeToAccountsStream(subscribeAccounts);
-                            // update all accounts from the network
-                            this.checkAllAccounts();
+                        } else if(!connected && this.isConnected) {
+                            this.logger.debug("### CasinocoinService Connect Closed !! - isConnected: " + connected);
+                            // inform listeners we are disconnected
+                            connectSubject.next(AppConstants.KEY_DISCONNECTED);
+                            this.isConnected = false;
+                        } else if(!connected){
+                            connectSubject.next(AppConstants.KEY_DISCONNECTED);
                         }
                     });
-                } else if(this.isConnected && !connected) {
-                    this.logger.debug("### CasinocoinService Connect Closed !! - isConnected: " + connected);
-                    // inform listeners we are disconnected
-                    connectSubject.next(AppConstants.KEY_DISCONNECTED);
-                    this.isConnected = false;
                 }
             });
         } else {
@@ -91,6 +101,10 @@ export class CasinocoinService implements OnDestroy {
         }
         // return observable with incomming message
         return connectSubject.asObservable();
+    }
+
+    disconnect(){
+        this.socketSubscription.unsubscribe();
     }
 
     initServerState(){
@@ -200,7 +214,7 @@ export class CasinocoinService implements OnDestroy {
                     this.getAccountInfo(dbTX.destination);
                     this.getAccountInfo(dbTX.accountID);
                 }
-            }  else if(incommingMessage['type'] == 'response'){
+            }  else if((incommingMessage['type'] == 'response') && incommingMessage.status === 'success'){
                 // this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
                 // we received a response on a request
                 if(incommingMessage['id'] == 'ping'){
@@ -208,72 +222,59 @@ export class CasinocoinService implements OnDestroy {
                     this.logger.debug("### CasinocoinService - Pong");
                 } else if(incommingMessage['id'] == 'server_state'){
                     // we received a server_state
-                    if(incommingMessage.status === 'success'){
-                        this.serverState = incommingMessage.result.state;
-                        this.serverStateSubject.next(this.serverState);
-                    } else {
-                        this.logger.debug("### CasinocoinService - Server State: " + JSON.stringify(incommingMessage));
-                    }
+                    this.serverState = incommingMessage.result.state;
+                    this.serverStateSubject.next(this.serverState);
                 } else if(incommingMessage['id'] == 'getLedger'){
                     // we received a ledger
-                    if(incommingMessage.status === 'success'){
-                        let ledgerMessage: LedgerStreamMessages = {
-                            fee_base: 0,
-                            fee_ref: 0,
-                            ledger_index: incommingMessage.result.ledger_index,
-                            ledger_time: incommingMessage.result.ledger.close_time,
-                            txn_count: incommingMessage.result.ledger.transactions.length,
-                            ledger_hash: incommingMessage.result.ledger_hash,
-                            reserve_base: 0,
-                            reserve_inc: 0,
-                            validated_ledgers: incommingMessage.result.ledger.seqNum
-                        }
-                        this.addLedger(ledgerMessage);
-                        this.ledgerSubject.next(ledgerMessage);
-                    } else {
-                        this.logger.debug("### CasinocoinService - Get Ledger Error: " + JSON.stringify(incommingMessage));
+                    let ledgerMessage: LedgerStreamMessages = {
+                        fee_base: 0,
+                        fee_ref: 0,
+                        ledger_index: incommingMessage.result.ledger_index,
+                        ledger_time: incommingMessage.result.ledger.close_time,
+                        txn_count: incommingMessage.result.ledger.transactions.length,
+                        ledger_hash: incommingMessage.result.ledger_hash,
+                        reserve_base: 0,
+                        reserve_inc: 0,
+                        validated_ledgers: incommingMessage.result.ledger.seqNum
                     }
+                    this.addLedger(ledgerMessage);
+                    this.ledgerSubject.next(ledgerMessage);
                 } else if (incommingMessage['id'] == 'getAccountInfo'){
                     // we received account info
-                    if(incommingMessage.status === 'success'){
-                        this.logger.debug("### CasinocoinService - getAccountInfo: " + JSON.stringify(incommingMessage.result));
-                        let account_result = incommingMessage.result.account_data;
-                        // get the account from the wallet
-                        let walletAccount: LokiAccount = this.walletService.getAccount(account_result.Account);
-                        if(walletAccount.lastSequence < account_result.Sequence){
-                            // we need to get the missing transactions
+                    this.logger.debug("### CasinocoinService - getAccountInfo: " + JSON.stringify(incommingMessage.result));
+                    let account_result = incommingMessage.result.account_data;
+                    // get the account from the wallet
+                    let walletAccount: LokiAccount = this.walletService.getAccount(account_result.Account);
+                    // get the transactions from the wallet for the account
+                    // let walletAccountTx: Array<LokiTransaction> = this.walletService.getAccountTransactions(walletAccount.accountID);
 
-                        }
-                        // update the info
-                        walletAccount.activated = true;
-                        walletAccount.balance = account_result.Balance;
-                        walletAccount.lastSequence = account_result.Sequence;
-                        walletAccount.lastTxID = account_result.PreviousTxnID;
-                        walletAccount.lastTxLedger = account_result.PreviousTxnLgrSeq;
-                        // save back to the wallet
-                        this.walletService.updateAccount(walletAccount);
-                        // update accounts array
-                        this.accounts = this.walletService.getAllAccounts();
-                        // notify change
-                        this.accountSubject.next(walletAccount);
-                    } else {
-                        // there was an error
-                        if(incommingMessage.error == "actNotFound"){
-                            this.logger.error("Account " + incommingMessage.account + "does not yet exist on the ledger.")
-                        }
+
+                    if(walletAccount.lastSequence < account_result.Sequence){
+                        // we need to get the missing transactions
+
                     }
+                    // update the info
+                    walletAccount.activated = true;
+                    walletAccount.balance = account_result.Balance;
+                    walletAccount.lastSequence = account_result.Sequence;
+                    walletAccount.lastTxID = account_result.PreviousTxnID;
+                    walletAccount.lastTxLedger = account_result.PreviousTxnLgrSeq;
+                    // save back to the wallet
+                    this.walletService.updateAccount(walletAccount);
+                    // update accounts array
+                    this.accounts = this.walletService.getAllAccounts();
+                    // notify change
+                    this.accountSubject.next(walletAccount);
                 } else if(incommingMessage['id'] == 'ValidatedLedgers'){
                     this.logger.debug("### CasinocoinService - Validated Ledger: " + JSON.stringify(incommingMessage.result));
-                    if(incommingMessage.status === 'success'){
-                        if(!this.ledgersLoaded){
-                            // get the last 10 ledgers
-                            let startIndex = incommingMessage.result.ledger_index - 10;
-                            let endIndex = incommingMessage.result.ledger_index;
-                            for (let i=startIndex; i <= endIndex; i++){
-                                this.getLedger(i);
-                            }
-                            this.ledgersLoaded = true;   
+                    if(!this.ledgersLoaded){
+                        // get the last 10 ledgers
+                        let startIndex = incommingMessage.result.ledger_index - 10;
+                        let endIndex = incommingMessage.result.ledger_index;
+                        for (let i=startIndex; i <= endIndex; i++){
+                            this.getLedger(i);
                         }
+                        this.ledgersLoaded = true;   
                     }
                 } else if(incommingMessage['id'] == 'AccountUpdates'){
                     this.logger.debug("### CasinocoinService - Account Update: " + JSON.stringify(incommingMessage.result));
@@ -332,7 +333,15 @@ export class CasinocoinService implements OnDestroy {
                     let updateTxIndex = this.transactions.findIndex( item => item.txID == tx.txID);
                     this.transactions[updateTxIndex] = tx;
                     this.logger.debug("### CasinocoinService - updated TX: " + JSON.stringify(tx));
+                } else if(incommingMessage['id'] == 'getAccountTx'){
+                    let accountTxArray = incommingMessage.result.transactions;
+                    this.logger.debug("### CasinocoinService - Account TX: " + JSON.stringify(accountTxArray));
+                    if(accountTxArray.length > 0){
+
+                    }
                 }
+            } else if(incommingMessage.status === 'error'){
+                this.logger.debug("### CasinocoinService - Error Received: " + JSON.stringify(incommingMessage));
             } else { 
                 this.logger.debug("unmapped message: " + JSON.stringify(incommingMessage));
             }
@@ -345,6 +354,15 @@ export class CasinocoinService implements OnDestroy {
 
     pingServer() {
         this.sendCommand({id: "ping",command: "ping"});
+    }
+
+    keepAlive() {
+        // start keepalive after 5 seconds and then repeat every 10 seconds
+        let timer = Observable.timer(5000,10000);
+        timer.subscribe( t => {
+            this.logger.debug("### KeepAlive Ticks: ", t);
+            this.pingServer();
+        });
     }
 
     getServerState() {
@@ -380,13 +398,15 @@ export class CasinocoinService implements OnDestroy {
         this.sendCommand(accountInfoRequest);
     }
 
-    getAccountTx(accountID: string){
+    getAccountTx(accountID: string, fromLedger: number){
         let accountTxRequest = {
             id: "getAccountTx",
             command: "account_tx",
             account: accountID,
-            ledger_index_min: -1,
-            ledger_index_max: -1
+            ledger_index_min: fromLedger,
+            ledger_index_max: -1,
+            forward: true,
+            limit: 1
         }
         this.sendCommand(accountTxRequest);
     }

@@ -1,4 +1,25 @@
-<div class="ui-widget ui-g">
-    <div class="ui-g-12">Addressbook !</div>
-    <div class="ui-g-12">Content</div>
-</div>
+<p-panel header="Addressbook" [style]="{'height':'80vh', 'margin':'10px'}">
+    <div class="ui-widget ui-g">
+        <div class="ui-g-12">
+            <button pButton type="button" (click)="showCreateAddress()" icon="fa-file-text-o" iconPos="right" label="Create New Address"></button>
+        </div>
+        <div class="ui-g-12">
+            <p-contextMenu #cm [model]="addressMenuItems" [style]="{'width':'200px'}"></p-contextMenu>
+            <p-dataTable [value]="addresses" [immutable]="false" scrollable="true" scrollHeight="100%"
+                         [contextMenu]="cm" (onRowClick)="onAddressRowClick($event)" (onContextMenuSelect)="onContextMenu($event)"
+                         [(selection)]="selectedAddressRow" editable="true" (onEditComplete)="onAddressEditComplete($event)"
+                         (onEditCancel)="onAddressEditCancel($event)">
+                <p-column field="accountID" header="Account" [style]="{'width':'160px'}"></p-column>
+                <p-column field="label" header="Label" [style]="{'width':'160px'}" editable="true"></p-column>
+                <p-column field="meta.created" header="Created" [style]="{'width':'80px'}">
+                    <ng-template let-data="rowData" pTemplate="body">
+                        <span>{{data.meta.created | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
+                    </ng-template>
+                </p-column>
+                <ng-template pTemplate="emptymessage">
+                    <p>No addresses stored in the wallet.</p>
+                </ng-template>
+            </p-dataTable>
+        </div>
+    </div>
+</p-panel>

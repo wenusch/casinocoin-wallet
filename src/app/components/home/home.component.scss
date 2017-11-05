@@ -85,3 +85,7 @@ background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 1
 :host input {
   width: 100%; padding-left: 5px;
 }
+
+.connected_color {
+  color: $casinocoinBlue;
+}

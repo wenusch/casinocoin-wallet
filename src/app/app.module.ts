@@ -54,7 +54,7 @@ import { DialogModule, ButtonModule, CheckboxModule,
          StepsModule, PasswordModule, GrowlModule,
          ContextMenuModule, TieredMenuModule } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
-import { MatListModule, MatSidenavModule } from '@angular/material';
+import { MatListModule, MatSidenavModule, MatTooltipModule } from '@angular/material';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
@@ -88,7 +88,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     DataTableModule, SharedModule, DropdownModule,
     StepsModule, PasswordModule, GrowlModule,
     MatListModule, MatSidenavModule, ContextMenuModule,
-    TieredMenuModule
+    TieredMenuModule, MatTooltipModule
   ],
   providers: [
     Logger, Options,

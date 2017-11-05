@@ -81,11 +81,6 @@ export class ReceiveCoinsComponent implements OnInit {
     this.electronService.clipboard.writeText(this.selectedReceiveRow.accountID);
   }
 
-  editLabel(){
-    this.logger.debug("Copy to clipboard: " + this.selectedReceiveRow.accountID);
-    this.electronService.clipboard.writeText(this.selectedReceiveRow.accountID);
-  }
-
   showCreateAccount(){
     this.showDialogFooter = false;
     this.showCreateAccountDialog = true;

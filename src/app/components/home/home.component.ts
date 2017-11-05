@@ -66,6 +66,9 @@ export class HomeComponent implements OnInit {
   swap_image: string = require('./assets/swap.png');
   swap_text_class: string = "inactive_text_color";
 
+  connected_icon: string = "fa fa-wifi fa-2x";
+  connected_tooltip: string = "Disconnected";
+
   searchDate: Date;
 
   constructor(private logger: Logger, 
@@ -92,11 +95,20 @@ export class HomeComponent implements OnInit {
       { label: 'Settings', icon: __dirname+ '/assets/icons/cogs_black_16.png', click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'settings'); }
       },
+      { label: 'Connect to Network', icon: __dirname+ '/assets/icons/compress_black_16.png', click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('context-menu-event', 'connect'); }, visible: true
+      },
+      { label: 'Disconnect from Network', icon: __dirname+ '/assets/icons/expand_black_16.png', click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('context-menu-event', 'disconnect'); }, visible: false
+      },
       { label: 'Tools', submenu: [
           {label: 'Import Private Key', icon: __dirname+'/assets/icons/sign-in_black_16.png', click(menuItem, browserWindow, event) { 
             browserWindow.webContents.send('context-menu-event', 'import-priv-key'); }
           },
           {label: 'Export Private Keys', icon: __dirname+'/assets/icons/sign-out_black_16.png', click(menuItem, browserWindow, event) { 
+            browserWindow.webContents.send('context-menu-event', 'export-priv-keys'); }
+          },
+          {label: 'Backup Wallet', icon: __dirname+'/assets/icons/file-zip_black_16.png', click(menuItem, browserWindow, event) { 
             browserWindow.webContents.send('context-menu-event', 'export-priv-keys'); }
           }
         ]
@@ -109,6 +121,7 @@ export class HomeComponent implements OnInit {
         browserWindow.webContents.send('context-menu-event', 'quit'); }
       })
     );
+
     // listen to context menu events
     this.electron.ipcRenderer.on('context-menu-event', (event, arg) => {
       if(arg == 'settings')
@@ -117,6 +130,10 @@ export class HomeComponent implements OnInit {
         this.onPrivateKeyImport();
       else if(arg == 'export-priv-keys')
         this.onPrivateKeysExport();
+      else if(arg == 'connect')
+        this.onConnect();
+      else if(arg == 'disconnect')
+        this.onDisconnect();
       else if(arg == 'quit')
         this.onQuit();
       else
@@ -131,26 +148,11 @@ export class HomeComponent implements OnInit {
         if(result == AppConstants.KEY_LOADED){
           this.logger.debug("### HOME load the accounts ###");
           this.messageService.add({severity:'info', summary:'Service Message', detail:'Succesfully opened the wallet.'});
-          // connect to the network
-          this.casinocoinService.connect().subscribe( connectResult => {
-            if(connectResult == AppConstants.KEY_CONNECTED){
-              this.messageService.add({severity:'info', summary:'Service Message', detail:'Connected to the Casinocoin network.'});
-            } else if (connectResult == AppConstants.KEY_DISCONNECTED){
-              this.messageService.add({severity:'info', summary:'Service Message', detail:'Disconnected from the Casinocoin network!'});
-            }
-          });
-        }
-      });
-    } else {
-      // connect to the network
-      this.casinocoinService.connect().subscribe( connectResult => {
-        if(connectResult == AppConstants.KEY_CONNECTED){
-          this.messageService.add({severity:'info', summary:'Service Message', detail:'Connected to the Casinocoin network.'});
-        } else if (connectResult == AppConstants.KEY_DISCONNECTED){
-          this.messageService.add({severity:'info', summary:'Service Message', detail:'Disconnected from the Casinocoin network!'});
         }
       });
     }
+    // connect to the network
+    this.connectToCasinocoinNetwork();
   }
 
   onMenuClick() {
@@ -162,12 +164,24 @@ export class HomeComponent implements OnInit {
     this.context_menu.popup(this.electron.remote.getCurrentWindow());
   }
 
+  onConnectionContextMenuClick(event) {
+    
+  }
+
   selectedMenuItem(item) {
     item.command();
   }
 
   onSettings() {
     this.logger.debug("Settings Clicked !!");
+  }
+
+  onConnect(){
+    this.connectToCasinocoinNetwork();
+  }
+
+  onDisconnect(){
+    this.casinocoinService.disconnect();
   }
 
   onQuit() {
@@ -204,6 +218,35 @@ export class HomeComponent implements OnInit {
           }
         }
     );
+  }
+
+  connectToCasinocoinNetwork(){
+    this.casinocoinService.connect().subscribe( connectResult => {
+      this.logger.debug("### HOME Connect Result: " + connectResult);
+      if(connectResult == AppConstants.KEY_CONNECTED){
+        this.connected_icon = "fa fa-wifi fa-2x connected_color";
+        this.connected_tooltip = "Connected";
+        this.messageService.add({severity:'info', summary:'Service Message', detail:'Connected to the Casinocoin network.'});
+        this.setConnectedMenuItem(true);
+      } else if (connectResult == AppConstants.KEY_DISCONNECTED){
+        this.connected_icon = "fa fa-wifi fa-2x";
+        this.connected_tooltip = "Disconnected";
+        this.messageService.add({severity:'info', summary:'Service Message', detail:'Disconnected from the Casinocoin network!'});
+        this.setConnectedMenuItem(false);
+      }
+    });
+  }
+
+  setConnectedMenuItem(connected: boolean){
+    if(connected){
+      // enable disconnect
+      this.context_menu.items[1].visible = false;
+      this.context_menu.items[2].visible = true;
+    } else {
+      // enable connect
+      this.context_menu.items[1].visible = true;
+      this.context_menu.items[2].visible = false;
+    }
   }
 
   onOverview() {
