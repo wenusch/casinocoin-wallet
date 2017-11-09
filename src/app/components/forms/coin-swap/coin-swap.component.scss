@@ -13,3 +13,15 @@
 :host p-dropdown {
     width: 100%;
 }
+
+/** Odd row color **/
+::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-odd {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+/** Even row color **/
+::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-even {
+    background-color: #ffffff;
+    color: #000000;
+}

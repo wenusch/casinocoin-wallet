@@ -72,4 +72,12 @@ export class AddressbookComponent implements OnInit {
     this.showCreateAddressDialog = true;
   }
 
+  doCreateNewAddressbookEntry(){
+    // first disable footer on submit
+    this.showDialogFooter = false;
+    // create addressbook entry
+
+    // hide dialog
+    this.showCreateAddressDialog = false;
+  }
 }

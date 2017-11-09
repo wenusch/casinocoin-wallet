@@ -10,6 +10,8 @@ import { SendCoinsComponent }       from './components/forms/send-coins/send-coi
 import { ReceiveCoinsComponent }    from './components/forms/receive-coins/receive-coins.component';
 import { AddressbookComponent }     from './components/forms/addressbook/addressbook.component';
 import { CoinSwapComponent }        from './components/forms/coin-swap/coin-swap.component';
+import { TransactionsComponent }    from './components/forms/transactions/transactions.component';
+import { SupportComponent }         from './components/forms/support/support.component';
 
 const routes: Routes = [
     { path: '', component: HomeComponent, canActivate: [AuthGuard],
@@ -19,7 +21,9 @@ const routes: Routes = [
             { path: 'receive', component: ReceiveCoinsComponent },
             { path: 'addressbook', component: AddressbookComponent },
             { path: 'swap', component: CoinSwapComponent },
-            { path: '', redirectTo: 'overview', pathMatch: 'full'}
+            { path: 'transactions', component: TransactionsComponent },
+            { path: 'support', component: SupportComponent },
+            { path: '', redirectTo: 'transactions', pathMatch: 'full'}
             ] },
     { path: 'wallet-setup', component: WalletSetupComponent },
     { path: 'login', component: LoginComponent },

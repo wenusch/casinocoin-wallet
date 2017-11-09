@@ -1,0 +1,55 @@
+<div class="ui-g form-container">
+    <p class="form-text-header">Transactions</p>
+    <div class="ui-g-12">
+        <div class="ui-inputgroup">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
+            <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
+                        placeholder="Select Account to filter ..." (onChange)="accountSelected($event)" 
+                        autofocus #accountDropdown></p-dropdown>
+        </div>
+    </div>
+    <div class="ui-g-12">
+        <p-dataTable [value]="transactions" scrollable="true" [immutable]="false" scrollHeight="50vh"
+                responsive="true" styleClass="borderless">
+            <p-column [style]="{'width':'20px'}">
+                <ng-template let-data="rowData" pTemplate="body">
+                    <i [ngClass]="getDirectionIconClasses(data)"></i>
+                </ng-template>
+            </p-column>
+            <p-column field="timestamp" [style]="{'width':'75px'}">
+                <ng-template let-data="rowData" pTemplate="body">
+                    <span class="text-large">{{data.timestamp | cscDate : 'dd'}}</span>
+                    <span class="text-small-bottom">{{data.timestamp | cscDate : 'MMM' | uppercase}}</span>
+                    <span class="text-large">{{data.timestamp | cscDate : 'HH'}}</span>
+                    <span class="text-small-top" >{{data.timestamp | cscDate : ':mm:ss'}}</span>
+                </ng-template>
+            </p-column>
+            <p-column [style]="{'width':'175px'}">
+                <ng-template let-data="rowData" pTemplate="body">
+                    <span class="text-small">
+                        <p class="item-p"><span class="item-label">from: </span><span class="item-value"> {{ data.accountID }}</span></p>
+                        <p class="item-p"><span class="item-label">to: </span><span class="item-value"> {{ data.destination }}</span></p>
+                        <p class="item-p"><span class="item-label">message: </span><span class="item-value"> {{ getDescription(data) }}</span></p>
+                    </span>
+                </ng-template>
+            </p-column>
+            <p-column field="validated" [style]="{'width':'50px'}">
+                <ng-template let-data="rowData" pTemplate="body">
+                    <p class="item-p"><span class="item-label">validated: </span><i [ngClass]="getValidatedIconClasses(data.validated)"></i></p>
+                    <p class="item-p"><span class="item-label">ledger: </span><span class="item-value"> {{ data.inLedger }}</span></p>
+                </ng-template>
+            </p-column>
+            <p-column field="amount" [style]="{'width':'75px'}">
+                <ng-template let-data="rowData" pTemplate="body">
+                    <span class="text-large" #amountColText>{{ getTXTextColor(amountColText,data) }}{{data.amount | cscAmount : false : true}}</span>
+                </ng-template>
+            </p-column>
+            <ng-template pTemplate="emptymessage">
+                <p>There are no transactions in the wallet.</p>
+            </ng-template>
+        </p-dataTable>
+    </div>
+    <div class="ui-g-12">
+        <button pButton type="button" (click)="doShowLedgers()" icon="fa-list" iconPos="left" label="Show Ledgers" class="ui-button-secondary"></button>
+    </div>
+</div>

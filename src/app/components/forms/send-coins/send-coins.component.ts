@@ -21,12 +21,15 @@ export class SendCoinsComponent implements OnInit {
   @ViewChild('amountInput') amountInput;
   @ViewChild('accountDropdown') accountDropdown: Dropdown;
   @ViewChild('passwordInput') passwordInput;
+  @ViewChild('feesInput') feesInput;
 
   accounts: SelectItem[] = [];
   selectedAccount: string;
   receipient: string;
   description: string;
   amount: string;
+  fees: string;
+  minimalFee: string;
   walletPassword: string;
   showPasswordDialog:boolean = false;
   signAndSubmitIcon:string = "fa-check";
@@ -37,15 +40,22 @@ export class SendCoinsComponent implements OnInit {
               private messageService: MessageService ) { }
 
   ngOnInit() {
-    // get accounts from wallet
-    if(this.walletService.isWalletOpen){
-      this.walletService.getAllAccounts().forEach( element => {
-        if(new Big(element.balance) > 0){
-          let accountLabel = element.accountID + " [Balance: " + CSCUtil.dropsToCsc(element.balance) + "]";
-          this.accounts.push({label: accountLabel, value: element.accountID});
-        }
-      });
-    }
+    // get accounts from wallet once its open
+    this.walletService.openWalletSubject.subscribe( result => {
+      if(result == AppConstants.KEY_LOADED){
+        this.walletService.getAllAccounts().forEach( element => {
+          if(new Big(element.balance) > 0){
+            let accountLabel = element.accountID + " [Balance: " + CSCUtil.dropsToCsc(element.balance) + "]";
+            this.accounts.push({label: accountLabel, value: element.accountID});
+          }
+        });
+      }
+    });
+    // set the default fee
+    this.logger.debug("### SendCoins - ledger: " + JSON.stringify(this.casinocoinService.ledgers[0]));
+    this.fees = CSCUtil.dropsToCsc(this.casinocoinService.ledgers[0].fee_base.toString());
+    this.minimalFee = this.fees;
+    this.logger.debug("### SendCoins - minimalFee: " + this.minimalFee);
   }
 
   focusDescription(){
@@ -54,6 +64,10 @@ export class SendCoinsComponent implements OnInit {
 
   focusAmount(){
     this.amountInput.nativeElement.focus();
+  }
+
+  focusFees(){
+    this.feesInput.nativeElement.focus();
   }
 
   doCancelSignAndSubmitTx(){

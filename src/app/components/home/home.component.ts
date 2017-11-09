@@ -11,11 +11,14 @@ import { MessageService } from 'primeng/components/common/messageservice';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { AppConstants } from '../../domain/app-constants';
 import { AlertComponent } from '../alert/alert.component';
+import { CSCUtil } from '../../domain/csc-util';
+import { LedgerStreamMessages, ServerStateMessage } from '../../domain/websocket-types';
 
 import * as LokiTypes from '../../domain/lokijs';
 
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 @Component({
   selector: 'app-home',
@@ -47,6 +50,7 @@ export class HomeComponent implements OnInit {
   context_menu: ElectronMenu;
 
   showPrivateKeyImportDialog:boolean = false;
+  showSettingsDialog:boolean = false;
   privateKeySeed:string;
   walletPassword:string;
 
@@ -66,10 +70,21 @@ export class HomeComponent implements OnInit {
   swap_image: string = require('./assets/swap.png');
   swap_text_class: string = "inactive_text_color";
 
+  active_menu_item: string = "transactions";
+
+  isConnected: boolean = false;
   connected_icon: string = "fa fa-wifi fa-2x";
   connected_tooltip: string = "Disconnected";
+  connection_image: string = "assets/icons/connected-red.png";
 
   searchDate: Date;
+
+  serverState: ServerStateMessage;
+
+  balance:string;;
+  fiat_balance:string;
+  transaction_count:number;
+  last_transaction:number;
 
   constructor(private logger: Logger, 
               private router: Router,
@@ -92,27 +107,24 @@ export class HomeComponent implements OnInit {
     
     // define context menu when COG is clicked
     let context_menu_template = [
-      { label: 'Settings', icon: __dirname+ '/assets/icons/cogs_black_16.png', click(menuItem, browserWindow, event) { 
-          browserWindow.webContents.send('context-menu-event', 'settings'); }
-      },
-      { label: 'Connect to Network', icon: __dirname+ '/assets/icons/compress_black_16.png', click(menuItem, browserWindow, event) { 
-          browserWindow.webContents.send('context-menu-event', 'connect'); }, visible: true
-      },
-      { label: 'Disconnect from Network', icon: __dirname+ '/assets/icons/expand_black_16.png', click(menuItem, browserWindow, event) { 
-          browserWindow.webContents.send('context-menu-event', 'disconnect'); }, visible: false
-      },
-      { label: 'Tools', submenu: [
-          {label: 'Import Private Key', icon: __dirname+'/assets/icons/sign-in_black_16.png', click(menuItem, browserWindow, event) { 
+      // { label: 'Connect to Network', icon: __dirname+ '/assets/icons/compress_black_16.png', click(menuItem, browserWindow, event) { 
+      //     browserWindow.webContents.send('context-menu-event', 'connect'); }, visible: true
+      // },
+      // { label: 'Disconnect from Network', icon: __dirname+ '/assets/icons/expand_black_16.png', click(menuItem, browserWindow, event) { 
+      //     browserWindow.webContents.send('context-menu-event', 'disconnect'); }, visible: false
+      // },
+      // { label: 'Tools', submenu: [
+          {label: 'Import Private Key', click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('context-menu-event', 'import-priv-key'); }
           },
-          {label: 'Export Private Keys', icon: __dirname+'/assets/icons/sign-out_black_16.png', click(menuItem, browserWindow, event) { 
+          {label: 'Export Private Keys', click(menuItem, browserWindow, event) { 
             browserWindow.webContents.send('context-menu-event', 'export-priv-keys'); }
           },
-          {label: 'Backup Wallet', icon: __dirname+'/assets/icons/file-zip_black_16.png', click(menuItem, browserWindow, event) { 
+          {label: 'Backup Wallet', click(menuItem, browserWindow, event) { 
             browserWindow.webContents.send('context-menu-event', 'export-priv-keys'); }
           }
-        ]
-      }
+        // ]
+      // }
     ];
     this.context_menu = this.electron.remote.Menu.buildFromTemplate(context_menu_template);
     this.context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
@@ -124,9 +136,7 @@ export class HomeComponent implements OnInit {
 
     // listen to context menu events
     this.electron.ipcRenderer.on('context-menu-event', (event, arg) => {
-      if(arg == 'settings')
-        this.onSettings();
-      else if(arg == 'import-priv-key')
+      if(arg == 'import-priv-key')
         this.onPrivateKeyImport();
       else if(arg == 'export-priv-keys')
         this.onPrivateKeysExport();
@@ -139,20 +149,46 @@ export class HomeComponent implements OnInit {
       else
         this.logger.debug("### Context menu not implemented: " + arg);
     });
-    // navigate to the overview
-    this.router.navigate(['overview']);
-    // open the wallet if not yet open
-    if(!this.walletService.isWalletOpen){
-      this.logger.debug("### HOME open the wallet ###");
-      this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
-        if(result == AppConstants.KEY_LOADED){
-          this.logger.debug("### HOME load the accounts ###");
-          this.messageService.add({severity:'info', summary:'Service Message', detail:'Succesfully opened the wallet.'});
+    // navigate to the transactions
+    this.router.navigate(['transactions']);
+    // subscribe to the openWallet subject
+    this.walletService.openWalletSubject.subscribe( result => {
+      if(result == AppConstants.KEY_LOADED){
+        this.logger.debug("### HOME Wallet Open ###");
+        this.messageService.add({severity:'info', summary:'Service Message', detail:'Succesfully opened the wallet.'});
+        this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
+        this.transaction_count = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
+        let lastTX = this.walletService.getWalletLastTx();
+        if(lastTX != null){
+            this.last_transaction = lastTX.timestamp;
         }
-      });
-    }
+        this.fiat_balance = "0.00";
+      } else if(result == AppConstants.KEY_INIT && this.currentWallet){
+        // wallet is not open but we seem to have a session, not good so redirect to login
+        this.router.navigate(['/login']);
+      }
+    });
     // connect to the network
     this.connectToCasinocoinNetwork();
+    let mnemonicArray = CSCUtil.getRandomMnemonic();
+    let mnemonicString = mnemonicArray.join(',');
+    this.logger.debug("### HOME mnemonic: " + mnemonicString);
+    // crypto.createHmac('sha256', password).update(walletUUID).digest('hex');
+    let mnemonicHash = crypto.createHash("sha512");
+    mnemonicHash.update(mnemonicString);
+    let finalHash = mnemonicHash.digest("hex");
+    this.logger.debug("### HOME mnemonic hash: " + finalHash);
+
+    let cipher = crypto.createCipher("aes-256-gcm", finalHash); 
+    let encrypted = cipher.update("test1234", "utf8", "hex");
+    encrypted += cipher.final("hex");
+    this.logger.debug("### HOME Encrypted Password: " + encrypted);
+
+    // let decipher = crypto.createDecipher("aes-256-gcm", finalHash);
+    // let decrypted = decipher.update(encrypted, "hex", "utf8");
+    // decrypted += decipher.final("utf8");
+    // this.logger.debug("### HOME Decrypted Password: " + decrypted);
+
   }
 
   onMenuClick() {
@@ -160,20 +196,20 @@ export class HomeComponent implements OnInit {
     this.show_menu = this.show_menu == 'small' ? 'wide' : 'small';
   }
 
-  onContextMenuClick(event) {
+  onSettingsMenuClick(event) {
+    this.showSettingsDialog = true;
+  }
+
+  onToolsMenuClick(event) {
     this.context_menu.popup(this.electron.remote.getCurrentWindow());
   }
 
-  onConnectionContextMenuClick(event) {
-    
+  onConnectionClick(event) {
+    this.logger.debug("Connection Clicked !!");
   }
 
   selectedMenuItem(item) {
     item.command();
-  }
-
-  onSettings() {
-    this.logger.debug("Settings Clicked !!");
   }
 
   onConnect(){
@@ -224,12 +260,16 @@ export class HomeComponent implements OnInit {
     this.casinocoinService.connect().subscribe( connectResult => {
       this.logger.debug("### HOME Connect Result: " + connectResult);
       if(connectResult == AppConstants.KEY_CONNECTED){
-        this.connected_icon = "fa fa-wifi fa-2x connected_color";
+        this.isConnected = true;
+        this.connected_icon = "fa fa-wifi connected_color";
+        this.connection_image = "assets/icons/connected.png";
         this.connected_tooltip = "Connected";
         this.messageService.add({severity:'info', summary:'Service Message', detail:'Connected to the Casinocoin network.'});
         this.setConnectedMenuItem(true);
       } else if (connectResult == AppConstants.KEY_DISCONNECTED){
-        this.connected_icon = "fa fa-wifi fa-2x";
+        this.isConnected = false;
+        this.connected_icon = "fa fa-wifi disconnected_color";
+        this.connection_image = "assets/icons/connected-red.png";
         this.connected_tooltip = "Disconnected";
         this.messageService.add({severity:'info', summary:'Service Message', detail:'Disconnected from the Casinocoin network!'});
         this.setConnectedMenuItem(false);
@@ -249,89 +289,70 @@ export class HomeComponent implements OnInit {
     }
   }
 
+  getConnectionColorClass(){
+    if(this.isConnected){
+      return "connected-color";
+    } else {
+      return "disconnected-color"
+    }
+  }
+
+  getConnectionImage(){
+    if(this.isConnected){
+      return "../../../assets/icons/connected.png";
+    } else {
+      return "../../../assets/icons/connected-red.png"
+    }
+  }
+
   onOverview() {
     this.logger.debug("Home Clicked !!");
     // make overview active and others inactive
-    this.overview_image = require("./assets/overview_active.png");
-    this.overview_text_class = "active_text_color";
-    this.send_image = require("./assets/send.png");
-    this.send_text_class = "inactive_text_color";
-    this.receive_image = require("./assets/receive.png");
-    this.receive_text_class = "inactive_text_color";
-    this.addressbook_image = require("./assets/addressbook.png");
-    this.addressbook_text_class = "inactive_text_color";
-    this.swap_image = require("./assets/swap.png");
-    this.swap_text_class = "inactive_text_color";
+
     // navigate to overview
     this.router.navigate(['overview']);
   }
 
+  onTransactions() {
+    this.logger.debug("Transactions Clicked !!");
+    this.active_menu_item = "transactions";
+    // navigate to transactions
+    this.router.navigate(['transactions']);
+  }
+
   onSendCoins() {
     this.logger.debug("Send Coins Clicked !!");
-    // make send active and others inactive
-    this.overview_image = require("./assets/overview.png");
-    this.overview_text_class = "inactive_text_color";
-    this.send_image = require("./assets/send_active.png");
-    this.send_text_class = "active_text_color";
-    this.receive_image = require("./assets/receive.png");
-    this.receive_text_class = "inactive_text_color";
-    this.addressbook_image = require("./assets/addressbook.png");
-    this.addressbook_text_class = "inactive_text_color";
-    this.swap_image = require("./assets/swap.png");
-    this.swap_text_class = "inactive_text_color";
+    this.active_menu_item = "send";
     // navigate to send
     this.router.navigate(['send']);
   }
 
   onReceiveCoins() {
     this.logger.debug("Receive Coins Clicked !!");
-    // make receive active and others inactive
-    this.overview_image = require("./assets/overview.png");
-    this.overview_text_class = "inactive_text_color";
-    this.send_image = require("./assets/send.png");
-    this.send_text_class = "inactive_text_color";
-    this.receive_image = require("./assets/receive_active.png");
-    this.receive_text_class = "active_text_color";
-    this.addressbook_image = require("./assets/addressbook.png");
-    this.addressbook_text_class = "inactive_text_color";
-    this.swap_image = require("./assets/swap.png");
-    this.swap_text_class = "inactive_text_color";
+    this.active_menu_item = "receive";
     // navigate to receive
     this.router.navigate(['receive']);
   }
 
   onAddressbook() {
     this.logger.debug("Addressbook Clicked !!");
-    // make addressbook active and others inactive
-    this.overview_image = require("./assets/overview.png");
-    this.overview_text_class = "inactive_text_color";
-    this.send_image = require("./assets/send.png");
-    this.send_text_class = "inactive_text_color";
-    this.receive_image = require("./assets/receive.png");
-    this.receive_text_class = "inactive_text_color";
-    this.addressbook_image = require("./assets/addressbook_active.png");
-    this.addressbook_text_class = "active_text_color";
-    this.swap_image = require("./assets/swap.png");
-    this.swap_text_class = "inactive_text_color";
+    this.active_menu_item = "addressbook";
     // navigate to addressbook
     this.router.navigate(['addressbook']);
   }
 
   onCoinSwap() {
     this.logger.debug("Coin Swap Clicked !!");
-    // make swap active and others inactive
-    this.overview_image = require("./assets/overview.png");
-    this.overview_text_class = "inactive_text_color";
-    this.send_image = require("./assets/send.png");
-    this.send_text_class = "inactive_text_color";
-    this.receive_image = require("./assets/receive.png");
-    this.receive_text_class = "inactive_text_color";
-    this.addressbook_image = require("./assets/addressbook.png");
-    this.addressbook_text_class = "inactive_text_color";
-    this.swap_image = require("./assets/swap_active.png");
-    this.swap_text_class = "active_text_color";
+    this.active_menu_item = "coinswap";
     // navigate to swap
     this.router.navigate(['swap']);
+  }
+
+  onSupport() {
+    this.logger.debug("Support Clicked !!");
+    this.active_menu_item = "support";
+    // navigate to support
+    this.router.navigate(['support']);
   }
 
   onImportPrivateKey(){
@@ -340,5 +361,9 @@ export class HomeComponent implements OnInit {
     // refresh accounts
     this.casinocoinService.checkAllAccounts();
     this.showPrivateKeyImportDialog = false;
+  }
+
+  onSettingsSave(){
+    
   }
 }

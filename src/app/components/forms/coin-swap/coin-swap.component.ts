@@ -71,6 +71,22 @@ export class CoinSwapComponent implements OnInit {
     return CSCUtil.casinocoinToUnixTimestamp(inputTime);
   }
 
+  getDepositAmount(deposit){
+    if(deposit != undefined ){
+      return deposit.amount;
+    } else {
+      return 0;
+    }
+  }
+
+  getSwapStatus(status){
+    if(status == 'swap_created'){
+      return "Swap Created";
+    } else {
+      return status;
+    }
+  }
+
   onSwapRowSelect(event) {
     this.logger.debug("Swap Selected: " + JSON.stringify(event.data));
     this.logger.debug("Swap Selected: " + this.selectedSwap);

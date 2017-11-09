@@ -1,10 +1,10 @@
 @charset "UTF-8";
 .ui-widget {
   font-family: "Roboto", "Trebuchet MS", Arial, Helvetica, sans-serif;
-  font-size: 0.96em; }
+  font-size: 1em; }
   .ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button {
     font-family: "Roboto", "Trebuchet MS", Arial, Helvetica, sans-serif;
-    font-size: 0.96em; }
+    font-size: 1em; }
   .ui-widget :active {
     outline: none; }
 
@@ -553,7 +553,7 @@ p-togglebutton.ng-dirty.ng-invalid .ui-button {
 @font-face {
   font-family: 'Roboto';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 300;
   src: url("fonts/roboto-v15-latin-regular.eot");
   /* IE9 Compat Modes */
   src: local("Roboto"), local("Roboto-Regular"), url("fonts/roboto-v15-latin-regular.eot?#iefix") format("embedded-opentype"), url("fonts/roboto-v15-latin-regular.woff2") format("woff2"), url("fonts/roboto-v15-latin-regular.woff") format("woff"), url("fonts/roboto-v15-latin-regular.ttf") format("truetype"), url("fonts/roboto-v15-latin-regular.svg#Roboto") format("svg");
@@ -618,6 +618,7 @@ p-togglebutton.ng-dirty.ng-invalid .ui-button {
   background: #901119;
   color: #ffffff; }
 
+/* Slider */
 .ui-slider {
   position: relative;
   text-align: left;
@@ -693,12 +694,30 @@ p-togglebutton.ng-dirty.ng-invalid .ui-button {
 .ui-slider-vertical .ui-slider-range-max {
   top: 0; }
 
+/* Progressbar */
 .ui-progressbar .ui-progressbar-value {
   border: 1px solid #3f94e9;
   background: #8ec5fc; }
 
 .ui-progressbar .ui-progressbar-label {
   color: #222222; }
+
+/* Secundary Button */
+.ui-button.ui-button-secondary.ui-state-default {
+  background-color: #c9c9c9;
+  border-color: #ccc;
+  color: #000000; }
+
+.ui-button.ui-button-secondary:enabled:hover,
+.ui-button.ui-button-secondary:focus {
+  background-color: #f2f2f2;
+  border-color: #ccc;
+  color: #373a3c; }
+
+.ui-button.ui-button-secondary:enabled:active {
+  background-color: #e6e6e6;
+  border-color: #ccc;
+  color: #373a3c; }
 
 .ui-widget-header .ui-button,
 .ui-widget-content .ui-button,

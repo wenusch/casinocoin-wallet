@@ -28,6 +28,8 @@ function getInstallerConfig (arch) {
     setupExe: 'casinocoin-wallet-'+arch+'-'+appVersion+'.exe',
     setupIcon: path.join(rootPath, 'src', 'assets', 'icons', 'casinocoin.ico'),
     iconUrl: iconUrlPath,
-    loadingGif: path.join(rootPath, 'src', 'assets', 'setup.gif')
+    loadingGif: path.join(rootPath, 'src', 'assets', 'setup.gif'),
+    certificateFile: 'C:/Users/a.jochems/Documents/Crypto Service/Comodo/code-signing-cert.p12',
+    certificatePassword: 'Lziio1wob716A4mLXxrF'
   })
 }

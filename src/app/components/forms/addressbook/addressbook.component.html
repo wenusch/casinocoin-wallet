@@ -1,25 +1,55 @@
-<p-panel header="Addressbook" [style]="{'height':'80vh', 'margin':'10px'}">
-    <div class="ui-widget ui-g">
-        <div class="ui-g-12">
-            <button pButton type="button" (click)="showCreateAddress()" icon="fa-file-text-o" iconPos="right" label="Create New Address"></button>
-        </div>
-        <div class="ui-g-12">
-            <p-contextMenu #cm [model]="addressMenuItems" [style]="{'width':'200px'}"></p-contextMenu>
-            <p-dataTable [value]="addresses" [immutable]="false" scrollable="true" scrollHeight="100%"
-                         [contextMenu]="cm" (onRowClick)="onAddressRowClick($event)" (onContextMenuSelect)="onContextMenu($event)"
-                         [(selection)]="selectedAddressRow" editable="true" (onEditComplete)="onAddressEditComplete($event)"
-                         (onEditCancel)="onAddressEditCancel($event)">
-                <p-column field="accountID" header="Account" [style]="{'width':'160px'}"></p-column>
-                <p-column field="label" header="Label" [style]="{'width':'160px'}" editable="true"></p-column>
-                <p-column field="meta.created" header="Created" [style]="{'width':'80px'}">
-                    <ng-template let-data="rowData" pTemplate="body">
-                        <span>{{data.meta.created | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
-                    </ng-template>
-                </p-column>
-                <ng-template pTemplate="emptymessage">
-                    <p>No addresses stored in the wallet.</p>
-                </ng-template>
-            </p-dataTable>
-        </div>
+<div class="ui-widget ui-g form-container">
+    <p class="form-text-header">Addressbook</p>
+    <div class="ui-g-12">
+        <button pButton type="button" (click)="showCreateAddress()" icon="fa-file-text-o" iconPos="left" 
+                class="ui-button-secondary" label="Create New Address"></button>
     </div>
-</p-panel>
+    <div class="ui-g-12">
+        <p-contextMenu #cm [model]="addressMenuItems" [style]="{'width':'200px'}"></p-contextMenu>
+        <p-dataTable [value]="addresses" [immutable]="false" scrollable="true" scrollHeight="100%"
+                        [contextMenu]="cm" (onRowClick)="onAddressRowClick($event)" (onContextMenuSelect)="onContextMenu($event)"
+                        [(selection)]="selectedAddressRow" editable="true" (onEditComplete)="onAddressEditComplete($event)"
+                        (onEditCancel)="onAddressEditCancel($event)">
+            <p-column field="accountID" header="Account" [style]="{'width':'160px'}"></p-column>
+            <p-column field="label" header="Label" [style]="{'width':'160px'}" editable="true"></p-column>
+            <p-column field="meta.created" header="Created" [style]="{'width':'80px'}">
+                <ng-template let-data="rowData" pTemplate="body">
+                    <span>{{data.meta.created | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
+                </ng-template>
+            </p-column>
+            <ng-template pTemplate="emptymessage">
+                <p>No addresses stored in the wallet.</p>
+            </ng-template>
+        </p-dataTable>
+    </div>
+</div>
+<p-dialog [(visible)]="showCreateAddressDialog" [width]="450" [height]="300" [closable]="true" 
+    [modal]="true" appendTo="body">
+    <p-header>Create new addressbook entry</p-header>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <p>Enter a label for the new account and the account address.</p>
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+
+        </div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div style="text-align: right;">
+    <button pButton type="button" (click)="doCreateNewAddressbookEntry()" icon="fa-arrow-right" iconPos="right" label="Create" 
+        style="width: 115px;"></button>
+    </div>
+    <p-footer *ngIf="showDialogFooter" style="height: 30px;">
+    <p>{{errorMessage}}</p>
+    </p-footer>
+</p-dialog>

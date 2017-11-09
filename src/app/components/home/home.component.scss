@@ -1,14 +1,33 @@
 @import "~assets/variables";
 
+.container { 
+	display:table; 
+	width:100%; 
+	height:100%;  
+}
+
+::ng-deep .home-sidenav {
+	display:table-row;
+}
+
+::ng-deep .home-sidenav-container {
+	height: 100%;
+}
+
 ::ng-deep p-toolbar .ui-widget-header {
   color: #FFFFFF;
-background: $casinocoinRed 0 0 repeat-x;  /* Old browsers */
-background: -moz-linear-gradient(top, $casinocoinRed 0%, $casinocoinRedLighter 100%); /* FF3.6+ */
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,$casinocoinRed), color-stop(100%,$casinocoinRedLighter)); /* Chrome,Safari4+ */
-background: -webkit-linear-gradient(top, $casinocoinRed 0%,$casinocoinRedLighter 100%); /* Chrome10+,Safari5.1+ */
-background: -o-linear-gradient(top, $casinocoinRed 0%,$casinocoinRedLighter 100%); /* Opera11.10+ */
-background: -ms-linear-gradient(top, $casinocoinRed 0%,$casinocoinRedLighter 100%); /* IE10+ */
-background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 100%); /* W3C */
+  font-weight: 300;
+  font-size: 0.90em;
+  height: $statusBarHeight;
+  background: $casinocoinGray;
+}
+
+::ng-deep p-toolbar .ui-toolbar-group-left {
+  width: 52%;
+}
+
+::ng-deep p-toolbar .ui-toolbar-group-right {
+  width: 43%;
 }
 
 ::ng-deep #main_menu .ui-menu {
@@ -21,38 +40,12 @@ background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 1
     padding-bottom: 25px;
 }
 
-.mat-sidenav {
-  width: 125px;
-  background: #000000;
-}
-
 .mat-list-item {
   color: #FFFFFF;
 }
 
 .sidenav-height {
   height: 100%;
-}
-
-.csc-sidenav {
-  padding: 5px;
-}
-
-.toolbar-height {
-  height: 10vh;
-}
-
-.content-height {
-  height: calc(100% - 125px);
-}
-
-.toolbar-button {
-  background: $casinocoinRed;
-  margin: 10px;
-}
-
-.toolbar-image {
-  width: 70px;
 }
 
 .btn.focus, .btn:focus {
@@ -78,14 +71,75 @@ background: linear-gradient(to bottom, $casinocoinRed 0%,$casinocoinRedLighter 1
   color: #000000;
 }
 
-::ng-deep .mat-list .mat-list-item, .mat-nav-list .mat-list-item, .mat-selection-list .mat-list-item {
-  font-size: 14px;
-}
-
 :host input {
   width: 100%; padding-left: 5px;
 }
 
-.connected_color {
-  color: $casinocoinBlue;
+.connected-color {
+  color: $casinocoinGreen;
+}
+
+.disconnected-color {
+  color: $casinocoinRed;
+}
+
+.amount-color {
+  color: #fff;
+  font-weight: 700;
+}
+
+.amount-text-color {
+  color: #dba4a5 !important; 
+}
+
+.app-nav {
+  width: 230px;
+  height: 100%;
+  background: #a51b1f;
+  background-image: url('../../../assets/navbar-bg.jpg');
+  background-repeat: no-repeat;
+  background-position: bottom;
+}
+
+.csc-logo {
+  width: 220px;
+  padding: 20px;
+}
+
+.menu-item {
+  height: 65px;
+}
+
+.menu-icon {
+  width: 30px;
+  vertical-align: middle;
+}
+
+.menu-text {
+  padding-top: 20px;
+}
+
+.menu-nav mat-list-item:hover {
+  background-color: #7c1417;
+  background-repeat: no-repeat;
+  background-position: right;
+  position: sticky;
+  z-index: 1000;
+}
+
+.active_menu_item {
+  background-color: #7c1417;
+  background-image: url('../../../assets/menu-rectangle.png');
+  background-repeat: no-repeat;
+  background-position: right;
+  position: sticky;
+  z-index: 1000;
+}
+
+::ng-deep .mat-list-item-content {
+  display: block !important;
+}
+
+.footer-icon {
+  width: 15px;    
 }

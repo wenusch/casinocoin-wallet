@@ -1,48 +1,70 @@
-<p-panel header="Swap Coins" [style]="{'height':'100%'}">
-    <div class="ui-widget ui-g">
-        <div class="ui-g-8">
-            Swap your old casinocoins to new coins by initiating a swap. As soon as you send an amount to 
-            the deposit address the swap will be started. A minimal confirmation time of 200 blocks is needed 
-            and it can take up to 24 hours to receive your new coins. <p>Do not sent coins multiple times to the 
-            same swap deposit address but rather create a new one.</p><p>Select and swap and Right-Click to copy the Deposit 
-            Address or Swap ID.</p>
-        </div>
-        <div class="ui-g-4"></div>
-        <div class="ui-g-6">
-            <div class="ui-inputgroup" #inputAccountID>
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
-                <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
-                            placeholder="Select Account" autofocus #accountDropdown></p-dropdown>
-            </div>
-        </div>
-        <div class="ui-g-4">
-            <span>
-                <button pButton type="button" (click)="doCreateSwap()" icon="fa-exchange" iconPos="right" label="Create New Swap"></button>
-                <button pButton type="button" (click)="doRefreshSwaps()" [(icon)]="refresh_icon" iconPos="right" label="Refresh Swaps"></button>
-            </span>
-        </div>
-        <div class="ui-g-2">
-        </div>
-        <div class="ui-g-12">
-            <p-contextMenu #cm [model]="swapMenuItems" [style]="{'width':'200px'}"></p-contextMenu>
-            <p-dataTable [value]="swaps" [immutable]="false" scrollable="true" scrollHeight="200px" 
-                         [contextMenu]="cm" selectionMode="single" [(selection)]="selectedSwap" 
-                         (onRowSelect)="onSwapRowSelect($event)">
-                <p-column field="swapID" header="Swap ID" [style]="{'width':'50px'}">
-                    <ng-template let-col let-swap="rowData" pTemplate="body">
-                        <span>{{swap[col.field].substring(0,10) + '...'}}</span>
-                    </ng-template>
-                </p-column>
-                <p-column field="depositAddress" header="Deposit Address" [style]="{'width':'150px'}"></p-column>
-                <p-column field="updatedTimestamp" header="Updated" [style]="{'width':'72px'}">
-                    <ng-template let-col let-swap="rowData" pTemplate="body">
-                        <span>{{convertCscTimestamp(swap[col.field]) | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
-                    </ng-template>
-                </p-column>
-                <p-column field="deposit.amount" header="Amount" [style]="{'width':'40px'}"></p-column>
-                <p-column field="swapStatus" header="Status" [style]="{'width':'85px'}"></p-column>
-                <p-column field="deposit.confirmations" header="Confirms" [style]="{'width':'45px'}"></p-column>
-            </p-dataTable>
+<div class="ui-widget ui-g form-container">
+    <p class="form-text-header">Coin Swap</p>
+    <div class="ui-g-10">
+        Swap your old casinocoins to new coins by initiating a swap. As soon as you send an amount to 
+        the deposit address the swap will be started. A minimal confirmation time of 200 blocks is needed 
+        and it can take up to 24 hours to receive your new coins. <p>Do not sent coins multiple times to the 
+        same swap deposit address but rather create a new one.</p><p>Select and swap and Right-Click to copy the Deposit 
+        Address or Swap ID.</p>
+    </div>
+    <div class="ui-g-2"></div>
+    <div class="ui-g-6">
+        <div class="ui-inputgroup" #inputAccountID>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
+            <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
+                        placeholder="Select Account" autofocus #accountDropdown></p-dropdown>
         </div>
     </div>
-</p-panel>
+    <div class="ui-g-6">
+        <span>
+            <button pButton type="button" (click)="doCreateSwap()" icon="fa-exchange" iconPos="left" 
+                    class="ui-button-secondary" label="New Swap"></button>
+            <button pButton type="button" (click)="doRefreshSwaps()" [(icon)]="refresh_icon" iconPos="left" 
+                    class="ui-button-secondary" label="Refresh Swaps"></button>
+        </span>
+    </div>
+    <div class="ui-g-12">
+        <p-contextMenu #cm [model]="swapMenuItems" [style]="{'width':'250px'}"></p-contextMenu>
+        <p-dataTable [value]="swaps" [immutable]="false" scrollable="true" scrollHeight="35vh" 
+                        [contextMenu]="cm" selectionMode="single" [(selection)]="selectedSwap" 
+                        (onRowSelect)="onSwapRowSelect($event)">
+            <p-column field="swapID" header="Swap ID" [style]="{'width':'75px'}">
+                <ng-template let-col let-swap="rowData" pTemplate="body">
+                    <span>{{swap[col.field].substring(0,15) + '...'}}</span>
+                </ng-template>
+            </p-column>
+            <p-column header="Swap Information" [style]="{'width':'225px'}">
+                <ng-template let-data="rowData" pTemplate="body">
+                    <span class="text-small">
+                        <p class="item-p">
+                            <span class="item-label">Deposit Address: </span>
+                            <span class="item-value">{{ data.depositAddress }}</span>
+                        </p>
+                        <p class="item-p">
+                            <span class="item-label">Updated: </span>
+                            <span class="item-value">{{ convertCscTimestamp(data.updatedTimestamp) | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
+                        </p>
+                        <p class="item-p">
+                            <span class="item-label">Amount: </span>
+                            <span class="item-value">{{getDepositAmount(data.deposit)}}</span>
+                        </p>
+                        <p class="item-p">
+                            <span class="item-label">Status: </span>
+                            <span class="item-value">{{getSwapStatus(data.swapStatus)}}</span>
+                        </p>
+                    </span>
+                </ng-template>
+            </p-column>
+<!--
+            <p-column field="updatedTimestamp" header="Updated" [style]="{'width':'72px'}">
+                <ng-template let-col let-swap="rowData" pTemplate="body">
+                    <span>{{convertCscTimestamp(swap[col.field]) | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
+                </ng-template>
+            </p-column>
+            <p-column field="deposit.amount" header="Amount" [style]="{'width':'40px'}"></p-column>
+            <p-column field="swapStatus" header="Status" [style]="{'width':'85px'}"></p-column>
+        -->
+            <p-column field="deposit.confirmations" header="Confirms" [style]="{'width':'60px'}"></p-column>
+        </p-dataTable>
+    </div>
+</div>

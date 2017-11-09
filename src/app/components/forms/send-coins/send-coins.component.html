@@ -1,37 +1,45 @@
-<p-panel header="Send Coins" [style]="{'height':'80vh', 'margin':'10px'}">
-    <div class="ui-widget ui-g">
-        <div class="ui-g-12">
-            <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
-                <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
-                            placeholder="Select Account to send from ..." autofocus #accountDropdown></p-dropdown>
-            </div>
-        </div>
-        <div class="ui-g-12">
-            <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-address-book"></i></span>
-                <input type="text" pInputText placeholder="Receipient" [(ngModel)]="receipient" (keyup.enter)="focusDescription()">
-                <button pButton type="button" icon="fa-search" class="ui-button-secondary"></button>
-            </div>
-        </div>
-        <div class="ui-g-12">
-            <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-comments"></i></span>
-                <input type="text" pInputText placeholder="Description" [(ngModel)]="description" (keyup.enter)="focusAmount()" #descriptionInput>         
-            </div>
-        </div>
-        <div class="ui-g-12">
-            <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-money"></i></span>
-                <input type="number" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="doSendCoins()" #accountInput>         
-            </div>
-        </div>
-        <div class="ui-g-6">
-            <button pButton type="button" (click)="doSendCoins()" icon="fa-sign-out" iconPos="right" label="Send Coins"></button>
+<div class="ui-g form-container">
+    <p class="form-text-header">Send Coins</p>
+    <div class="ui-g-12">
+        <div class="ui-inputgroup">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
+            <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
+                        placeholder="Select Account to send from ..." autofocus #accountDropdown></p-dropdown>
         </div>
     </div>
-</p-panel>
-<p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="250" [closable]="true" [modal]="true">
+    <div class="ui-g-12">
+        <div class="ui-inputgroup">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-address-book"></i></span>
+            <input type="text" pInputText placeholder="Receipient" [(ngModel)]="receipient" (keyup.enter)="focusDescription()">
+            <button pButton type="button" icon="fa-search" class="ui-button-secondary"></button>
+        </div>
+    </div>
+    <div class="ui-g-12">
+        <div class="ui-inputgroup">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-comments"></i></span>
+            <input type="text" pInputText placeholder="Description" [(ngModel)]="description" (keyup.enter)="focusAmount()" #descriptionInput>         
+        </div>
+    </div>
+    <div class="ui-g-12">
+        <div class="ui-inputgroup">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-money"></i></span>
+            <input type="number" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()" #accountInput>         
+        </div>
+    </div>
+    <div class="ui-g-12">
+        <div class="ui-inputgroup">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;">Fees</span>
+            <input type="number" pInputText placeholder="Fees" [(ngModel)]="fees" (keyup.enter)="doSendCoins()"
+                    [(min)]="minimalFee" #feesInput>         
+        </div>
+    </div>
+    <div class="ui-g-6">
+        <button pButton type="button" (click)="doSendCoins()" icon="fa-sign-out" iconPos="left" label="Send Coins"
+                class="ui-button-secondary"></button>
+    </div>
+</div>
+<p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="250" [closable]="true" 
+    [modal]="true" appendTo="body">
     <p-header>
         Casinocoin Wallet Password
     </p-header>

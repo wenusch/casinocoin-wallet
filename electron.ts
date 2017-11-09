@@ -15,7 +15,7 @@ const platform = os.platform() + '_' + os.arch();
 // set property for exit dialog
 let showExitPrompt = true;
 
-let updaterFeedURL = 'http://download.casinocoin.org/update/' + platform + '/' + version;
+let updaterFeedURL = 'https://download.casinocoin.org/update/' + platform + '/' + version;
 if(version.indexOf("beta") !== -1){
 	updaterFeedURL = updaterFeedURL + '/' + 'beta';
 }
@@ -87,7 +87,7 @@ function createWindow() {
   const electronScreen = screen;
   const size = electronScreen.getPrimaryDisplay().workAreaSize;
 
-  const minimalWidth = Math.min(size.width, 960);
+  const minimalWidth = Math.min(size.width, 1000);
   const minimalHeight = Math.min(size.height, 720);
 
   // Create the browser window.

@@ -1,10 +1,19 @@
 import { Memo } from './csc-types';
+import { AppConstants } from '../domain/app-constants';
 
 export interface LokiMeta {
     revision: number,
     created: number,
     version: number,
     updated: number
+}
+
+export enum LokiTxStatus {
+    new = "txNEW",
+    send = "txSEND",
+    error = "txERROR",
+    received = "txRECEIVED",
+    validated = "txVALIDATED"
 }
 
 export interface LokiAccount {
@@ -74,7 +83,7 @@ export interface LokiTransaction {
     timestamp: number;
     direction: string;
     validated: boolean;
-    status: string;
+    status: LokiTxStatus;
     inLedger?: number;
 }
 

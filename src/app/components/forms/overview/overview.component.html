@@ -38,6 +38,9 @@
                     </ng-template>
                 </p-column>
                 <p-column field="txn_count" header="TX" [style]="{'width':'30px'}"></p-column>
+                <ng-template pTemplate="emptymessage">
+                    <p>No Ledgers download yet.</p>
+                </ng-template>
             </p-dataTable>
         </p-panel>
     </div>

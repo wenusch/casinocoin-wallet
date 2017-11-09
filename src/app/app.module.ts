@@ -27,7 +27,7 @@ import { WebStorageModule,
          SessionStorageService, 
          CookiesStorageService }    from 'ngx-store';
 
-import { DatePipe }                 from '@angular/common';
+import { DatePipe, DecimalPipe }    from '@angular/common';
 import { CSCDatePipe, 
          CSCAmountPipe }            from './app-pipes.module';
 
@@ -45,6 +45,8 @@ import { ReceiveCoinsComponent }    from './components/forms/receive-coins/recei
 import { AddressbookComponent }     from './components/forms/addressbook/addressbook.component';
 import { CoinSwapComponent }        from './components/forms/coin-swap/coin-swap.component';
 import { OverviewComponent }        from './components/forms/overview/overview.component';
+import { TransactionsComponent }    from './components/forms/transactions/transactions.component';
+import { SupportComponent }         from './components/forms/support/support.component';
 
 // import PrimeNG, Material and Bootstrap modules
 import { DialogModule, ButtonModule, CheckboxModule,
@@ -54,7 +56,8 @@ import { DialogModule, ButtonModule, CheckboxModule,
          StepsModule, PasswordModule, GrowlModule,
          ContextMenuModule, TieredMenuModule } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
-import { MatListModule, MatSidenavModule, MatTooltipModule } from '@angular/material';
+import { MatListModule, MatSidenavModule, MatTooltipModule,
+         MatButtonModule } from '@angular/material';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
@@ -71,6 +74,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     AddressbookComponent,
     CoinSwapComponent,
     OverviewComponent,
+    TransactionsComponent,
+    SupportComponent,
     AlertComponent
   ],
   imports: [
@@ -88,11 +93,11 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     DataTableModule, SharedModule, DropdownModule,
     StepsModule, PasswordModule, GrowlModule,
     MatListModule, MatSidenavModule, ContextMenuModule,
-    TieredMenuModule, MatTooltipModule
+    TieredMenuModule, MatTooltipModule, MatButtonModule
   ],
   providers: [
     Logger, Options,
-    DatePipe,
+    DatePipe, DecimalPipe,
     HttpClient,
     ElectronService,
     AuthGuard,

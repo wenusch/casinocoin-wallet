@@ -1,71 +1,124 @@
-<div>
-    <p-toolbar class="toolbar-height">
-        <div class="ui-toolbar-group-left">              
-            <div class="btn-group" role="group" aria-label="Basic example">
-                <button type="button" class="btn toolbar-button active" (click)="onOverview()">
-                  <img class="toolbar-image" [src]="overview_image"/>
-                  <div [class]="overview_text_class">Overview</div>
-                </button>
-                <button type="button" class="btn toolbar-button" (click)="onSendCoins()" >
-                  <img class="toolbar-image" [src]="send_image"/>
-                  <div [class]="send_text_class">Send</div>
-                </button>
-                <button type="button" class="btn toolbar-button" (click)="onReceiveCoins()" >
-                  <img class="toolbar-image" [src]="receive_image"/>
-                  <div [class]="receive_text_class">Receive</div>
-                </button>
-                <button type="button" class="btn toolbar-button" (click)="onAddressbook()" >
-                  <img class="toolbar-image" [src]="addressbook_image"/>
-                  <div [class]="addressbook_text_class">Addressbook</div>
-                </button>
-                <button type="button" class="btn toolbar-button" (click)="onCoinSwap()">
-                    <img class="toolbar-image" [src]="swap_image"/>
-                    <div [class]="swap_text_class">Swap</div>
-                  </button>
-              </div>
-            <!--
-            <div class="ui-g">
-                <div class="ui-g-12">
-                    <div (click)="sidenav.toggle()" style="text-align: center; padding-top: 10px; padding-bottom: 10px;">
-                        <i class="fa fa-bars fa-2x"></i>
+<div class="container">
+    <div class="home-sidenav">
+        <mat-sidenav-container class="home-sidenav-container">
+            <mat-sidenav mode="side" opened="true">
+                <div class="app-nav">
+                    <img src="../../../assets/casinocoin-logo.png" alt="Casinocoin" class="csc-logo" />
+                    <mat-list>
+                        <mat-list-item class="menu-item">
+                            <div class="ui-g">
+                                
+                                <div class="ui-g-12 menu-text">
+                                    <span class="amount-text-color">Balance:</span><span class="amount-color"> {{balance | cscAmount : false : true}}</span>
+                                </div>
+                            </div>
+                        </mat-list-item>
+                    </mat-list>
+                    <div class="menu-nav">
+                        <mat-list style="padding-top: 30px;">
+                            <mat-list-item (click)="onTransactions()" class="menu-item" 
+                                            [ngClass]="{active_menu_item: active_menu_item === 'transactions'}">
+                                <div class="ui-g">
+                                    <div class="ui-g-3">
+                                        <img src="../../../assets/icons/transactions.png" class="menu-icon"/>
+                                    </div>
+                                    <div class="ui-g-9 menu-text">
+                                        <span class="amount-text-color">Transactions:</span><span class="amount-color"> {{transaction_count}}</span>
+                                    </div>
+                                </div>
+                            </mat-list-item>
+                            <mat-list-item (click)="onSendCoins()" class="menu-item"
+                                            [ngClass]="{active_menu_item: active_menu_item === 'send'}"> 
+                                <div class="ui-g">
+                                    <div class="ui-g-3">
+                                        <img src="../../../assets/icons/send.png" class="menu-icon"/>
+                                    </div>
+                                    <div class="ui-g-9 menu-text">Send coins</div>
+                                </div>
+                            </mat-list-item>
+                            <mat-list-item (click)="onReceiveCoins()" class="menu-item"
+                                            [ngClass]="{active_menu_item: active_menu_item === 'receive'}"> 
+                                <div class="ui-g">
+                                    <div class="ui-g-3">
+                                        <img src="../../../assets/icons/receive.png" class="menu-icon" />
+                                    </div>
+                                    <div class="ui-g-9 menu-text">Receive coins</div>
+                                </div>
+                            </mat-list-item>
+                            <mat-list-item (click)="onAddressbook()" class="menu-item"
+                                            [ngClass]="{active_menu_item: active_menu_item === 'addressbook'}"> 
+                                <div class="ui-g">
+                                    <div class="ui-g-3">
+                                        <img src="../../../assets/icons/address.png" class="menu-icon" />
+                                    </div>
+                                    <div class="ui-g-9 menu-text">Address book</div>
+                                </div>
+                            </mat-list-item>
+                        </mat-list>
+                        <mat-list style="padding-top: 30px;">
+                            <mat-list-item (click)="onCoinSwap()" class="menu-item"
+                                            [ngClass]="{active_menu_item: active_menu_item === 'coinswap'}"> 
+                                <div class="ui-g">
+                                    <div class="ui-g-3">
+                                        <img src="../../../assets/icons/swap.png" class="menu-icon" />
+                                    </div>
+                                    <div class="ui-g-9 menu-text">Coin Swap</div>
+                                </div>
+                            </mat-list-item>
+                            <mat-list-item (click)="onSupport()" class="menu-item"
+                                            [ngClass]="{active_menu_item: active_menu_item === 'support'}"> 
+                                <div class="ui-g">
+                                    <div class="ui-g-3">
+                                        <img src="../../../assets/icons/support.png" class="menu-icon" />
+                                    </div>
+                                    <div class="ui-g-9">Support</div>
+                                </div>
+                            </mat-list-item>
+                        </mat-list>
                     </div>
                 </div>
-            </div>
-          -->
-        </div>
-        <div class="ui-toolbar-group-right">
-            <!--
-            <p-tieredMenu #contextMenu [model]="context_menu_items" [popup]="true"></p-tieredMenu >
-            -->
-            <div class="ui-g">
-                <div class="ui-g-4">
-                    <div #connection (click)="onConnectionContextMenuClick($event)" 
-                         style="text-align: center; padding-top: 15px; padding-right: 15px;">
-                         <!--   
-                         <i class="fa fa-wifi fa-2x"></i>
-                         -->
-                         <span [matTooltip]="connected_tooltip">
-                            <i [class]="connected_icon"></i>
-                         </span>
+            </mat-sidenav>
+            <!-- primary content -->
+            <p-growl [(value)]="msgs"></p-growl>
+            <router-outlet></router-outlet>
+            <p-toolbar class="toolbar-height">
+                <div class="ui-toolbar-group-left">
+                    <div class="ui-g">
+                        <div class="ui-g-8">
+                            <img src="../../../assets/icons/balance.png" class="footer-icon">
+                            Balance: {{balance | cscAmount : false : true}}
+                        </div>
+                        <div class="ui-g-4">
+                            <img src="../../../assets/icons/fiat.png" class="footer-icon">
+                            Fiat Value: {{fiat_balance}}
+                        </div>
                     </div>
                 </div>
-                <div class="ui-g-4">
-                    <div #cog (click)="onContextMenuClick($event)" style="text-align: center; padding-top: 15px; padding-right: 15px;">
-                            <i class="fa fa-cog fa-2x"></i>
+                <div class="ui-toolbar-group-right">
+                    <div class="ui-g">
+                        <div class="ui-g-4">
+                            <div (click)="onSettingsMenuClick($event)">
+                                <img src="../../../assets/icons/settings.png" alt="Settings" class="footer-icon">
+                                Settings
+                            </div>
+                        </div>
+                        <div class="ui-g-4">
+                            <div (click)="onToolsMenuClick($event)">
+                                <img src="../../../assets/icons/tools.png" alt="Tools" class="footer-icon">
+                                Tools
+                            </div>
+                        </div>
+                        <div class="ui-g-4">
+                            <div (click)="onConnectionClick($event)" [matTooltip]="connected_tooltip">
+                                <img [src]="connection_image" alt="Connection" class="footer-icon" />
+                                <span [ngClass]="getConnectionColorClass()">{{connected_tooltip}}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="ui-g-4">
-                    <div (click)="onQuit()" style="text-align: center; padding-top: 15px; padding-right: 15px;">
-                        <i class="fa fa-power-off fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </p-toolbar>
-</div>
-<div class="ui-widget content-height">
-    <p-growl [(value)]="msgs"></p-growl>
-    <router-outlet></router-outlet>
+            </p-toolbar>
+        </mat-sidenav-container>
+    </div>
 </div>
 <p-dialog class="dialog-header" [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="300" [closable]="true" [modal]="true">
     <p-header>Import private key</p-header>
@@ -96,6 +149,20 @@
     </div>
     <div style="text-align: right;">
         <button pButton type="button" (click)="onImportPrivateKey()" icon="fa-arrow-right" iconPos="right" label="Import" 
+                style="width: 115px;"></button>
+    </div>
+</p-dialog>
+<p-dialog class="dialog-header" [(visible)]="showSettingsDialog" [width]="640" [height]="480" [closable]="true" [modal]="true">
+    <p-header>Settings</p-header>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div style="text-align: right;">
+        <button pButton type="button" (click)="onSettingsSave()" icon="fa-save" iconPos="right" label="Save" 
                 style="width: 115px;"></button>
     </div>
 </p-dialog>

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { CSCUtil } from './domain/csc-util';
 
 /*
@@ -19,19 +19,25 @@ export class CSCDatePipe implements PipeTransform {
 
 @Pipe({name: 'cscAmount'})
 export class CSCAmountPipe implements PipeTransform {
-    constructor(){}
+    constructor(private numberPipe: DecimalPipe){}
 
-    transform(value, includeCurrency: boolean): string {
+    transform(value, includeCurrency: boolean, numberFormat: boolean): string {
         if(value == null){
             return "";
         } else if(isNaN(value)){
             let amount = CSCUtil.dropsToCsc(value);
+            if(numberFormat != null && numberFormat){
+                amount = this.numberPipe.transform(amount, "1.2-8");
+            }
             if(includeCurrency){
                 amount = amount + " CSC";
             }
             return amount;
         } else {
             let amount = CSCUtil.dropsToCsc(value.toString());
+            if(numberFormat != null && numberFormat){
+                amount = this.numberPipe.transform(amount, "1.2-8");
+            }
             if(includeCurrency){
                 amount = amount + " CSC";
             }

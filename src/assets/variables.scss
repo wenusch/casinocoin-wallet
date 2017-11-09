@@ -1,10 +1,12 @@
 $fontFamily:  "Roboto", "Trebuchet MS", Arial, Helvetica, sans-serif;
-$fontSize: 0.96em;
+$fontSize: 0.94em;
 $borderRadius: 2px;
 $disabledOpacity: 0.35;
+$statusBarHeight: 40px;
 
 $casinocoinRed: #901119;
 $casinocoinRedLighter: lighten($casinocoinRed, 10%);
 $casinocoinRedDarker: darken($casinocoinRed, 20%);
-$casinocoinGreen: #119022;
+$casinocoinGreen: #4caf50;
 $casinocoinBlue: #114490;
+$casinocoinGray: #333333;

@@ -294,15 +294,44 @@ export class WalletService {
   }
 
   getAllTransactions(): Array<LokiTypes.LokiTransaction> {
+    // return all transactions sorted by descending timestamp
     return this.transactions.chain().find().simplesort("timestamp", true).data();
   }
 
   getUnvalidatedTransactions(): Array<LokiTypes.LokiTransaction> {
-    return this.transactions.find({ validated:  false });
+    return this.transactions.find({ validated: false });
   }
 
   updateTransaction(transaction: LokiTypes.LokiTransaction){
     this.transactions.update(transaction);
+  }
+
+  getAccountTransactions(inputAccountID: string): Array<LokiTypes.LokiTransaction>{
+    // return all validated transactions for an account id sorted by ascending ledger index
+    return this.transactions.chain().find(
+      { $or: [{ accountID: inputAccountID, validated: true}, {destination: inputAccountID, validated: true}]}
+    ).simplesort("inLedger", false).data();
+  }
+
+  getAccountTXBalance(inputAccountID: string): string {
+    // get all transactions
+    let totalBalance: Big = new Big("0");
+    let allAccountTX: Array<LokiTypes.LokiTransaction> = this.getAccountTransactions(inputAccountID);
+    allAccountTX.forEach(element => {
+      // if accountID == inputAccountID its outgoing else its incomming
+      if(element.accountID == inputAccountID){
+        totalBalance = totalBalance.minus(element.amount);
+        // also remove fees
+        totalBalance = totalBalance.minus(element.fee);
+      } else if(element.destination == inputAccountID){
+        totalBalance = totalBalance.plus(element.amount);
+      }
+    });
+    // special case for the genesis account that was initialized with 40.000.000.000 coins
+    if(inputAccountID == "cHb9CJAWyB4cj91VRWn96DkukG4bwdtyTh"){
+      totalBalance = totalBalance.plus("4000000000000000000");
+    }
+    return totalBalance.toString();
   }
 
   // #########################################

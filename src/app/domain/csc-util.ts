@@ -1,5 +1,6 @@
 import Big from 'big.js';
 import { Amount, Memo, CasinocoindAmount, CasinocoinMemo }  from './csc-types';
+import { Mnemonic } from './mnemonic';
 
 export class CSCUtil {
 
@@ -102,4 +103,16 @@ export class CSCUtil {
         }).join('')
     }
 
+    static randomIntFromInterval(min, max) {
+        return Math.floor(Math.random()*(max-min+1)+min);
+    }
+
+    static getRandomMnemonic(): Array<string> {
+        let mnemonicArray: Array<string> = [];
+        for (let i=0; i<16; i++){
+            let randomIndex = this.randomIntFromInterval(0, (Mnemonic.english.length - 1));
+            mnemonicArray.push(Mnemonic.english[randomIndex]);
+        }
+        return mnemonicArray;
+    }
 }
