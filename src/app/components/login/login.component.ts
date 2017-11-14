@@ -42,22 +42,27 @@ export class LoginComponent implements OnInit {
         private walletService: WalletService,
         private messageService: MessageService,
         private datePipe: DatePipe) { 
-            this.wallets = [];
-            this.logger.debug("Wallet Count: " + this.availableWallets.length);
-            for(let i=0; i< this.availableWallets.length; i++){
-                this.logger.debug("Wallet: " + JSON.stringify(this.availableWallets[i]));
-                let walletCreationDate = new Date(CSCUtil.casinocoinToUnixTimestamp(this.availableWallets[i]['creationDate']));
-                let walletLabel = this.availableWallets[i]['walletUUID'].substring(0,12) + "... [Created: " + 
-                        this.datePipe.transform(walletCreationDate, "yyyy-MM-dd") + "]";
-                this.logger.debug("Wallet Label: " + walletLabel);
-                this.wallets.push({label: walletLabel, value: this.availableWallets[i]['walletUUID']});
-            }
     }
  
     ngOnInit() {
-        this.logger.debug("LoginComponent onInit");
+        this.logger.debug("### LoginComponent onInit");
         // get return url from route parameters or default to '/'
         this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+        this.wallets = [];
+        this.logger.debug("Wallet Count: " + this.availableWallets.length);
+        for(let i=0; i< this.availableWallets.length; i++){
+            this.logger.debug("Wallet: " + JSON.stringify(this.availableWallets[i]));
+            let walletLabel = this.availableWallets[i]['walletUUID'].substring(0,12);
+            let walletCreationDate = new Date(CSCUtil.casinocoinToUnixTimestamp(this.availableWallets[i]['creationDate']));
+            if(this.availableWallets[i]['importedDate']){
+                let walletImportDate = new Date(CSCUtil.casinocoinToUnixTimestamp(this.availableWallets[i]['importedDate']));
+                walletLabel = walletLabel + "... [Imported: " + this.datePipe.transform(walletImportDate, "yyyy-MM-dd") + "]";
+            } else {
+                walletLabel = walletLabel + "... [Created: " + this.datePipe.transform(walletCreationDate, "yyyy-MM-dd") + "]";
+            }
+            this.logger.debug("Wallet Label: " + walletLabel);
+            this.wallets.push({label: walletLabel, value: this.availableWallets[i]['walletUUID']});
+        }
     }
  
     doOpenWallet() {
@@ -78,20 +83,23 @@ export class LoginComponent implements OnInit {
             let walletIndex = this.availableWallets.findIndex( item => item['walletUUID'] == this.selectedWallet);
             let walletObject = this.availableWallets[walletIndex];
             this.footer_visible = false;
-            this.logger.debug("### Check Wallet Password: " + JSON.stringify(walletObject));
+            this.logger.debug("### LoginComponent - Check Wallet Password: " + JSON.stringify(walletObject));
             if(this.walletService.checkWalletPasswordHash(this.selectedWallet, this.walletPassword, walletObject['hash'])){
-                this.walletLocation = walletObject['location'];
-                this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
-                    this.logger.debug("### Open Wallet Response: " + result);
+                this.logger.debug("### LoginComponent - Open Wallet Location: " + walletObject['location']);
+                this.walletService.openWallet(walletObject['location'], walletObject['walletUUID']).subscribe( result => {
+                    this.logger.debug("### LoginComponent - Open Wallet Response: " + result);
                     this.login_icon = "fa-check";
                     if(result == AppConstants.KEY_INIT){
                         this.footer_visible = false;
                         this.error_message = "";
                     } else if (result == AppConstants.KEY_LOADED){
                         // Navigate to Home 
+                        this.currentWallet = walletObject['walletUUID'];
+                        this.walletLocation = walletObject['location'];
                         this.router.navigate([this.returnUrl]);
                     } else if (result == AppConstants.KEY_ERRORED) {
                         // there was an error opening the wallet
+                        this.logger.debug("### LoginComponent - there was an error opening the wallet");
                         this.error_message = "There was an error opening the wallet!!";
                         this.footer_visible = true;
                     } else {

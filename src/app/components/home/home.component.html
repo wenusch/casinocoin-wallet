@@ -182,3 +182,39 @@
         <div class="ui-g-8">Current Account Reserve</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.reserve_base | cscAmount}}</div>
     </div>
 </p-dialog>
+
+<p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="250" [closable]="true" [modal]="true" appendTo="body">
+<p-header>
+    Casinocoin Wallet Password
+</p-header>
+<div class="ui-g ui-fluid">
+    <div class="ui-g-1"></div>
+    <div class="ui-g-10">
+        <p>Please enter the password that belongs to the wallet you want to import.</p>
+    </div>
+    <div class="ui-g-1"></div>
+</div>
+<div class="ui-g ui-fluid">
+    <div class="ui-g-1"></div>
+    <div class="ui-g-10">
+        <div class="ui-inputgroup">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
+            <input type="password" pInputText placeholder="Wallet Password" style="width: 100%; padding-left: 5px;"
+                   [(ngModel)]="importWalletPassword" (keyup.enter)="doWalletImport()" #passwordInput>         
+        </div>
+    </div>
+    <div class="ui-g-1"></div>
+</div>
+<div class="ui-g ui-fluid">
+    <div class="ui-g-1"></div>
+    <div class="ui-g-5">
+    </div>
+    <div class="ui-g-5">
+        <span>
+            <button pButton type="button" (click)="doWalletImport()" icon="fa-check" iconPos="right" 
+                    label="Import Wallet" style="width: 150px;"></button>
+        </span>
+    </div>
+    <div class="ui-g-1"></div>
+</div>
+</p-dialog>

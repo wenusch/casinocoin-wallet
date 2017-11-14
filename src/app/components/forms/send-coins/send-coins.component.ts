@@ -102,9 +102,9 @@ export class SendCoinsComponent implements OnInit {
     this.descriptionInput.nativeElement.focus();
   }
 
-  // focusAmount(){
-  //   this.amount.nativeElement.focus();
-  // }
+  focusAmount(){
+    this.amountInput.nativeElement.focus();
+  }
 
   focusFees(){
     this.feesInput.nativeElement.focus();

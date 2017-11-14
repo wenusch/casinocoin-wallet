@@ -2,7 +2,6 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { InputText } from 'primeng/primeng';
 import { Logger } from 'angular2-logger/core';
 import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
-import { MessageService } from 'primeng/components/common/messageservice';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
 import { LedgerStreamMessages } from '../../../domain/websocket-types';
@@ -43,7 +42,7 @@ export class TransactionsComponent implements OnInit {
   constructor(private logger:Logger, 
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
-              private messageService: MessageService ) { }
+              private electronService: ElectronService, ) { }
 
   ngOnInit() {
     // get transactions from wallet
@@ -71,6 +70,33 @@ export class TransactionsComponent implements OnInit {
     });
     // get network ledgers
     this.ledgers = this.casinocoinService.ledgers;
+    // define Transaction Context menu
+    let tx_context_menu_template = [
+      { label: 'Copy From Address', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('tx-context-menu-event', 'copy-from'); }
+      },
+      { label: 'Copy To Address', 
+        click(menuItem, browserWindow, event) { 
+           browserWindow.webContents.send('tx-context-menu-event', 'copy-to'); }
+      },
+      { label: 'Copy Transaction ID', 
+         click(menuItem, browserWindow, event) { 
+             browserWindow.webContents.send('tx-context-menu-event', 'copy-txid'); }
+      }
+    ];
+    this.tx_context_menu = this.electronService.remote.Menu.buildFromTemplate(tx_context_menu_template);
+    // listen to connection context menu events
+    this.electronService.ipcRenderer.on('tx-context-menu-event', (event, arg) => {
+      if(arg == 'copy-to')
+        this.electronService.clipboard.writeText(this.selectedTxRow.destination);
+      else if(arg == 'copy-from')
+        this.electronService.clipboard.writeText(this.selectedTxRow.accountID);
+      else if(arg == 'copy-txid')
+        this.electronService.clipboard.writeText(this.selectedTxRow.txID);
+      else
+        this.logger.debug("### Context menu not implemented: " + arg);
+    });
   }
 
   getTXTextColor(cell, rowData){
@@ -134,9 +160,8 @@ export class TransactionsComponent implements OnInit {
 
   showTxContextMenu(event){
     this.logger.debug("### showTxContextMenu: " + JSON.stringify(event));
-    if(this.selectedTxRow){
-      this.logger.debug("### showTxContextMenu - row: " + JSON.stringify(this.selectedTxRow));
-    }
+    this.selectedTxRow = event.data;
+    this.tx_context_menu.popup(this.electronService.remote.getCurrentWindow());
   }
 
   onTxRowClick(event){

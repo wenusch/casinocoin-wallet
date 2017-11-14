@@ -53,10 +53,12 @@
             <input type="number" pInputText [(ngModel)]="totalSend" #totalSendInput disabled>         
         </div>
     </div>
+    <!-- We need to have the option to include the reserve as well in the future !!!
     <div class="ui-g-12" [matTooltip]="reserve_tooltip">
         <p-checkbox [(ngModel)]="includeReserve" binary="true" label="Include account reserve?"
                      (ngModelChange)="onReserveChange($event)" [disabled]="!selectedAccount"></p-checkbox>
     </div>
+    -->
     <div class="ui-g-6">
         <button pButton type="button" (click)="doSendCoins()" icon="fa-sign-out" iconPos="left" label="Send Coins"
                 class="ui-button-secondary" [disabled]="!isSendValid"></button>
@@ -92,7 +94,7 @@
         <div class="ui-g-5">
             <span>
                 <button pButton type="button" (click)="doSignAndSubmitTx()" [(icon)]="signAndSubmitIcon" iconPos="right" 
-                        label="Sign And Submit" style="width: 200px;"></button>
+                        label="Sign And Submit" style="width: 175px;"></button>
             </span>
         </div>
         <div class="ui-g-1"></div>

@@ -2,7 +2,7 @@ import { Component, OnInit, trigger, state, animate, transition, style, ViewChil
 import { Router } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { Logger } from 'angular2-logger/core';
-import { LocalStorage, SessionStorage } from 'ngx-store';
+import { LocalStorage, SessionStorage, LocalStorageService, SessionStorageService } from 'ngx-store';
 import { ElectronService } from '../../providers/electron.service';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
 import { CasinocoinService } from '../../providers/casinocoin.service';
@@ -42,8 +42,7 @@ const crypto = require('crypto');
 export class HomeComponent implements OnInit {
 
   @SessionStorage() public currentWallet: string;
-  @LocalStorage() public walletLocation: string;
-
+    
   @ViewChild('contextMenu') contextMenu: ContextMenu;
 
   //show_menu: string = 'shown';
@@ -55,8 +54,11 @@ export class HomeComponent implements OnInit {
   showPrivateKeyImportDialog:boolean = false;
   showSettingsDialog:boolean = false;
   showServerInfoDialog:boolean = false;
+  showPasswordDialog:boolean = false;
   privateKeySeed:string;
   walletPassword:string;
+  importWalletPassword:string;
+  importFileObject:Object;
 
   privateKeyExportLocation: string = "";
 
@@ -96,6 +98,8 @@ export class HomeComponent implements OnInit {
                private walletService: WalletService,
                private casinocoinService: CasinocoinService ,
                private notificationService: NotificationService,
+               private localStorageService: LocalStorageService,
+               private sessionStorageService: SessionStorageService,
                private marketService: MarketService,
                private datePipe: DatePipe,
                private currenyPipe: CurrencyPipe ) {
@@ -129,6 +133,14 @@ export class HomeComponent implements OnInit {
       }
     ];
     this.tools_context_menu = this.electron.remote.Menu.buildFromTemplate(tools_context_menu_template);
+    this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(
+      { label: 'Close Wallet', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('tools-context-menu-event', 'close-wallet');
+        }
+      })
+    );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
       { label: 'Quit', 
@@ -169,6 +181,8 @@ export class HomeComponent implements OnInit {
         this.onRestoreBackup();
       else if(arg == 'add-wallet')
         this.onAddWallet();
+      else if(arg == 'close-wallet')
+        this.closeWallet();
       else if(arg == 'quit')
         this.onQuit();
       else
@@ -203,7 +217,10 @@ export class HomeComponent implements OnInit {
         }
         // until there is valid market info on new CSC we calculate market value against 1:1000 ratio
         let balanceOldCSC = new Big(CSCUtil.dropsToCsc(this.balance)).div(1000);
-        let cscFiat = balanceOldCSC.times(this.marketService.coinMarketInfo.price_usd).toString();
+        let cscFiat = "0.00";
+        if(this.marketService.coinMarketInfo){
+          cscFiat = balanceOldCSC.times(this.marketService.coinMarketInfo.price_usd).toString();
+        }
         this.fiat_balance = this.currenyPipe.transform(cscFiat, "USD", true, "1.2-2");
         // subscribe to transaction updates
         this.casinocoinService.transactionSubject.subscribe( tx => {
@@ -370,10 +387,36 @@ export class HomeComponent implements OnInit {
         }, (result) => {
           this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
           if(result && result.length > 0) {
-            this.logger.debug("Add Wallet Location: " + JSON.stringify(result));
+            this.importFileObject = path.parse(result[0]);
+            this.showPasswordDialog = true;
+            return;
+          } else {
+            return;
           }
         }
     );
+  }
+
+  doWalletImport(){
+    this.logger.debug("Add Wallet Location: " + JSON.stringify(this.importFileObject));
+    let walletHash = this.walletService.generateWalletPasswordHash(this.importFileObject['name'], this.importWalletPassword);
+    let newWallet =
+        { "walletUUID": this.importFileObject['name'], 
+          "importedDate": CSCUtil.iso8601ToCasinocoinTime(new Date().toISOString()),
+          "location": this.importFileObject['dir'],
+          "hash": walletHash
+        };
+    let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
+    availableWallets.push(newWallet);
+    this.localStorageService.set(AppConstants.KEY_AVAILABLE_WALLETS, availableWallets);
+    // redirect to login
+    this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
+    this.router.navigate(['/login']);
+  }
+
+  closeWallet(){
+    this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
+    this.router.navigate(['/login']);
   }
 
   connectToCasinocoinNetwork(){

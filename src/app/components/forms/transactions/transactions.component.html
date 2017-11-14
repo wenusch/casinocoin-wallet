@@ -8,9 +8,10 @@
                         autofocus #accountDropdown></p-dropdown>
         </div>
     </div>
-    <div class="ui-g-12" (contextmenu)="showTxContextMenu($event)">
+    <div class="ui-g-12">
+        <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
         <p-dataTable [value]="transactions" scrollable="true" [immutable]="false" scrollHeight="50vh" [contextMenu]="cm"
-            responsive="true" styleClass="borderless" (onRowClick)="onTxRowClick($event)" [(selection)]="selectedTxRow">
+            responsive="true" styleClass="borderless" (onContextMenuSelect)="showTxContextMenu($event)">
             <p-column [style]="{'width':'20px'}">
                 <ng-template let-data="rowData" pTemplate="body">
                     <i [ngClass]="getDirectionIconClasses(data)"></i>
