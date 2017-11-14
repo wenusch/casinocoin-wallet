@@ -18,7 +18,8 @@ import { WalletService }            from './providers/wallet.service';
 import { CasinocoinService }        from './providers/casinocoin.service';
 import { WebsocketService }         from './providers/websocket.service';
 import { SwapService }              from './providers/swap.service';
-import { AlertService }             from './providers/alert.service';
+import { NotificationService }      from './providers/notification.service';
+import { MarketService }            from './providers/market.service';
 
 import { AuthGuard }                from './domain/auth-guard';
 
@@ -27,13 +28,13 @@ import { WebStorageModule,
          SessionStorageService, 
          CookiesStorageService }    from 'ngx-store';
 
-import { DatePipe, DecimalPipe }    from '@angular/common';
+import { DatePipe, DecimalPipe,
+         CurrencyPipe }             from '@angular/common';
 import { CSCDatePipe, 
          CSCAmountPipe }            from './app-pipes.module';
 
 import { AppComponent }             from './app.component';
 import { HomeComponent }            from './components/home/home.component';
-import { AlertComponent }           from './components/alert/alert.component';
 import { WalletSetupComponent }     from './components/wallet-setup/wallet-setup.component';
 import { SetupStep1Component }      from './components/wallet-setup/step1-component';
 import { SetupStep2Component }      from './components/wallet-setup/step2-component';
@@ -75,8 +76,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     CoinSwapComponent,
     OverviewComponent,
     TransactionsComponent,
-    SupportComponent,
-    AlertComponent
+    SupportComponent
   ],
   imports: [
     BrowserModule,
@@ -97,7 +97,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
   ],
   providers: [
     Logger, Options,
-    DatePipe, DecimalPipe,
+    DatePipe, DecimalPipe, CurrencyPipe,
     HttpClient,
     ElectronService,
     AuthGuard,
@@ -106,7 +106,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     CasinocoinService,
     SwapService,
     MessageService,
-    AlertService
+    NotificationService,
+    MarketService
   ],
   bootstrap: [AppComponent]
 })

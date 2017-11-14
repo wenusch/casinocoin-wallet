@@ -23,11 +23,11 @@
 }
 
 ::ng-deep p-toolbar .ui-toolbar-group-left {
-  width: 52%;
+  width: 55%;
 }
 
 ::ng-deep p-toolbar .ui-toolbar-group-right {
-  width: 43%;
+  width: 42%;
 }
 
 ::ng-deep #main_menu .ui-menu {
@@ -142,4 +142,8 @@
 
 .footer-icon {
   width: 15px;    
+}
+
+::ng-deep .bold-value {
+  font-weight: bolder;
 }

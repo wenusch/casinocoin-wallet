@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Logger } from 'angular2-logger/core';
 import { AppConstants } from '../../../domain/app-constants';
+import { ElectronService } from '../../../providers/electron.service';
 
 @Component({
   selector: 'app-support',
@@ -9,7 +10,8 @@ import { AppConstants } from '../../../domain/app-constants';
 })
 export class SupportComponent implements OnInit {
 
-  constructor(private logger: Logger) { 
+  constructor(private logger: Logger,
+              private electronService: ElectronService) { 
           this.logger.debug("### INIT Support ###");
   }
 
@@ -17,4 +19,33 @@ export class SupportComponent implements OnInit {
 
   }
 
+  openFAQ(){
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("https://casinocoin.org/faq/");
+  }
+
+  openDiscord(){
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("http://casinocoin.chat/");
+  }
+
+  openWebsite(){
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("https://casinocoin.org");
+  }
+
+  openGithub(){
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("https://github.com/casinocoin/casinocoin-wallet/issues");
+  }
+
+  openContactForm(){
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("https://casinocoin.org/contact");
+  }
+
+  openEmail(){
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("mailto:support@casinocoin.org");
+  }
 }

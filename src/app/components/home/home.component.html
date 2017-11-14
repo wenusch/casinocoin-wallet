@@ -48,7 +48,7 @@
                             <mat-list-item (click)="onAddressbook()" class="menu-item"
                                             [ngClass]="{active_menu_item: active_menu_item === 'addressbook'}"> 
                                 <div class="ui-g">
-                                    <div class="ui-g-3">
+                                    <div class="ui-g-3" style="padding-top: 20px;">
                                         <img src="../../../assets/icons/address.png" class="menu-icon" />
                                     </div>
                                     <div class="ui-g-9 menu-text">Address book</div>
@@ -84,11 +84,11 @@
             <p-toolbar class="toolbar-height">
                 <div class="ui-toolbar-group-left">
                     <div class="ui-g">
-                        <div class="ui-g-8">
+                        <div class="ui-g-6">
                             <img src="../../../assets/icons/balance.png" class="footer-icon">
                             Balance: {{balance | cscAmount : false : true}}
                         </div>
-                        <div class="ui-g-4">
+                        <div class="ui-g-6">
                             <img src="../../../assets/icons/fiat.png" class="footer-icon">
                             Fiat Value: {{fiat_balance}}
                         </div>
@@ -102,13 +102,13 @@
                                 Settings
                             </div>
                         </div>
-                        <div class="ui-g-4">
+                        <div class="ui-g-3">
                             <div (click)="onToolsMenuClick($event)">
                                 <img src="../../../assets/icons/tools.png" alt="Tools" class="footer-icon">
                                 Tools
                             </div>
                         </div>
-                        <div class="ui-g-4">
+                        <div class="ui-g-5" style="text-align: right">
                             <div (click)="onConnectionClick($event)" [matTooltip]="connected_tooltip">
                                 <img [src]="connection_image" alt="Connection" class="footer-icon" />
                                 <span [ngClass]="getConnectionColorClass()">{{connected_tooltip}}</span>
@@ -125,7 +125,7 @@
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            <p>Enter the Seed for the Private Key you wish to import.</p>
+            <p>Enter the Seed for the Private Key you wish to import and the password for your wallet.</p>
         </div>
         <div class="ui-g-1"></div>
     </div>
@@ -164,5 +164,21 @@
     <div style="text-align: right;">
         <button pButton type="button" (click)="onSettingsSave()" icon="fa-save" iconPos="right" label="Save" 
                 style="width: 115px;"></button>
+    </div>
+</p-dialog>
+<p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="500" [height]="425" [closable]="true" [modal]="true">
+    <p-header>Server Information</p-header>
+    <div class="ui-g">
+        <div class="ui-g-8">Server Version</div><div class="ui-g-4 bold-value">{{serverState.build_version}}</div>
+        <div class="ui-g-8">Available Ledgers</div><div class="ui-g-4 bold-value">{{serverState.complete_ledgers}}</div>
+        <div class="ui-g-8">Server Status</div><div class="ui-g-4 bold-value">{{serverState.server_state}}</div>
+        <div class="ui-g-8">Server Latency (ms)</div><div class="ui-g-4 bold-value">{{serverState.io_latency_ms}}</div>
+        <div class="ui-g-8">Connected Peers</div><div class="ui-g-4 bold-value">{{serverState.peers}}</div>
+        <div class="ui-g-8">Last Ledger Sequence</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.seq}}</div>
+        <div class="ui-g-8">Last Closing Time</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.close_time | cscDate: 'HH:mm:ss'}}</div>
+        <div class="ui-g-8">Close Duration (ms)</div><div class="ui-g-4 bold-value">{{serverState.last_close.converge_time}}</div>
+        <div class="ui-g-8">Last Close Proposers</div><div class="ui-g-4 bold-value">{{serverState.last_close.proposers}}</div>
+        <div class="ui-g-8">Current Fee</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.base_fee | cscAmount}}</div>
+        <div class="ui-g-8">Current Account Reserve</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.reserve_base | cscAmount}}</div>
     </div>
 </p-dialog>

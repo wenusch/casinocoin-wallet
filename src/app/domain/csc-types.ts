@@ -1,18 +1,31 @@
+import int from 'int';
+
+export type PrepareTxPayment = {
+    source:string;
+    destination:string;
+    amountDrops:string;
+    feeDrops: string;
+    description?: string;
+    invoiceID?: string;
+    sourceTag?: int;
+    destinationTag?: int;
+}
+
 export type CasinocoinTxObject = {
-    TransactionType: string,
-    Account: string,
-    Destination: string,
-    Amount: string,
-    Fee: string,
-    Flags: number,
-    Sequence: number,
-    LastLedgerSequence : number,
-    InvoiceID?: string,
-    Memos?: Array<CasinocoinMemo>,
-    SourceTag?: string,
-    DestinationTag?: string,
-    TxnSignature?: string,
-    SigningPubKey?: string
+    TransactionType: string;
+    Account: string;
+    Destination: string;
+    Amount: string;
+    Fee: string;
+    Flags: number;
+    Sequence: number;
+    LastLedgerSequence : number;
+    InvoiceID?: string;
+    Memos?: Array<CasinocoinMemo>;
+    SourceTag?: int;
+    DestinationTag?: int;
+    TxnSignature?: string;
+    SigningPubKey?: string;
 }
 
 export type CasinocoinMemo = {

@@ -18,10 +18,10 @@ export class WebsocketService {
         { server_id: 'wst02', server_url: 'ws://wst02.casinocoin.org:7007/', response_time: -1 }
     ];
     private PROD_SERVERS: Array<any> = [
-        { server_id: 'ws01', server_url: 'wss://ws01.casinocoin.org:7007/', response_time: -1 },
-        { server_id: 'ws02', server_url: 'wss://ws02.casinocoin.org:7007/', response_time: -1 },
-        { server_id: 'ws03', server_url: 'wss://ws03.casinocoin.org:7007/', response_time: -1 },
-        { server_id: 'ws04', server_url: 'wss://ws04.casinocoin.org:7007/', response_time: -1 }
+        { server_id: 'ws01', server_url: 'wss://ws01.casinocoin.org:4443/', response_time: -1 },
+        { server_id: 'ws02', server_url: 'wss://ws02.casinocoin.org:4443/', response_time: -1 },
+        { server_id: 'ws03', server_url: 'wss://ws03.casinocoin.org:4443/', response_time: -1 },
+        { server_id: 'ws04', server_url: 'wss://ws04.casinocoin.org:4443/', response_time: -1 }
     ];
 
     private currentServerFound: boolean = false;
@@ -52,17 +52,7 @@ export class WebsocketService {
     if(connectToProduction != null) {
       this.findBestServer(connectToProduction).subscribe( result => {
         if(result){
-          if(!this.currentServerFound){
-            this.currentServerFound = true;
-          } else {
-            // faster server found so reconnect ...
-
-            // this.logger.debug("### findBestServer - Faster Server Found -> Connect: " + JSON.stringify(this.currentServer));
-          }
-          // connect to the server
-          this.connect();
-          // indicate server find complete
-          this.isServerFindComplete = true;
+          this.handleCurrentServerFound();
         } else {
           if(!this.currentServerFound){
             this.logger.debug("### findBestServer - No best server found yet!!");
@@ -78,6 +68,20 @@ export class WebsocketService {
         //     let data = JSON.parse(response.data);
         //     return data;
         // });
+  }
+
+  handleCurrentServerFound(){
+    if(!this.currentServerFound){
+      this.currentServerFound = true;
+    } else {
+      // faster server found so reconnect ...
+
+      // this.logger.debug("### findBestServer - Faster Server Found -> Connect: " + JSON.stringify(this.currentServer));
+    }
+    // connect to the server
+    this.connect();
+    // indicate server find complete
+    this.isServerFindComplete = true;
   }
 
   executeServerFind(value: ServerDefinition, findCompleteSubject: Subject<boolean>){

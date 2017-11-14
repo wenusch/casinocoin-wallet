@@ -13,6 +13,7 @@ import Big from 'big.js';
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const LZString = require('lz-string');
 
 
 import * as loki from 'lokijs';
@@ -126,6 +127,7 @@ export class WalletService {
     let collectionSubject = new Subject<any>();
     let openSubject = new Subject<string>();
     openSubject.subscribe(result => {
+      this.logger.debug("openWallet: " + result);
       this.openWalletSubject.next(result);
     });
     let openError = false;
@@ -537,5 +539,14 @@ export class WalletService {
     } else {
       return null;
     }
+  }
+
+  getWalletDump(): string {
+    return LZString.compressToBase64(this.walletDB.serialize());
+  }
+
+  importWalletDump(dumpContents: string){
+    let decompressed = LZString.decompressFromBase64 (dumpContents);
+    this.walletDB.loadJSON(decompressed);
   }
 }

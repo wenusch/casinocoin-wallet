@@ -24,6 +24,7 @@ export class CoinSwapComponent implements OnInit {
   swaps: LokiSwap[] = [];
   selectedSwap: LokiSwap;
   swapMenuItems: MenuItem[];
+  private refreshInterval: any;
 
   refresh_icon: string = "fa-refresh";
 
@@ -54,6 +55,10 @@ export class CoinSwapComponent implements OnInit {
       });
       // refresh the swaps to the latest status
       this.swapService.refreshSwaps();
+      // run a timer to refresh the swap status every set interval of 30 seconds
+      this.refreshInterval = setInterval(() => {
+        this.swapService.refreshSwaps();
+      }, 30000);
     }
   }
 
@@ -82,6 +87,14 @@ export class CoinSwapComponent implements OnInit {
   getSwapStatus(status){
     if(status == 'swap_created'){
       return "Swap Created";
+    } else if(status == 'waiting_for_confirmations') {
+      return "Waiting for Confirmations";
+    } else if(status == 'moved_to_storage') {
+      return "Moved to Cold Storage";
+    } else if(status == 'new_coins_transferred') {
+      return "New Coins Transfered";
+    } else if(status == 'swap_completed') {
+      return "Swap Complete";
     } else {
       return status;
     }

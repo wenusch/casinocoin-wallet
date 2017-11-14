@@ -1,20 +1,22 @@
 import { Component, OnInit, trigger, state, animate, transition, style, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
+import { DatePipe, CurrencyPipe } from '@angular/common';
 import { Logger } from 'angular2-logger/core';
-import { LocalStorage, SessionStorage } from "ngx-store";
-import { ElectronService } from "../../providers/electron.service";
-import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron"; 
-import { CasinocoinService } from "../../providers/casinocoin.service";
-import { WalletService } from "../../providers/wallet.service";
+import { LocalStorage, SessionStorage } from 'ngx-store';
+import { ElectronService } from '../../providers/electron.service';
+import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
+import { CasinocoinService } from '../../providers/casinocoin.service';
+import { WalletService } from '../../providers/wallet.service';
+import { MarketService } from '../../providers/market.service';
+import { NotificationService, NotificationType, SeverityType } from '../../providers/notification.service';
 import { MenuItem as PrimeMenuItem, Message, ContextMenu } from 'primeng/primeng';
-import { MessageService } from 'primeng/components/common/messageservice';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { AppConstants } from '../../domain/app-constants';
-import { AlertComponent } from '../alert/alert.component';
 import { CSCUtil } from '../../domain/csc-util';
 import { LedgerStreamMessages, ServerStateMessage } from '../../domain/websocket-types';
 
 import * as LokiTypes from '../../domain/lokijs';
+import Big from 'big.js';
 
 const path = require('path');
 const fs = require('fs');
@@ -47,10 +49,12 @@ export class HomeComponent implements OnInit {
   //show_menu: string = 'shown';
   show_menu: string = 'small';
   menu_items: PrimeMenuItem[];
-  context_menu: ElectronMenu;
+  tools_context_menu: ElectronMenu;
+  connection_context_menu: ElectronMenu;
 
   showPrivateKeyImportDialog:boolean = false;
   showSettingsDialog:boolean = false;
+  showServerInfoDialog:boolean = false;
   privateKeySeed:string;
   walletPassword:string;
 
@@ -86,83 +90,125 @@ export class HomeComponent implements OnInit {
   transaction_count:number;
   last_transaction:number;
 
-  constructor(private logger: Logger, 
-              private router: Router,
-              private electron: ElectronService,
-              private walletService: WalletService,
-              private casinocoinService: CasinocoinService ,
-              private messageService: MessageService) { }
+  constructor( private logger: Logger, 
+               private router: Router,
+               private electron: ElectronService,
+               private walletService: WalletService,
+               private casinocoinService: CasinocoinService ,
+               private notificationService: NotificationService,
+               private marketService: MarketService,
+               private datePipe: DatePipe,
+               private currenyPipe: CurrencyPipe ) {
+    this.logger.debug("### INIT HOME ###");
+  }
 
   ngOnInit() {
     this.logger.debug("### HOME currentWallet: " + this.currentWallet);
-    // define menu 
-    this.menu_items = [
-        { label: 'Overview', icon: 'fa fa-home fa-2x', command: (event) => { this.onOverview() } },
-        { label: 'Send', icon: 'fa fa-sign-out fa-2x', command: (event) => { this.onSendCoins() } },
-        { label: 'Receive', icon: 'fa fa-sign-in fa-2x', command: (event) => { this.onReceiveCoins() } },
-        { label: 'Addressbook', icon: 'fa fa-address-book fa-2x', command: (event) => { this.onAddressbook() } },
-        { label: 'Swap', icon: 'fa fa-exchange fa-2x', command: (event) => { this.onCoinSwap() } }
-    ];
+    // get server state
+    this.serverState = this.casinocoinService.serverState;
+    this.casinocoinService.serverStateSubject.subscribe( state => {
+      this.serverState = state;
+    });
 
-    
-    // define context menu when COG is clicked
-    let context_menu_template = [
-      // { label: 'Connect to Network', icon: __dirname+ '/assets/icons/compress_black_16.png', click(menuItem, browserWindow, event) { 
-      //     browserWindow.webContents.send('context-menu-event', 'connect'); }, visible: true
-      // },
-      // { label: 'Disconnect from Network', icon: __dirname+ '/assets/icons/expand_black_16.png', click(menuItem, browserWindow, event) { 
-      //     browserWindow.webContents.send('context-menu-event', 'disconnect'); }, visible: false
-      // },
-      // { label: 'Tools', submenu: [
-          {label: 'Import Private Key', click(menuItem, browserWindow, event) {
-            browserWindow.webContents.send('context-menu-event', 'import-priv-key'); }
-          },
-          {label: 'Export Private Keys', click(menuItem, browserWindow, event) { 
-            browserWindow.webContents.send('context-menu-event', 'export-priv-keys'); }
-          },
-          {label: 'Backup Wallet', click(menuItem, browserWindow, event) { 
-            browserWindow.webContents.send('context-menu-event', 'export-priv-keys'); }
-          }
-        // ]
-      // }
+    // define Tools context menu
+    let tools_context_menu_template = [
+      { label: 'Import Private Key', 
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('tools-context-menu-event', 'import-priv-key');
+        }
+      },  
+      { label: 'Export Private Keys', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('tools-context-menu-event', 'export-priv-keys');
+        }
+      },
+      { label: 'Import Existing Wallet', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('tools-context-menu-event', 'add-wallet');
+        }
+      }
     ];
-    this.context_menu = this.electron.remote.Menu.buildFromTemplate(context_menu_template);
-    this.context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
-    this.context_menu.append(new this.electron.remote.MenuItem(
-      { label: 'Quit', click(menuItem, browserWindow, event) { 
-        browserWindow.webContents.send('context-menu-event', 'quit'); }
+    this.tools_context_menu = this.electron.remote.Menu.buildFromTemplate(tools_context_menu_template);
+    this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(
+      { label: 'Quit', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('tools-context-menu-event', 'quit');
+        }
       })
     );
 
-    // listen to context menu events
-    this.electron.ipcRenderer.on('context-menu-event', (event, arg) => {
+    // define Connection context menu
+    let connect_context_menu_template = [
+     { label: 'Connect to Network', 
+       click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('connection-context-menu-event', 'connect'); }, visible: true
+      },
+      { label: 'Disconnect from Network', 
+        click(menuItem, browserWindow, event) { 
+            browserWindow.webContents.send('connection-context-menu-event', 'disconnect'); }, visible: false
+      },
+      { label: 'Server Information', 
+        click(menuItem, browserWindow, event) { 
+            browserWindow.webContents.send('connection-context-menu-event', 'server-info'); }, visible: false
+      }
+    ];
+    this.connection_context_menu = this.electron.remote.Menu.buildFromTemplate(connect_context_menu_template);
+    
+
+    // listen to tools context menu events
+    this.electron.ipcRenderer.on('tools-context-menu-event', (event, arg) => {
+      this.logger.debug("### HOME Menu Event: " + arg);
       if(arg == 'import-priv-key')
         this.onPrivateKeyImport();
       else if(arg == 'export-priv-keys')
         this.onPrivateKeysExport();
-      else if(arg == 'connect')
-        this.onConnect();
-      else if(arg == 'disconnect')
-        this.onDisconnect();
+      else if(arg == 'backup-wallet')
+        this.onBackupWallet();
+      else if(arg == 'restore-backup')
+        this.onRestoreBackup();
+      else if(arg == 'add-wallet')
+        this.onAddWallet();
       else if(arg == 'quit')
         this.onQuit();
       else
         this.logger.debug("### Context menu not implemented: " + arg);
     });
+
+    // listen to connection context menu events
+    this.electron.ipcRenderer.on('connection-context-menu-event', (event, arg) => {
+      if(arg == 'connect')
+        this.onConnect();
+      else if(arg == 'disconnect')
+        this.onDisconnect();
+      else if(arg == 'server-info')
+        this.onServerInfo();
+      else
+        this.logger.debug("### Context menu not implemented: " + arg);
+    });
+
     // navigate to the transactions
     this.router.navigate(['transactions']);
     // subscribe to the openWallet subject
     this.walletService.openWalletSubject.subscribe( result => {
       if(result == AppConstants.KEY_LOADED){
         this.logger.debug("### HOME Wallet Open ###");
-        this.messageService.add({severity:'info', summary:'Service Message', detail:'Succesfully opened the wallet.'});
+        let msg: NotificationType = {severity: SeverityType.info, title:'Wallet Message', body:'Succesfully opened the wallet.'};
+        this.notificationService.addMessage(msg);
         this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
         this.transaction_count = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
         let lastTX = this.walletService.getWalletLastTx();
         if(lastTX != null){
             this.last_transaction = lastTX.timestamp;
         }
-        this.fiat_balance = "0.00";
+        // until there is valid market info on new CSC we calculate market value against 1:1000 ratio
+        let balanceOldCSC = new Big(CSCUtil.dropsToCsc(this.balance)).div(1000);
+        let cscFiat = balanceOldCSC.times(this.marketService.coinMarketInfo.price_usd).toString();
+        this.fiat_balance = this.currenyPipe.transform(cscFiat, "USD", true, "1.2-2");
+        // subscribe to transaction updates
+        this.casinocoinService.transactionSubject.subscribe( tx => {
+          this.transaction_count = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
+        });
       } else if(result == AppConstants.KEY_INIT && this.currentWallet){
         // wallet is not open but we seem to have a session, not good so redirect to login
         this.router.navigate(['/login']);
@@ -201,11 +247,11 @@ export class HomeComponent implements OnInit {
   }
 
   onToolsMenuClick(event) {
-    this.context_menu.popup(this.electron.remote.getCurrentWindow());
+    this.tools_context_menu.popup(this.electron.remote.getCurrentWindow());
   }
 
   onConnectionClick(event) {
-    this.logger.debug("Connection Clicked !!");
+    this.connection_context_menu.popup(this.electron.remote.getCurrentWindow());
   }
 
   selectedMenuItem(item) {
@@ -213,11 +259,17 @@ export class HomeComponent implements OnInit {
   }
 
   onConnect(){
+    this.logger.debug("### HOME Connect ###");
     this.connectToCasinocoinNetwork();
   }
 
   onDisconnect(){
+    this.logger.debug("### HOME Disconnect ###");
     this.casinocoinService.disconnect();
+  }
+
+  onServerInfo() {
+    this.showServerInfoDialog = true;
   }
 
   onQuit() {
@@ -256,6 +308,74 @@ export class HomeComponent implements OnInit {
     );
   }
 
+  onBackupWallet(){
+    this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("documents"));
+    this.electron.remote.dialog.showOpenDialog(
+        { title: 'Wallet Backup Location',
+          defaultPath: this.electron.remote.app.getPath("documents"), 
+          properties: ['openDirectory','createDirectory']}, (result) => {
+          this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
+          if(result && result.length>0) {
+            let dbDump = this.walletService.getWalletDump();
+            // create a filename
+            let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss") + "-csc-wallet.backup";
+            let backupFilePath = path.join(result[0], filename);
+            // Write the JSON array to the file 
+            fs.writeFile(backupFilePath, dbDump, (err) => {
+              if(err){
+                  alert("An error ocurred creating the backup file: "+ err.message)
+              }
+                          
+              alert("The backup has been succesfully saved to: " + filename);
+            });
+          }
+        }
+    );
+  }
+
+  onRestoreBackup(){
+    this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("documents"));
+    this.electron.remote.dialog.showOpenDialog(
+        { title: 'Select Wallet Backup File',
+          defaultPath: this.electron.remote.app.getPath("documents"),
+          filters: [
+            { name: 'CSC Wallet Backups', extensions: ['backup'] }
+          ],
+          properties: ['openFile']
+        }, (result) => {
+          this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
+          if(result && result.length > 0) {
+            let dbDump = fs.readFileSync(result[0]);
+            if(dbDump.length > 0){
+              this.walletService.importWalletDump(dbDump);
+              // redirect to login
+              this.router.navigate(['/login']);
+            }
+          } else {
+            alert("An error ocurred reading the backup file: "+ result[0]);
+          }
+        }
+    );
+  }
+
+  onAddWallet(){
+    this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("documents"));
+    this.electron.remote.dialog.showOpenDialog(
+        { title: 'Select Wallet',
+          defaultPath: this.electron.remote.app.getPath("documents"),
+          filters: [
+            { name: 'CSC Wallet', extensions: ['db'] }
+          ],
+          properties: ['openFile']
+        }, (result) => {
+          this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
+          if(result && result.length > 0) {
+            this.logger.debug("Add Wallet Location: " + JSON.stringify(result));
+          }
+        }
+    );
+  }
+
   connectToCasinocoinNetwork(){
     this.casinocoinService.connect().subscribe( connectResult => {
       this.logger.debug("### HOME Connect Result: " + connectResult);
@@ -264,14 +384,12 @@ export class HomeComponent implements OnInit {
         this.connected_icon = "fa fa-wifi connected_color";
         this.connection_image = "assets/icons/connected.png";
         this.connected_tooltip = "Connected";
-        this.messageService.add({severity:'info', summary:'Service Message', detail:'Connected to the Casinocoin network.'});
         this.setConnectedMenuItem(true);
       } else if (connectResult == AppConstants.KEY_DISCONNECTED){
         this.isConnected = false;
         this.connected_icon = "fa fa-wifi disconnected_color";
         this.connection_image = "assets/icons/connected-red.png";
         this.connected_tooltip = "Disconnected";
-        this.messageService.add({severity:'info', summary:'Service Message', detail:'Disconnected from the Casinocoin network!'});
         this.setConnectedMenuItem(false);
       }
     });
@@ -280,12 +398,14 @@ export class HomeComponent implements OnInit {
   setConnectedMenuItem(connected: boolean){
     if(connected){
       // enable disconnect
-      this.context_menu.items[1].visible = false;
-      this.context_menu.items[2].visible = true;
+      this.connection_context_menu.items[0].visible = false;
+      this.connection_context_menu.items[1].visible = true;
+      this.connection_context_menu.items[2].visible = true;
     } else {
       // enable connect
-      this.context_menu.items[1].visible = true;
-      this.context_menu.items[2].visible = false;
+      this.connection_context_menu.items[0].visible = true;
+      this.connection_context_menu.items[1].visible = false;
+      this.connection_context_menu.items[2].visible = false;
     }
   }
 

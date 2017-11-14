@@ -2,10 +2,10 @@ import { Memo } from './csc-types';
 import { AppConstants } from '../domain/app-constants';
 
 export interface LokiMeta {
-    revision: number,
-    created: number,
-    version: number,
-    updated: number
+    revision: number;
+    created: number;
+    version: number;
+    updated: number;
 }
 
 export enum LokiTxStatus {
@@ -17,8 +17,8 @@ export enum LokiTxStatus {
 }
 
 export interface LokiAccount {
-    $loki?: string,
-    meta?: LokiMeta,
+    $loki?: string;
+    meta?: LokiMeta;
     accountID: string;
     label: string;
     balance: string;
@@ -30,8 +30,8 @@ export interface LokiAccount {
 }
 
 export interface LokiLog {
-    $loki?: string,
-    meta?: LokiMeta,
+    $loki?: string;
+    meta?: LokiMeta;
     timestamp?: number;
     event?: string;
     level?: string;
@@ -39,8 +39,8 @@ export interface LokiLog {
 }
 
 export interface LokiKey {
-    $loki?: string,
-    meta?: LokiMeta,
+    $loki?: string;
+    meta?: LokiMeta;
     privateKey: string;
     publicKey: string;
     accountID: string;
@@ -52,8 +52,8 @@ export interface LokiKey {
 }
 
 export interface LokiSwap {
-    $loki?: string,
-    meta?: LokiMeta,
+    $loki?: string;
+    meta?: LokiMeta;
     accountID: string;
     swapID: string;
     initiatedTimestamp: number;
@@ -66,8 +66,8 @@ export interface LokiSwap {
 }
 
 export interface LokiTransaction {
-    $loki?: string,
-    meta?: LokiMeta,
+    $loki?: string;
+    meta?: LokiMeta;
     txID: string;
     accountID: string;
     amount: string;
@@ -75,7 +75,7 @@ export interface LokiTransaction {
     fee: string;
     flags: number;
     lastLedgerSequence: number;
-    memos?: Array<Memo>,
+    memos?: Array<Memo>;
     sequence: number;
     signingPubKey: string;
     transactionType: string;
@@ -88,8 +88,8 @@ export interface LokiTransaction {
 }
 
 export interface LokiAddress {
-    $loki?: string,
-    meta?: LokiMeta,
+    $loki?: string;
+    meta?: LokiMeta;
     accountID: string;
     label: string;
     owner: boolean;

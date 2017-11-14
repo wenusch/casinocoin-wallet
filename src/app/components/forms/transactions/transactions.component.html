@@ -8,9 +8,9 @@
                         autofocus #accountDropdown></p-dropdown>
         </div>
     </div>
-    <div class="ui-g-12">
-        <p-dataTable [value]="transactions" scrollable="true" [immutable]="false" scrollHeight="50vh"
-                responsive="true" styleClass="borderless">
+    <div class="ui-g-12" (contextmenu)="showTxContextMenu($event)">
+        <p-dataTable [value]="transactions" scrollable="true" [immutable]="false" scrollHeight="50vh" [contextMenu]="cm"
+            responsive="true" styleClass="borderless" (onRowClick)="onTxRowClick($event)" [(selection)]="selectedTxRow">
             <p-column [style]="{'width':'20px'}">
                 <ng-template let-data="rowData" pTemplate="body">
                     <i [ngClass]="getDirectionIconClasses(data)"></i>
@@ -53,3 +53,19 @@
         <button pButton type="button" (click)="doShowLedgers()" icon="fa-list" iconPos="left" label="Show Ledgers" class="ui-button-secondary"></button>
     </div>
 </div>
+<p-dialog class="dialog-header" [(visible)]="showLedgerDialog" [width]="500" [height]="425" 
+    [closable]="true" [modal]="true" appendTo="body">
+    <p-header>Ledger Information</p-header>
+    <p-dataTable [value]="ledgers" [immutable]="false" scrollable="true" scrollHeight="325px">
+        <p-column field="ledger_index" header="Ledger" [style]="{'width':'75px'}"></p-column>
+        <p-column field="ledger_time" header="Time" [style]="{'width':'125px'}">
+            <ng-template let-col let-ledger="rowData" pTemplate="body">
+                <span>{{convertCscTimestamp(ledger[col.field]) | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
+            </ng-template>
+        </p-column>
+        <p-column field="txn_count" header="TX" [style]="{'width':'30px'}"></p-column>
+        <ng-template pTemplate="emptymessage">
+            <p>No Ledgers download yet.</p>
+        </ng-template>
+    </p-dataTable>
+</p-dialog>

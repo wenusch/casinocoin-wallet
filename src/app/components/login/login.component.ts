@@ -2,7 +2,6 @@ import { Component, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { WalletService } from '../../providers/wallet.service';
-import { AlertService } from '../../providers/alert.service';
 import { LocalStorage, SessionStorage } from "ngx-store";
 import { SelectItem } from 'primeng/primeng';
 import { CSCUtil } from '../../domain/csc-util';
@@ -34,10 +33,11 @@ export class LoginComponent implements OnInit {
     footer_visible: boolean = false;
     error_message: string = "";
  
+    login_icon: string = "fa-check";
+
     constructor(
         private logger: Logger,
         private route: ActivatedRoute,
-        private alertService: AlertService,
         private router: Router,
         private walletService: WalletService,
         private messageService: MessageService,
@@ -72,6 +72,7 @@ export class LoginComponent implements OnInit {
             this.inputPasswordElementRef.nativeElement.focus();
             // this.messageService.add({severity:'error', summary:'Open Wallet Error', detail:'Please select a wallet to open!'});
         } else {
+            this.login_icon = "fa-refresh fa-spin";
             this.currentWallet = this.selectedWallet;
             // get the complete wallet object
             let walletIndex = this.availableWallets.findIndex( item => item['walletUUID'] == this.selectedWallet);
@@ -82,6 +83,7 @@ export class LoginComponent implements OnInit {
                 this.walletLocation = walletObject['location'];
                 this.walletService.openWallet(this.walletLocation, this.currentWallet).subscribe( result => {
                     this.logger.debug("### Open Wallet Response: " + result);
+                    this.login_icon = "fa-check";
                     if(result == AppConstants.KEY_INIT){
                         this.footer_visible = false;
                         this.error_message = "";
@@ -99,7 +101,8 @@ export class LoginComponent implements OnInit {
             } else {
                 // Invalid Wallet Password !!!
                 this.footer_visible = true;
-                this.error_message = "You entered the wrong wallet password!"
+                this.error_message = "You entered the wrong wallet password!";
+                this.login_icon = "fa-check";
                 this.inputPasswordElementRef.nativeElement.value = "";
                 this.inputPasswordElementRef.nativeElement.focus();
             }

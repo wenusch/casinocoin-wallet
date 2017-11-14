@@ -5,9 +5,12 @@ import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
+import { LedgerStreamMessages } from '../../../domain/websocket-types';
 import { CSCUtil } from '../../../domain/csc-util';
 import { AppConstants } from '../../../domain/app-constants';
 import { LokiTransaction } from '../../../domain/lokijs';
+import { ElectronService } from '../../../providers/electron.service';
+import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
 import Big from 'big.js';
 
 @Component({
@@ -25,13 +28,17 @@ export class TransactionsComponent implements OnInit {
 
   transactions: Array<LokiTransaction>;
   accounts: SelectItem[] = [];
+  ledgers: LedgerStreamMessages[] = [];
   selectedAccount: string;
+  selectedTxRow: LokiTransaction;
   receipient: string;
   description: string;
   amount: string;
   walletPassword: string;
   showPasswordDialog:boolean = false;
+  showLedgerDialog:boolean = false;
   signAndSubmitIcon:string = "fa-check";
+  tx_context_menu: ElectronMenu;
   
   constructor(private logger:Logger, 
               private casinocoinService: CasinocoinService,
@@ -51,8 +58,19 @@ export class TransactionsComponent implements OnInit {
             this.accounts.push({label: accountLabel, value: element.accountID});
           }
         });
+        // subscribe to transaction updates
+        this.casinocoinService.transactionSubject.subscribe( tx => {
+          let updateTxIndex = this.transactions.findIndex( item => item.txID == tx.txID);
+          if( updateTxIndex >= 0 ){
+            this.transactions[updateTxIndex] = tx;
+          } else {
+            this.transactions.splice(0,0,tx);
+          }
+        });
       }
     });
+    // get network ledgers
+    this.ledgers = this.casinocoinService.ledgers;
   }
 
   getTXTextColor(cell, rowData){
@@ -107,7 +125,21 @@ export class TransactionsComponent implements OnInit {
   }
 
   doShowLedgers(){
-    
+    this.showLedgerDialog = true;
   }
 
+  convertCscTimestamp(inputTime) {
+    return CSCUtil.casinocoinToUnixTimestamp(inputTime);
+  }
+
+  showTxContextMenu(event){
+    this.logger.debug("### showTxContextMenu: " + JSON.stringify(event));
+    if(this.selectedTxRow){
+      this.logger.debug("### showTxContextMenu - row: " + JSON.stringify(this.selectedTxRow));
+    }
+  }
+
+  onTxRowClick(event){
+    this.logger.debug("### onTxRowClick: " + JSON.stringify(event));
+  }
 }

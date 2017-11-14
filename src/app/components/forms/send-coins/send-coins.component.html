@@ -2,40 +2,64 @@
     <p class="form-text-header">Send Coins</p>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-credit-card"></i></span>
             <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
                         placeholder="Select Account to send from ..." autofocus #accountDropdown></p-dropdown>
         </div>
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-address-book"></i></span>
-            <input type="text" pInputText placeholder="Receipient" [(ngModel)]="receipient" (keyup.enter)="focusDescription()">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-address-book"></i></span>
+            <input type="text" pInputText placeholder="Receipient" [(ngModel)]="receipient" (keyup.enter)="focusDescription()"
+                     [disabled]="!selectedAccount" (ngModelChange)="onReceipientChange($event)">
             <button pButton type="button" icon="fa-search" class="ui-button-secondary"></button>
         </div>
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-comments"></i></span>
-            <input type="text" pInputText placeholder="Description" [(ngModel)]="description" (keyup.enter)="focusAmount()" #descriptionInput>         
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-comments"></i></span>
+            <input type="text" pInputText placeholder="Description" [(ngModel)]="description" (keyup.enter)="focusAmount()"
+                    [disabled]="!selectedAccount || invalidReceipient" #descriptionInput>         
         </div>
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-money"></i></span>
-            <input type="number" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()" #accountInput>         
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Amount</span>
+            <input type="number" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()"
+                    [disabled]="!selectedAccount || invalidReceipient" (ngModelChange)="onAmountChange($event)" #amountInput>
+            <button pButton type="button" class="ui-button-secondary" (click)="sendAllCoins()" label="all" 
+                    [disabled]="!selectedAccount || invalidReceipient"></button>
         </div>
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box;">Fees</span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Fees</span>
             <input type="number" pInputText placeholder="Fees" [(ngModel)]="fees" (keyup.enter)="doSendCoins()"
-                    [(min)]="minimalFee" #feesInput>         
+                    min="{{minimalFee}}" step="{{minimalFee}}" [disabled]="!selectedAccount || invalidReceipient"
+                    (ngModelChange)="onFeesChange($event)" #feesInput>         
         </div>
+    </div>
+    <!--
+    <div class="ui-g-12">
+        <div class="ui-inputgroup" [matTooltip]="reserve_tooltip">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Reserve</span>
+            <input type="number" pInputText [(ngModel)]="accountReserve" #reserveInput disabled>         
+        </div>
+    </div>
+    -->
+    <div class="ui-g-12">
+        <div class="ui-inputgroup" [matTooltip]="total_tooltip">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Total</span>
+            <input type="number" pInputText [(ngModel)]="totalSend" #totalSendInput disabled>         
+        </div>
+    </div>
+    <div class="ui-g-12" [matTooltip]="reserve_tooltip">
+        <p-checkbox [(ngModel)]="includeReserve" binary="true" label="Include account reserve?"
+                     (ngModelChange)="onReserveChange($event)" [disabled]="!selectedAccount"></p-checkbox>
     </div>
     <div class="ui-g-6">
         <button pButton type="button" (click)="doSendCoins()" icon="fa-sign-out" iconPos="left" label="Send Coins"
-                class="ui-button-secondary"></button>
+                class="ui-button-secondary" [disabled]="!isSendValid"></button>
     </div>
 </div>
 <p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="250" [closable]="true" 
@@ -55,7 +79,7 @@
         <div class="ui-g-10">
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
-                <input type="password" pInputText placeholder="Wallet Password" 
+                <input type="password" pInputText placeholder="Wallet Password" style="width: 100%; padding-left: 5px;"
                        [(ngModel)]="walletPassword" (keyup.enter)="doSignAndSubmitTx()" #passwordInput>         
             </div>
         </div>

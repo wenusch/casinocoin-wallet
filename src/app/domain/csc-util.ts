@@ -1,4 +1,6 @@
 import Big from 'big.js';
+import int from 'int';
+
 import { Amount, Memo, CasinocoindAmount, CasinocoinMemo }  from './csc-types';
 import { Mnemonic } from './mnemonic';
 
@@ -114,5 +116,59 @@ export class CSCUtil {
             mnemonicArray.push(Mnemonic.english[randomIndex]);
         }
         return mnemonicArray;
+    }
+
+    static validateAccountID(accountID: string): boolean {
+        // prepare position lookup table with casinocoin alphabet
+        var vals = 'cpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2brdeCg65jkm8oFqi1tuvAxyz';
+        // check if address starts with lowercase 'c'
+        if(!accountID.startsWith('c')){
+            return false;
+        }
+        // decode the the address
+        var positions = {};
+        for (var i=0 ; i < vals.length ; ++i) {
+            positions[vals[i]] = i;
+        }
+        var base = 58;
+        var length = accountID.length;
+        var num = int(0);
+        var leading_zero = 0;
+        var seen_other = false;
+        for (var i=0; i<length ; ++i) {
+            var char = accountID[i];
+            var p = positions[char];
+    
+            // if we encounter an invalid character, decoding fails
+            if (p === undefined) {
+                return false;
+            }
+            num = num.mul(base).add(p);
+            if (char == '1' && !seen_other) {
+                ++leading_zero;
+            }
+            else {
+                seen_other = true;
+            }
+        }
+        var hex = num.toString(16);        
+        // num.toString(16) does not have leading 0
+        if (hex.length % 2 !== 0) {
+            hex = '0' + hex;
+        }
+        // strings starting with only ones need to be adjusted
+        // e.g. '1' should map to '00' and not '0000'
+        if (leading_zero && !seen_other) {
+            --leading_zero;
+        }
+        while (leading_zero-- > 0) {
+            hex = '00' + hex;
+        }
+        // addresses should always be 48 positions long
+        if(hex.length == 48){
+            return true;
+        } else {
+            return false;
+        }
     }
 }

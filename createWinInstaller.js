@@ -4,7 +4,7 @@ const appVersion = require('./package.json').version;
 const argv = require('minimist')(process.argv.slice(1));
 const arch = argv.arch || 'ia32';
 
-const iconUrlPath = "https://raw.githubusercontent.com/casinocoin/CasinoCoin-Assets/master/casinocoin-icon-64x64.png";
+const iconUrlPath = "https://raw.githubusercontent.com/casinocoin/CasinoCoin-Assets/master/casinocoin-icon-256x256.png";
 
 getInstallerConfig(arch)
   .then(createWindowsInstaller)

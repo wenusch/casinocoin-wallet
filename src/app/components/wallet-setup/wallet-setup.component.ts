@@ -218,7 +218,7 @@ export class WalletSetupComponent implements OnInit {
               serverFound = true;
               // server found to connect to
               this.logger.debug("### WalletSetup - Connect to Network");
-              this.websocketService.connect();
+              this.websocketService.handleCurrentServerFound();
               // connect and subscribe to Casinocoin Service messages
               this.casinocoinService.connect().subscribe((message: any) => {
                 this.logger.debug("### WalletSetup - Connect Message: " + message);
