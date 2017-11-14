@@ -16,6 +16,25 @@ export enum LokiTxStatus {
     validated = "txVALIDATED"
 }
 
+export enum LokiDBEnvironment {
+    prod = "Production",
+    test = "Test"
+}
+
+export interface LokiDBMetadata {
+    $loki?: string;
+    meta?: LokiMeta;
+    dbVersion: string;
+    appVersion: string;
+    walletUUID: string;
+    walletHash: string;
+    environment: LokiDBEnvironment;
+    creationTimestamp: number;
+    updatedTimestamp: number;
+    location: string;
+    lastOpenedTimestamp: number;
+}
+
 export interface LokiAccount {
     $loki?: string;
     meta?: LokiMeta;

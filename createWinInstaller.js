@@ -23,6 +23,7 @@ function getInstallerConfig (arch) {
     appDirectory: path.join(appPath, 'casinocoin-wallet-win32-' + arch + '/'),
     authors: 'Casinocoin Foundation',
     noMsi: true,
+    noDelta: true,
     outputDirectory: path.join(outPath, 'windows-'+arch),
     exe: 'casinocoin-wallet.exe',
     setupExe: 'casinocoin-wallet-'+arch+'-'+appVersion+'.exe',

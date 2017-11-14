@@ -181,8 +181,17 @@ export class WalletSetupComponent implements OnInit {
     this.logger.debug("### WalletSetup - Create Wallet");
     // generate wallet UUID
     this.walletUUID = UUID.UUID();
+    // get environment 
+    let walletEnvironment = LokiTypes.LokiDBEnvironment.prod;
+    if(this.walletTestNetwork){
+      walletEnvironment = LokiTypes.LokiDBEnvironment.test;
+    }
+
     // create the wallet
-    this.walletService.createWallet(this.walletLocation, this.walletUUID, this.walletPassword).subscribe(createResult => {
+    this.walletService.createWallet( this.walletLocation, 
+                                     this.walletUUID, 
+                                     this.walletPassword,
+                                     walletEnvironment ).subscribe(createResult => {
       if(createResult == AppConstants.KEY_FINISHED){
         this.walletCreated = true;
         this.logger.debug("### WalletSetup - Create new Account");

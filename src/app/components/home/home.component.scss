@@ -108,6 +108,7 @@
 
 .menu-item {
   height: 65px;
+  user-select: none;
 }
 
 .menu-icon {
@@ -146,4 +147,14 @@
 
 ::ng-deep .bold-value {
   font-weight: bolder;
+}
+
+#copyright-and-version {
+  position: absolute;
+  bottom: 10px;
+  text-align: center;
+  color: #FFFFFF;
+  font-size: smaller;
+  width: 100%;
+  user-select: none;
 }

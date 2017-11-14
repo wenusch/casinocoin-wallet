@@ -77,6 +77,10 @@
                         </mat-list>
                     </div>
                 </div>
+                <div id="copyright-and-version">
+                    Wallet Version: {{dbMetadata.appVersion}}<br>
+                    DB Version: {{dbMetadata.dbVersion}}
+                </div>
             </mat-sidenav>
             <!-- primary content -->
             <p-growl [(value)]="msgs"></p-growl>
@@ -166,9 +170,10 @@
                 style="width: 115px;"></button>
     </div>
 </p-dialog>
-<p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="500" [height]="425" [closable]="true" [modal]="true">
+<p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="500" [height]="475" [closable]="true" [modal]="true">
     <p-header>Server Information</p-header>
     <div class="ui-g">
+        <div class="ui-g-8">Server</div><div class="ui-g-4 bold-value">{{currentServer.server_id}}</div>
         <div class="ui-g-8">Server Version</div><div class="ui-g-4 bold-value">{{serverState.build_version}}</div>
         <div class="ui-g-8">Available Ledgers</div><div class="ui-g-4 bold-value">{{serverState.complete_ledgers}}</div>
         <div class="ui-g-8">Server Status</div><div class="ui-g-4 bold-value">{{serverState.server_state}}</div>

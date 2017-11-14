@@ -6,9 +6,9 @@ import { LocalStorage, SessionStorage, LocalStorageService, SessionStorageServic
 import { ElectronService } from '../../providers/electron.service';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
 import { CasinocoinService } from '../../providers/casinocoin.service';
+import { ServerDefinition } from '../../domain/websocket-types';
 import { WalletService } from '../../providers/wallet.service';
 import { MarketService } from '../../providers/market.service';
-import { NotificationService, NotificationType, SeverityType } from '../../providers/notification.service';
 import { MenuItem as PrimeMenuItem, Message, ContextMenu } from 'primeng/primeng';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { AppConstants } from '../../domain/app-constants';
@@ -51,6 +51,8 @@ export class HomeComponent implements OnInit {
   tools_context_menu: ElectronMenu;
   connection_context_menu: ElectronMenu;
 
+  dbMetadata: LokiTypes.LokiDBMetadata;
+
   showPrivateKeyImportDialog:boolean = false;
   showSettingsDialog:boolean = false;
   showServerInfoDialog:boolean = false;
@@ -86,6 +88,7 @@ export class HomeComponent implements OnInit {
   searchDate: Date;
 
   serverState: ServerStateMessage;
+  currentServer: ServerDefinition = { server_id: '', server_url: '', response_time: -1 };
 
   balance:string;;
   fiat_balance:string;
@@ -97,13 +100,23 @@ export class HomeComponent implements OnInit {
                private electron: ElectronService,
                private walletService: WalletService,
                private casinocoinService: CasinocoinService ,
-               private notificationService: NotificationService,
                private localStorageService: LocalStorageService,
                private sessionStorageService: SessionStorageService,
                private marketService: MarketService,
                private datePipe: DatePipe,
                private currenyPipe: CurrencyPipe ) {
     this.logger.debug("### INIT HOME ###");
+    this.dbMetadata = {
+      dbVersion: AppConstants.KEY_DB_VERSION,
+      appVersion: this.electron.remote.app.getVersion(),
+      environment: LokiTypes.LokiDBEnvironment.prod,
+      walletUUID: "",
+      walletHash: "",
+      creationTimestamp: 0,
+      updatedTimestamp: 0,
+      location: "",
+      lastOpenedTimestamp: 0
+    }
   }
 
   ngOnInit() {
@@ -207,8 +220,10 @@ export class HomeComponent implements OnInit {
     this.walletService.openWalletSubject.subscribe( result => {
       if(result == AppConstants.KEY_LOADED){
         this.logger.debug("### HOME Wallet Open ###");
-        let msg: NotificationType = {severity: SeverityType.info, title:'Wallet Message', body:'Succesfully opened the wallet.'};
-        this.notificationService.addMessage(msg);
+        // get the DB Metadata
+        this.dbMetadata = this.walletService.getDBMetadata();
+        this.logger.debug("### HOME DB Metadata: " + JSON.stringify(this.dbMetadata));
+        // get balance and transaction count
         this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
         this.transaction_count = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
         let lastTX = this.walletService.getWalletLastTx();
@@ -226,6 +241,10 @@ export class HomeComponent implements OnInit {
         this.casinocoinService.transactionSubject.subscribe( tx => {
           this.transaction_count = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
         });
+        // subscribe to account updates
+        this.casinocoinService.accountSubject.subscribe( account => {
+          this.logger.debug("### HOME Account Update: " + JSON.stringify(account));
+        });
       } else if(result == AppConstants.KEY_INIT && this.currentWallet){
         // wallet is not open but we seem to have a session, not good so redirect to login
         this.router.navigate(['/login']);
@@ -233,6 +252,7 @@ export class HomeComponent implements OnInit {
     });
     // connect to the network
     this.connectToCasinocoinNetwork();
+    // generate mnemonic
     let mnemonicArray = CSCUtil.getRandomMnemonic();
     let mnemonicString = mnemonicArray.join(',');
     this.logger.debug("### HOME mnemonic: " + mnemonicString);
@@ -424,16 +444,16 @@ export class HomeComponent implements OnInit {
       this.logger.debug("### HOME Connect Result: " + connectResult);
       if(connectResult == AppConstants.KEY_CONNECTED){
         this.isConnected = true;
-        this.connected_icon = "fa fa-wifi connected_color";
         this.connection_image = "assets/icons/connected.png";
         this.connected_tooltip = "Connected";
         this.setConnectedMenuItem(true);
+        this.currentServer = this.casinocoinService.currentServer;
       } else if (connectResult == AppConstants.KEY_DISCONNECTED){
         this.isConnected = false;
-        this.connected_icon = "fa fa-wifi disconnected_color";
         this.connection_image = "assets/icons/connected-red.png";
         this.connected_tooltip = "Disconnected";
         this.setConnectedMenuItem(false);
+        this.currentServer = { server_id: '', server_url: '', response_time: -1 };
       }
     });
   }

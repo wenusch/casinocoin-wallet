@@ -5,8 +5,10 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { AppConstants } from '../domain/app-constants';
+import { CSCUtil } from '../domain/csc-util';
 import { ElectronService } from '../providers/electron.service';
-import { MessageService } from 'primeng/components/common/messageservice';
+import { NotificationService, NotificationType, SeverityType } from '../providers/notification.service';
+
 import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
 import Big from 'big.js';
 
@@ -28,7 +30,8 @@ export class WalletService {
 
   private accountSubject = new Subject<any>();
 
-  private walletDB
+  private walletDB;
+  private dbMetadata;
   private accounts;
   private transactions;
   private addressbook;
@@ -49,11 +52,14 @@ export class WalletService {
   constructor(private logger: Logger, 
               private electron: ElectronService,
               private localStorageService: LocalStorageService,
-              private messageService: MessageService) {
+              private notificationService: NotificationService) {
     this.logger.debug("### INIT WalletService ###");
    }
 
-  createWallet(walletLocation: string, walletUUID: string, walletSecret: string): Observable<any> {
+  createWallet( walletLocation: string, 
+                walletUUID: string, 
+                walletSecret: string, 
+                environment:LokiTypes.LokiDBEnvironment ): Observable<any> {
     // create wallet for UUID
     this.logger.debug("### WalletService Create UUID: " + walletUUID);   
     function createWalletComplete(thisobject){
@@ -82,7 +88,21 @@ export class WalletService {
     });
 
     collectionSubject.subscribe( collection => {
-      if(collection.name == "accounts")
+      if(collection.name == "dbMetadata"){
+        this.dbMetadata = collection;
+        let initDBVersion: LokiTypes.LokiDBMetadata = {
+          dbVersion: AppConstants.KEY_DB_VERSION,
+          appVersion: this.electron.remote.app.getVersion(),
+          environment: environment,
+          walletUUID: walletUUID,
+          walletHash: this.generateWalletPasswordHash(walletUUID, walletSecret),
+          creationTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
+          updatedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
+          location: walletLocation,
+          lastOpenedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now())
+        }
+        this.dbMetadata.insert(initDBVersion);
+      } else if(collection.name == "accounts")
         this.accounts = collection;
       else if(collection.name == "transactions")
         this.transactions = collection;
@@ -108,6 +128,7 @@ export class WalletService {
     });
 
     function createCollections() {
+      collectionSubject.next(walletDB.addCollection("dbMetadata", {unique: ["dbVersion"]}));
       collectionSubject.next(walletDB.addCollection("accounts", {unique: ["accountID"]}));
       collectionSubject.next(walletDB.addCollection("transactions", {unique: ["txID"]}));
       collectionSubject.next(walletDB.addCollection("addressbook", {unique: ["accountID"]}));
@@ -120,7 +141,7 @@ export class WalletService {
     return createSubject.asObservable();
   }
   
-  openWallet(walletLocation: string, walletUUID: string): Observable<any> {
+  openWallet(walletLocation: string, walletUUID: string, walletPassword: string): Observable<any> {
     let dbPath = path.join(walletLocation, (walletUUID + '.db'));
     this.logger.debug("### WalletService Open Wallet location: " + dbPath);
 
@@ -128,6 +149,10 @@ export class WalletService {
     let openSubject = new Subject<string>();
     openSubject.subscribe(result => {
       this.logger.debug("openWallet: " + result);
+      if(result == AppConstants.KEY_LOADED){
+        let msg: NotificationType = {severity: SeverityType.info, title:'Wallet Message', body:'Succesfully opened the wallet.'};
+        this.notificationService.addMessage(msg);
+      }
       this.openWalletSubject.next(result);
     });
     let openError = false;
@@ -139,7 +164,24 @@ export class WalletService {
       collectionSubject.subscribe( collection => {
         if(collection != null) {
           this.logger.debug("### WalletService Open Collection: " + collection.name)
-          if(collection.name == "accounts")
+          if(collection.name == "dbMetadata"){
+            this.dbMetadata = collection;
+            if(this.dbMetadata.count() == 0){
+              // first time running we need to add initial version
+              let initDBVersion: LokiTypes.LokiDBMetadata = {
+                dbVersion: AppConstants.KEY_DB_VERSION,
+                appVersion: this.electron.remote.app.getVersion(),
+                environment: LokiTypes.LokiDBEnvironment.prod,
+                walletUUID: walletUUID,
+                walletHash: this.generateWalletPasswordHash(walletUUID, walletPassword),
+                creationTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
+                updatedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
+                location: walletLocation,
+                lastOpenedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now())
+              }
+              this.dbMetadata.insert(initDBVersion);
+            }
+          } else if(collection.name == "accounts")
             this.accounts = collection;
           else if(collection.name == "transactions")
             this.transactions = collection;
@@ -169,6 +211,12 @@ export class WalletService {
       });
   
       function openCollections(result){
+        // check if dbMetadata exists as we added it later ....
+        let dbMeta = walletDB.getCollection("dbMetadata");
+        if(dbMeta == null){
+          walletDB.addCollection("dbMetadata", {unique: ["dbVersion"]});
+        }
+        collectionSubject.next(walletDB.getCollection("dbMetadata"));
         collectionSubject.next(walletDB.getCollection("accounts"));
         collectionSubject.next(walletDB.getCollection("transactions"));
         collectionSubject.next(walletDB.getCollection("addressbook"));
@@ -188,6 +236,18 @@ export class WalletService {
   // allow for a hard save on app exit
   saveWallet(){
     this.walletDB.saveDatabase();
+  }
+
+  // #########################################
+  // DB Metadata Collection
+  // #########################################
+  getDBMetadata(): LokiTypes.LokiDBMetadata {
+    return this.dbMetadata.chain().find().simplesort("updatedTimestamp", true).data()[0];
+  }
+
+  addDBMetadata(newDBMetadata: LokiTypes.LokiDBMetadata): LokiTypes.LokiDBMetadata {
+    let insertMetadata = this.dbMetadata.insert(newDBMetadata);
+    return insertMetadata;
   }
 
   // #########################################
@@ -291,8 +351,17 @@ export class WalletService {
     return insertedTx;
   }
 
-  getTransaction(txID: string): LokiTypes.LokiTransaction {
-    return this.transactions.by("txID", txID);
+  getTransaction(inputTxID: string): LokiTypes.LokiTransaction {
+    if(this.isWalletOpen){
+      this.logger.debug("getTransaction: " + inputTxID + " count: " + this.transactions.count());
+      if(this.transactions.count() > 0){
+        return this.transactions.find({ txID: inputTxID });
+      } else {
+        return undefined;
+      }
+    } else {
+      return undefined;
+    }
   }
 
   getAllTransactions(): Array<LokiTypes.LokiTransaction> {
@@ -500,10 +569,10 @@ export class WalletService {
     this.addAccount(walletAccount);
     // encrypt the keys
     this.encryptAllKeys(password).subscribe(result => {
-      this.messageService.add( {severity:'info', 
-                                summary:'Private Key Import', 
-                                detail:'The Private Key import is complete.'
-                              });
+      this.notificationService.addMessage( {severity: SeverityType.info, 
+                                            title: 'Private Key Import', 
+                                            body: 'The Private Key import is complete.'
+                                           });
     });
   }
   

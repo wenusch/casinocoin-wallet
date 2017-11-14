@@ -6,7 +6,8 @@ import { Subject } from 'rxjs/Subject';
 import { WebsocketService } from './websocket.service';
 import { WalletService } from './wallet.service';
 import { LedgerStreamMessages, ValidationStreamMessages, 
-         TransactionStreamMessages, ServerStateMessage } from '../domain/websocket-types';
+         TransactionStreamMessages, ServerStateMessage, 
+         ServerDefinition } from '../domain/websocket-types';
 import { Logger } from 'angular2-logger/core';
 import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
 import * as cscBinaryAPI from 'casinocoin-libjs-binary-codec';
@@ -37,6 +38,7 @@ export class CasinocoinService implements OnDestroy {
     public transactions: Array<LokiTransaction> = [];
     public transactionSubject = new Subject<LokiTransaction>();
     public lastTransactionHash: string = "";
+    public currentServer: ServerDefinition;
 
     constructor(private logger: Logger, 
                 private wsService: WebsocketService,
@@ -71,6 +73,7 @@ export class CasinocoinService implements OnDestroy {
                             // inform listeners we are connected
                             connectSubject.next(AppConstants.KEY_CONNECTED);
                             this.isConnected = true;
+                            this.currentServer = this.wsService.currentServer;
                             // start KeepAlive messages
                             // this.keepAlive();
                             // get the current server state

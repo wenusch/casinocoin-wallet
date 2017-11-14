@@ -86,7 +86,9 @@ export class LoginComponent implements OnInit {
             this.logger.debug("### LoginComponent - Check Wallet Password: " + JSON.stringify(walletObject));
             if(this.walletService.checkWalletPasswordHash(this.selectedWallet, this.walletPassword, walletObject['hash'])){
                 this.logger.debug("### LoginComponent - Open Wallet Location: " + walletObject['location']);
-                this.walletService.openWallet(walletObject['location'], walletObject['walletUUID']).subscribe( result => {
+                this.walletService.openWallet( walletObject['location'], 
+                                               walletObject['walletUUID'],
+                                               this.walletPassword ).subscribe( result => {
                     this.logger.debug("### LoginComponent - Open Wallet Response: " + result);
                     this.login_icon = "fa-check";
                     if(result == AppConstants.KEY_INIT){
