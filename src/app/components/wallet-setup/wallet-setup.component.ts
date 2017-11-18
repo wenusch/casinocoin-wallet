@@ -14,6 +14,7 @@ import { WalletService } from '../../providers/wallet.service';
 import { CasinocoinService } from '../../providers/casinocoin.service';
 import { WebsocketService } from '../../providers/websocket.service';
 import { SetupStep1Component } from './step1-component';
+import { CSCCrypto } from 'app/domain/csc-crypto';
 
 let path = require('path');
 
@@ -46,19 +47,20 @@ export class WalletSetupComponent implements OnInit {
   steps: MenuItem[];
   msgs: Message[] = [];
   activeIndex: number = 1;
-  maxActiveIndex: number = 4;
+  maxActiveIndex: number = 6;
+  enableFinishDisclaimer: boolean = false;
   enableFinishPassword: boolean = false;
   enableFinishLocation: boolean = false;
   enableFinishCreation: boolean = false;
-
-  step1State: string = 'in-left';
-  step2State: string = 'out';
-  step3State: string = 'out';
-  step4State: string = 'out';
+  enableCancelCreation: boolean = false;
 
   walletTestNetwork: boolean;
+  disclaimerAccepted: boolean;
   walletLocation: string;
   walletPassword: string;
+  recoveryMnemonicWords: Array<string>;
+  recoveryAccepted:boolean;
+  recoveryHash: string;
   walletUUID: string;
   walletAccount: Object;
 
@@ -88,6 +90,13 @@ export class WalletSetupComponent implements OnInit {
     this.walletLocation = path.join(userHome, '.casinocoin');
     this.walletTestNetwork = false;
 
+    let availableWallets: Array<any> = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
+    if(availableWallets != null &&  availableWallets.length >= 1){
+      this.enableCancelCreation = true;
+    }
+
+    this.recoveryMnemonicWords = CSCCrypto.getRandomMnemonic();
+
     // if(userHome.indexOf(':\\') > 0) {
     //   this.walletLocation = userHome + '\\' + 'Casinocoin'; 
     // } else if(userHome.startsWith('/')){
@@ -105,25 +114,41 @@ export class WalletSetupComponent implements OnInit {
           }
       },
       {
-          label: 'Set Password',
+          label: 'Disclaimer',
           command: (event: any) => {
               this.activeIndex = 2;
+              this.msgs.length = 0;
+              this.msgs.push({severity:'info', summary:'Accept Disclaimer', detail: event.item.label});
+          }
+      },
+      {
+          label: 'Password',
+          command: (event: any) => {
+              this.activeIndex = 3;
               this.msgs.length = 0;
               this.msgs.push({severity:'info', summary:'Wallet Password', detail: event.item.label});
           }
       },
       {
-          label: 'Wallet Location',
+          label: 'Recovery',
           command: (event: any) => {
-              this.activeIndex = 3;
+              this.activeIndex = 4;
+              this.msgs.length = 0;
+              this.msgs.push({severity:'info', summary:'Recovery Passphrase', detail: event.item.label});
+          }
+      },
+      {
+          label: 'Location',
+          command: (event: any) => {
+              this.activeIndex = 5;
               this.msgs.length = 0;
               this.msgs.push({severity:'info', summary:'Wallet Location', detail: event.item.label});
           }
       },
       {
-          label: 'Create Wallet',
+          label: 'Finish',
           command: (event: any) => {
-              this.activeIndex = 4;
+              this.activeIndex = 6;
               this.msgs.length = 0;
               this.msgs.push({severity:'info', summary:'Create Wallet', detail: event.item.label});
           }
@@ -141,6 +166,10 @@ export class WalletSetupComponent implements OnInit {
       this.finishStep2();
     } else if(this.activeIndex == 4) {
       this.finishStep3();
+    } else if(this.activeIndex == 5) {
+      this.finishStep4();
+    } else if(this.activeIndex == 6) {
+      this.finishStep5();
     }
     
     this.logger.debug("Next, New Active Step: " + this.activeIndex);
@@ -153,6 +182,10 @@ export class WalletSetupComponent implements OnInit {
       this.cancelStep3();
     } else if(this.activeIndex == 4) {
       this.cancelStep4();
+    } else if(this.activeIndex == 5) {
+      this.cancelStep5();
+    } else if(this.activeIndex == 6) {
+      this.cancelStep6();
     }
     if(this.activeIndex > 1){
       this.activeIndex -= 1;
@@ -162,20 +195,26 @@ export class WalletSetupComponent implements OnInit {
 
   finishStep1() {
     // toggle to step 2
-    this.logger.debug("Wallet Testnetwork: " + this.walletTestNetwork);
+    this.logger.debug("### Wallet Testnetwork: " + this.walletTestNetwork);
   }
 
   finishStep2() {
     // toggle to step 3
-    this.logger.debug("User Password: " + this.walletPassword);
-  }
-
-  cancelStep2() {
-    // toggle to step 1
-
+    this.logger.debug("### Disclaimer Accepted?: " + this.disclaimerAccepted);
   }
 
   finishStep3() {
+    // toggle to step 4
+    this.logger.debug("Wallet Password: " + this.walletPassword);
+  }
+
+  finishStep4() {
+    // toggle to step 5
+    this.recoveryHash = new CSCCrypto(this.recoveryMnemonicWords).encrypt(this.walletPassword);
+    this.logger.debug("Mnemonic Recovery Hash Created: " + this.recoveryHash);
+  }
+
+  finishStep5() {
     // toggle to step 4
     this.logger.debug("Wallet Location: " + this.walletLocation);
     this.logger.debug("### WalletSetup - Create Wallet");
@@ -187,11 +226,13 @@ export class WalletSetupComponent implements OnInit {
       walletEnvironment = LokiTypes.LokiDBEnvironment.test;
     }
 
+    let mnemonic = "";
     // create the wallet
     this.walletService.createWallet( this.walletLocation, 
                                      this.walletUUID, 
                                      this.walletPassword,
-                                     walletEnvironment ).subscribe(createResult => {
+                                     walletEnvironment,
+                                     this.recoveryHash ).subscribe(createResult => {
       if(createResult == AppConstants.KEY_FINISHED){
         this.walletCreated = true;
         this.logger.debug("### WalletSetup - Create new Account");
@@ -223,24 +264,24 @@ export class WalletSetupComponent implements OnInit {
           this.logger.debug("### WalletSetup - Find Server to connect to");
           let serverFound = false;
           this.websocketService.findBestServer(!this.walletTestNetwork).subscribe( result => {
+            this.logger.debug("### WalletSetup - findBestServer Result: " + result);
             if(result && !serverFound){
               serverFound = true;
               // server found to connect to
               this.logger.debug("### WalletSetup - Connect to Network");
-              this.websocketService.handleCurrentServerFound();
               // connect and subscribe to Casinocoin Service messages
               this.casinocoinService.connect().subscribe((message: any) => {
                 this.logger.debug("### WalletSetup - Connect Message: " + message);
                 if(message == AppConstants.KEY_CONNECTED){
                   this.connectedToNetwork = true;
                   this.enableFinishCreation = true;
+                  // the websocket has a queued subject so send out the messages
+                  this.casinocoinService.getServerState();
+                  this.casinocoinService.subscribeToLedgerStream();
+                  this.casinocoinService.subscribeToAccountsStream([walletAccount.accountID]);
                 }
                 
               });
-              // the websocket has a queued subject so send out the messages
-              this.casinocoinService.getServerState();
-              this.casinocoinService.subscribeToLedgerStream();
-              this.casinocoinService.subscribeToAccountsStream([walletAccount.accountID]);
             }
           });
         }
@@ -248,23 +289,23 @@ export class WalletSetupComponent implements OnInit {
     });
   }
 
-  cancelStep3() {
-    // toggle to step 2
-    this.step3State = 'out';
-    this.step2State = 'in-right';
-  }
-
   finishSetup() {
     // Close dialog and wallet setup and go to Home screen
     this.logger.debug("Setup Finished");
     this.logger.debug("Current Timestamp CSC: " + CSCUtil.unixToCasinocoinTimestamp(Date.now()));
-    let walletArray = [
+    let newAvailableWallet = 
       { "walletUUID": this.walletUUID, 
         "creationDate": CSCUtil.iso8601ToCasinocoinTime(new Date().toISOString()),
         "location": this.walletLocation,
-        "hash": this.walletHash
-      }
-    ];
+        "hash": this.walletHash,
+        "network" : (this.walletTestNetwork ? "TEST" : "LIVE")
+      };
+    let walletArray: Array<any> = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
+    if(walletArray == null){
+      // first wallet so init array
+      walletArray = [];
+    }
+    walletArray.push(newAvailableWallet);
     this.sessionStorageService.set(AppConstants.KEY_CURRENT_WALLET, this.walletUUID);
     this.localStorageService.set(AppConstants.KEY_CURRENT_WALLET, this.walletUUID);
     this.localStorageService.set(AppConstants.KEY_AVAILABLE_WALLETS, walletArray);
@@ -274,10 +315,29 @@ export class WalletSetupComponent implements OnInit {
     this.router.navigate(['']);
   }
 
+  cancelSetup(){
+    this.logger.debug("Setup New Wallet Canceled");
+    this.router.navigate(['/login']);
+  }
+
+  cancelStep2() {
+    // toggle to step 1
+  }
+
+  cancelStep3() {
+    // toggle to step 2 
+  }
+
   cancelStep4() {
-    // toggle to step 3
-    this.step4State = 'out';
-    this.step3State = 'in-right';
+    // toggle to step 3  
+  }
+
+  cancelStep5() {
+    // toggle to step 4
+  }
+
+  cancelStep6() {
+    // toggle to step 5
   }
 
   onLocationUpdated(newLocation: string) {
@@ -291,10 +351,21 @@ export class WalletSetupComponent implements OnInit {
     this.walletTestNetwork = testNetwork;
   }
 
+  onDisclaimerAcceptedUpdated(newDisclaimerAccepted: boolean) {
+    this.logger.debug("onDisclaimerAcceptedUpdated: " + newDisclaimerAccepted);
+    this.disclaimerAccepted = newDisclaimerAccepted;
+    this.enableFinishDisclaimer = newDisclaimerAccepted;
+  }
+
   onPasswordUpdated(newPassword: string) {
     this.logger.debug("onPasswordUpdated: " + newPassword);
     this.walletPassword = newPassword;
     this.enableFinishPassword = true;
+  }
+
+  onRecoveryAcceptChanged(recoveryAccepted: boolean) {
+    this.logger.debug("onRecoveryAcceptChanged: " + recoveryAccepted);
+    this.recoveryAccepted = recoveryAccepted;
   }
 
   generateWalletAccount() {

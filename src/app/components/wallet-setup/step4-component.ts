@@ -1,29 +1,22 @@
-import { Component, OnInit, ViewEncapsulation, Input } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Input, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
 import { Logger } from 'angular2-logger/core';
-import { ElectronService } from '../../providers/electron.service';
-import { MenuItem, MessagesModule, Message } from 'primeng/primeng';
+import { PasswordModule } from 'primeng/primeng';
 
 @Component({
     selector: 'setup-step4',
     templateUrl: './step4-component.html',
-    encapsulation: ViewEncapsulation.None,
-    animations: [
-      trigger('slideInOut', [
-        state('in', style({
-          transform: 'translate3d(0, 0, 0)'
-        })),
-        // state('out', style({
-        //   transform: 'translate3d(100%, 0, 0)'
-        // })),
-        transition('in => out', animate('400ms ease-in-out')),
-        transition('out => in', animate('400ms ease-in-out'))
-      ])
-    ]
+    encapsulation: ViewEncapsulation.None
   })
   export class SetupStep4Component {
-    @Input() walletCreated:boolean;
-    @Input() accountCreated:boolean;
-    @Input() keysEncrypted:boolean;
-    @Input() connectedToNetwork:boolean;
+    @Input() newWalletMnemonic: Array<string>;
+    @Input() recoveryAccepted: boolean;
+    @Output() recoveryAcceptChanged:EventEmitter<boolean> = new EventEmitter();
+
+    onRecoveryAcceptChanged(newValue) {
+      this.recoveryAcceptChanged.emit(newValue);
+    }
+
+    constructor( ) { }
+
   }

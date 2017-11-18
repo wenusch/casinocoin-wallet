@@ -8,6 +8,7 @@ import { WalletService } from '../../../providers/wallet.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { AppConstants } from '../../../domain/app-constants';
 import Big from 'big.js';
+import { CasinocoinTxObject, PrepareTxPayment } from 'app/domain/csc-types';
 
 @Component({
   selector: 'app-send-coins',
@@ -27,6 +28,8 @@ export class SendCoinsComponent implements OnInit {
   selectedAccount: string;
   receipient: string = "";
   description: string = "";
+  invoiceID: string;
+  destinationTag: number;
   amount: string = "";
   fees: string = "";
   minimalFee: string = "";
@@ -53,7 +56,7 @@ export class SendCoinsComponent implements OnInit {
       if(result == AppConstants.KEY_LOADED){
         this.walletService.getAllAccounts().forEach( element => {
           if(new Big(element.balance) > 0){
-            let accountLabel = element.accountID + " [Balance: " + CSCUtil.dropsToCsc(element.balance) + "]";
+            let accountLabel = element.label + " - " + element.accountID.substring(0,10) + '...' + " [Balance: " + CSCUtil.dropsToCsc(element.balance) + "]";
             this.accounts.push({label: accountLabel, value: element.accountID});
           }
         });
@@ -116,14 +119,20 @@ export class SendCoinsComponent implements OnInit {
 
   doSignAndSubmitTx(){
     this.signAndSubmitIcon = "fa-refresh";
-    let txObject = this.casinocoinService.createPaymentTx(
+    let preparePayment: PrepareTxPayment = 
       { source: this.selectedAccount, 
         destination: this.receipient, 
         amountDrops: CSCUtil.cscToDrops(this.amount),
         feeDrops: CSCUtil.cscToDrops(this.fees),
         description: this.description
-      }
-    );
+      };
+    if(this.destinationTag){
+      preparePayment.destinationTag = this.destinationTag;
+    }
+    if(this.invoiceID && this.invoiceID.length > 0){
+      preparePayment.invoiceID = CSCUtil.encodeInvoiceID(this.invoiceID);
+    }
+    let txObject = this.casinocoinService.createPaymentTx(preparePayment);
     this.logger.debug("### Sign: " + JSON.stringify(txObject));
     let txBlob:string = this.casinocoinService.signTx(txObject, this.walletPassword);
     if(txBlob == AppConstants.KEY_ERRORED){
@@ -138,6 +147,9 @@ export class SendCoinsComponent implements OnInit {
       this.walletPassword = "";
       this.amount = "";
       this.accountDropdown.resetFilter();
+      this.invoiceID = "";
+      this.destinationTag = undefined;
+      this.totalSend = "";
     }
     this.showPasswordDialog = false;
     this.signAndSubmitIcon = "fa-check";

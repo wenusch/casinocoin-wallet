@@ -2,7 +2,6 @@ import Big from 'big.js';
 import int from 'int';
 
 import { Amount, Memo, CasinocoindAmount, CasinocoinMemo }  from './csc-types';
-import { Mnemonic } from './mnemonic';
 
 export class CSCUtil {
 
@@ -98,24 +97,47 @@ export class CSCUtil {
         };
     }
 
-    
+    static decodeInvoiceID(hex: string) : string {
+        // remove start padding
+        function removePadStart(string, padString){
+            // hex encoding -> remove every "00"
+            let resultString = string;
+            while(resultString.startsWith(padString)){
+                resultString = resultString.substring(2);
+            }
+            return resultString;
+        }
+        let unpaddedString = removePadStart(hex, "00");
+        return (unpaddedString ? new Buffer(unpaddedString, 'hex').toString('utf-8') : "");
+    }
+
+    static encodeInvoiceID(string: string) : string {
+        // limit data to 32 bytes (256 bit) left padded with 0 to 64 length for double digit hex
+        function padStart(string, padString) {
+            let targetLength = 64;
+            targetLength = targetLength>>0; //floor if number or convert non-number to 0;
+            padString = String(padString || ' ');
+            if (string.length > targetLength) {
+                return string;
+            }
+            else {
+                targetLength = targetLength-string.length;
+                if (targetLength > padString.length) {
+                    padString += padString.repeat(targetLength/padString.length); //append to original to ensure we are longer than needed
+                }
+                return padString.slice(0,targetLength) + string;
+            }
+        }
+        // encode
+        let encoded = string ? (new Buffer(string.substring(0,32), 'utf8')).toString('hex').toUpperCase() : "";
+        encoded = padStart(encoded, "0");
+        return encoded;
+    }
+
     private bytesToHex(byteArray) {
         return Array.from(byteArray, function(byte: number) {
           return ('0' + (byte & 0xFF).toString(16).toUpperCase()).slice(-2);
         }).join('')
-    }
-
-    static randomIntFromInterval(min, max) {
-        return Math.floor(Math.random()*(max-min+1)+min);
-    }
-
-    static getRandomMnemonic(): Array<string> {
-        let mnemonicArray: Array<string> = [];
-        for (let i=0; i<16; i++){
-            let randomIndex = this.randomIntFromInterval(0, (Mnemonic.english.length - 1));
-            mnemonicArray.push(Mnemonic.english[randomIndex]);
-        }
-        return mnemonicArray;
     }
 
     static validateAccountID(accountID: string): boolean {

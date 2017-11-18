@@ -40,6 +40,8 @@ import { SetupStep1Component }      from './components/wallet-setup/step1-compon
 import { SetupStep2Component }      from './components/wallet-setup/step2-component';
 import { SetupStep3Component }      from './components/wallet-setup/step3-component';
 import { SetupStep4Component }      from './components/wallet-setup/step4-component';
+import { SetupStep5Component }      from './components/wallet-setup/step5-component';
+import { SetupStep6Component }      from './components/wallet-setup/step6-component';
 import { LoginComponent }           from './components/login/login.component';
 import { SendCoinsComponent }       from './components/forms/send-coins/send-coins.component';
 import { ReceiveCoinsComponent }    from './components/forms/receive-coins/receive-coins.component';
@@ -55,7 +57,7 @@ import { DialogModule, ButtonModule, CheckboxModule,
          MenuModule, PanelModule, CalendarModule,
          DataTableModule, SharedModule, DropdownModule,
          StepsModule, PasswordModule, GrowlModule,
-         ContextMenuModule, TieredMenuModule } from 'primeng/primeng';
+         ContextMenuModule, TieredMenuModule, InputTextareaModule } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { MatListModule, MatSidenavModule, MatTooltipModule,
          MatButtonModule } from '@angular/material';
@@ -69,6 +71,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     WalletSetupComponent,
     SetupStep1Component, SetupStep2Component, 
     SetupStep3Component, SetupStep4Component,
+    SetupStep5Component, SetupStep6Component,
     LoginComponent,
     SendCoinsComponent,
     ReceiveCoinsComponent,
@@ -93,7 +96,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     DataTableModule, SharedModule, DropdownModule,
     StepsModule, PasswordModule, GrowlModule,
     MatListModule, MatSidenavModule, ContextMenuModule,
-    TieredMenuModule, MatTooltipModule, MatButtonModule
+    TieredMenuModule, MatTooltipModule, MatButtonModule,
+    InputTextareaModule
   ],
   providers: [
     Logger, Options,

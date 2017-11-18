@@ -24,6 +24,20 @@
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-tag"></i></span>
+            <input type="number" pInputText placeholder="Destination Tag" [(ngModel)]="destinationTag" (keyup.enter)="focusAmount()"
+                    [disabled]="!selectedAccount || invalidReceipient" min="1" step="1" #destinationTagInput>         
+        </div>
+    </div>
+    <div class="ui-g-12">
+        <div class="ui-inputgroup">
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-file-text-o"></i></span>
+            <input type="text" pInputText placeholder="Invoice ID" [(ngModel)]="invoiceID" (keyup.enter)="focusAmount()"
+                    [disabled]="!selectedAccount || invalidReceipient" #invoiceIDInput>         
+        </div>
+    </div>
+    <div class="ui-g-12">
+        <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Amount</span>
             <input type="number" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()"
                     [disabled]="!selectedAccount || invalidReceipient" (ngModelChange)="onAmountChange($event)" #amountInput>

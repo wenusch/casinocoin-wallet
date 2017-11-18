@@ -1,10 +1,7 @@
-import { Component, OnInit, ViewEncapsulation, Input, Output, EventEmitter, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Input, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
 import { Logger } from 'angular2-logger/core';
-import { ElectronService } from '../../providers/electron.service';
-import { MenuItem, MessagesModule, Message } from 'primeng/primeng';
-import { SessionStorageService, LocalStorageService } from "ngx-store";
-import { WalletService } from '../../providers/wallet.service';
+import { PasswordModule } from 'primeng/primeng';
 
 @Component({
     selector: 'setup-step3',
@@ -24,30 +21,18 @@ import { WalletService } from '../../providers/wallet.service';
     ]
   })
   export class SetupStep3Component {
+    @Input() newWalletPassword:string;
+    @Output() passwordChange:EventEmitter<string> = new EventEmitter();
 
-    constructor( private logger: Logger, 
-      private electron: ElectronService,
-      private localStorageService: LocalStorageService,
-      private sessionStorageService: SessionStorageService,
-      private walletService: WalletService ) { }
+    passwordPattern: string = "(?=.*[0-9])(?=.*[a-z]).{8,}";
 
-    @ViewChild('inputWalletLocation') inputWalletLocation;
-    @Input() newWalletLocation:string;
-    @Output() locationChange:EventEmitter<string> = new EventEmitter();
+    constructor( ) { }
 
-    selectWalletLocation() {    
-        this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("home"));
-        this.electron.remote.dialog.showOpenDialog(
-            { title: 'Wallet Location',
-            properties: ['openDirectory','createDirectory']}, (result) => {
-              this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
-              if(result && result.length>0) {
-                  this.newWalletLocation = result[0];
-                  this.locationChange.emit(this.newWalletLocation);
-                  this.inputWalletLocation.nativeElement.focus();
-              }
-            }
-        );
+    checkPasswordUpdate(newValue: string) {
+      let testResult = newValue.match(this.passwordPattern);
+      if(testResult != null) {
+        this.passwordChange.emit(newValue);
+      }
     }
 
   }

@@ -1,26 +1,29 @@
-<!-- Wallet Setup Step 3 -->
+<!-- Wallet Setup Step 4 - Mnemonic -->
 <div class="ui-g-12">
-    <h3 style="text-align: center;">Wallet Creation</h3>
+    <h3 style="text-align: center;">Recovery Passphrase</h3>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            Create wallet on filesystem:
+            In case you loose your wallet password, it can be recovered using the Recovery Passphrase. Please write down 
+            the shown words in the exact order as they appear on a piece of paper or otherwise and keep it safe.
         </div>
-        <div class="ui-g-1"><i class="fa fa-check icon-color-csc" aria-hidden="true" *ngIf="walletCreated"></i></div>
+        <div class="ui-g-1"></div>
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            Create account:
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-3" *ngFor="let word of newWalletMnemonic; let i = index">{{i+1}}. {{word}}</div>
+            </div>
         </div>
-        <div class="ui-g-1"><i class="fa fa-check icon-color-csc" aria-hidden="true" *ngIf="accountCreated"></i></div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            Encrypt wallet information with password:
+            <small style="font-weight: bolder;">
+            <p-checkbox [(ngModel)]="recoveryAccepted" binary="false" (onChange)="onRecoveryAcceptChanged($event)" 
+                        label="I have saved the recovery passphrase or understand the consequences of not doing so."></p-checkbox>
+            </small>
         </div>
-        <div class="ui-g-1"><i class="fa fa-check icon-color-csc" aria-hidden="true" *ngIf="keysEncrypted"></i></div>
         <div class="ui-g-1"></div>
-        <div class="ui-g-10">
-            Connect to the network:
-        </div>
-        <div class="ui-g-1"><i class="fa fa-check icon-color-csc" aria-hidden="true" *ngIf="connectedToNetwork"></i></div>
     </div>
 </div>

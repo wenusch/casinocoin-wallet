@@ -32,7 +32,6 @@ export class OverviewComponent implements OnInit {
   ngOnInit() {
     this.logger.debug("### Overview ngOnInit() ###");
     this.ledgers = this.casinocoinService.ledgers;
-    this.serverState = this.casinocoinService.serverState;
     this.casinocoinService.serverStateSubject.subscribe( state => {
       this.serverState = state;
     });

@@ -15,19 +15,11 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            <small>
-            <p-checkbox [(ngModel)]="walletTestNetwork" binary="false" (onChange)="onNetworkChanged($event)" label="Connect to the test network"></p-checkbox>
+            <small style="font-weight: bolder;">
+            <p-checkbox [(ngModel)]="walletTestNetwork" binary="false" (onChange)="onNetworkChanged($event)" 
+                        label="Connect to the test network"></p-checkbox>
             </small>
-            <!-- 
-            <input type="text" pInputText [(ngModel)]="newWalletLocation" (ngModelChange)="locationChange.emit($event)"
-                   ngControl="newWalletLocation" style="width: 100%;"/>
-            -->
         </div>
-        <!--
-        <div class="ui-g-2">
-            <button pButton type="button" (click)="selectWalletLocation()" icon="fa-folder-open"></button>
-        </div>
-    -->
         <div class="ui-g-1"></div>
     </div>
 </div>

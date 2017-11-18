@@ -1,0 +1,24 @@
+<!-- Wallet Setup Step 5 -->
+<div class="ui-g-12">
+    <div class="ui-g">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <h3 style="text-align: center;">Select wallet Location</h3>
+        </div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            Your wallet will be saved in the default location below. You can change it to an other location if required.
+        </div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-9">
+            <input type="text" pInputText [(ngModel)]="newWalletLocation" (ngModelChange)="locationChange.emit($event)"
+                   style="width: 100%;" #inputWalletLocation />
+        </div>
+        <div class="ui-g-2">
+            <button pButton type="button" (click)="selectWalletLocation()" icon="fa-folder-open"></button>
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+</div>

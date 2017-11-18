@@ -1,23 +1,21 @@
-<!-- Wallet Setup Step 1 -->
+<!-- Wallet Setup Step 3 - Password -->
 <div class="ui-g-12">
-    <div class="ui-g">
+    <h3 style="text-align: center;">Set Password</h3>
+    <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            <h3 style="text-align: center;">Select wallet Location</h3>
+            Please enter a wallet password. This is an obligatory step! Without a password your wallet can not be created. Keep your password in a safe place, 
+            whitout it your wallet can not be opened or used anymore!
+            <p>Your password needs to contain letters and numbers and be a minimum of 8 characters long.</p>
         </div>
         <div class="ui-g-1"></div>
+    </div>
+    <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            Your wallet will be saved in the default location below. You can change it to an other location if required.
-        </div>
-        <div class="ui-g-1"></div>
-        <div class="ui-g-1"></div>
-        <div class="ui-g-9">
-            <input type="text" pInputText [(ngModel)]="newWalletLocation" (ngModelChange)="locationChange.emit($event)"
-                   style="width: 100%;" #inputWalletLocation />
-        </div>
-        <div class="ui-g-2">
-            <button pButton type="button" (click)="selectWalletLocation()" icon="fa-folder-open"></button>
+            <input type="password" pPassword [(ngModel)]="newWalletPassword" (ngModelChange)="checkPasswordUpdate($event)" 
+                   style="width: 100%;" title="Password must be minmal 8 characters long including letter and numeric characters" 
+                   required [(pattern)]="passwordPattern"/>
         </div>
         <div class="ui-g-1"></div>
     </div>

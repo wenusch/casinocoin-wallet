@@ -29,6 +29,7 @@ export interface LokiDBMetadata {
     walletUUID: string;
     walletHash: string;
     environment: LokiDBEnvironment;
+    mnemonicRecovery: string;
     creationTimestamp: number;
     updatedTimestamp: number;
     location: string;
@@ -64,9 +65,6 @@ export interface LokiKey {
     publicKey: string;
     accountID: string;
     secret: string;
-    initVector: string;
-    keyTag: string;
-    secretTag: string;
     encrypted: boolean;
 }
 
@@ -91,6 +89,8 @@ export interface LokiTransaction {
     accountID: string;
     amount: string;
     destination: string;
+    destinationTag?: number;
+    invoiceID?: string;
     fee: string;
     flags: number;
     lastLedgerSequence: number;

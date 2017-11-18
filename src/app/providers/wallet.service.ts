@@ -6,6 +6,7 @@ import { Subject } from 'rxjs/Subject';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { AppConstants } from '../domain/app-constants';
 import { CSCUtil } from '../domain/csc-util';
+import { CSCCrypto } from '../domain/csc-crypto';
 import { ElectronService } from '../providers/electron.service';
 import { NotificationService, NotificationType, SeverityType } from '../providers/notification.service';
 
@@ -20,6 +21,7 @@ const LZString = require('lz-string');
 
 import * as loki from 'lokijs';
 import * as LokiTypes from '../domain/lokijs';
+import { LokiKey } from '../domain/lokijs';
 
 const lfsa = require('../../../node_modules/lokijs/src/loki-fs-structured-adapter.js');
 // const LokiIndexedAdapter = require('../../../node_modules/lokijs/src/loki-indexed-adapter.js');
@@ -39,9 +41,7 @@ export class WalletService {
   private keys;
   private swaps;
   private ledgers: Array<LedgerStreamMessages>;
-
-  private algorithm = "aes-256-gcm";
-  
+ 
   public isWalletOpen: boolean = false;
   public openWalletSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
 
@@ -59,7 +59,8 @@ export class WalletService {
   createWallet( walletLocation: string, 
                 walletUUID: string, 
                 walletSecret: string, 
-                environment:LokiTypes.LokiDBEnvironment ): Observable<any> {
+                environment:LokiTypes.LokiDBEnvironment,
+                mnemonicRecovery: string ): Observable<any> {
     // create wallet for UUID
     this.logger.debug("### WalletService Create UUID: " + walletUUID);   
     function createWalletComplete(thisobject){
@@ -96,6 +97,7 @@ export class WalletService {
           environment: environment,
           walletUUID: walletUUID,
           walletHash: this.generateWalletPasswordHash(walletUUID, walletSecret),
+          mnemonicRecovery: mnemonicRecovery,
           creationTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
           updatedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
           location: walletLocation,
@@ -141,7 +143,7 @@ export class WalletService {
     return createSubject.asObservable();
   }
   
-  openWallet(walletLocation: string, walletUUID: string, walletPassword: string): Observable<any> {
+  openWallet(walletLocation: string, walletUUID: string, walletPassword: string): Observable<string> {
     let dbPath = path.join(walletLocation, (walletUUID + '.db'));
     this.logger.debug("### WalletService Open Wallet location: " + dbPath);
 
@@ -150,10 +152,10 @@ export class WalletService {
     openSubject.subscribe(result => {
       this.logger.debug("openWallet: " + result);
       if(result == AppConstants.KEY_LOADED){
+        this.openWalletSubject.next(result);
         let msg: NotificationType = {severity: SeverityType.info, title:'Wallet Message', body:'Succesfully opened the wallet.'};
         this.notificationService.addMessage(msg);
       }
-      this.openWalletSubject.next(result);
     });
     let openError = false;
 
@@ -166,21 +168,6 @@ export class WalletService {
           this.logger.debug("### WalletService Open Collection: " + collection.name)
           if(collection.name == "dbMetadata"){
             this.dbMetadata = collection;
-            if(this.dbMetadata.count() == 0){
-              // first time running we need to add initial version
-              let initDBVersion: LokiTypes.LokiDBMetadata = {
-                dbVersion: AppConstants.KEY_DB_VERSION,
-                appVersion: this.electron.remote.app.getVersion(),
-                environment: LokiTypes.LokiDBEnvironment.prod,
-                walletUUID: walletUUID,
-                walletHash: this.generateWalletPasswordHash(walletUUID, walletPassword),
-                creationTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
-                updatedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
-                location: walletLocation,
-                lastOpenedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now())
-              }
-              this.dbMetadata.insert(initDBVersion);
-            }
           } else if(collection.name == "accounts")
             this.accounts = collection;
           else if(collection.name == "transactions")
@@ -230,7 +217,7 @@ export class WalletService {
 
       this.walletDB = walletDB;
     }
-    return openSubject.asObservable();
+    return this.openWalletSubject.asObservable();
   }
   
   // allow for a hard save on app exit
@@ -353,9 +340,13 @@ export class WalletService {
 
   getTransaction(inputTxID: string): LokiTypes.LokiTransaction {
     if(this.isWalletOpen){
-      this.logger.debug("getTransaction: " + inputTxID + " count: " + this.transactions.count());
       if(this.transactions.count() > 0){
-        return this.transactions.find({ txID: inputTxID });
+        let findResult = this.transactions.find({ txID: inputTxID });
+        if(findResult.length == 1){
+          return findResult[0];
+        } else {
+          return undefined;
+        }
       } else {
         return undefined;
       }
@@ -444,20 +435,14 @@ export class WalletService {
     // get all keys
     let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
     this.logger.debug(allKeys);
+    let cscCrypto = new CSCCrypto(password);
     allKeys.forEach( (element, index, array) => {
       if(!element.encrypted){
-        let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-        passwordHash = passwordHash.slice(0, 32);
-        let cipher = crypto.createCipheriv(this.algorithm, passwordHash, element.initVector);
-        // encrypt key
-        let cryptedKey = cipher.update(element.privateKey, 'utf8', 'hex');
-        cryptedKey += cipher.final("hex");
-        array[index].keyTag = cipher.getAuthTag().toString('hex');
+        // encrypt private key
+        let cryptedKey = cscCrypto.encrypt(element.privateKey);
         array[index].privateKey = cryptedKey;
-        cipher = crypto.createCipheriv(this.algorithm, passwordHash, element.initVector);
-        let cryptedSecret = cipher.update(element.secret, 'utf8', 'hex');
-        cryptedSecret += cipher.final("hex");
-        array[index].secretTag = cipher.getAuthTag().toString('hex');
+        // encrypt secret
+        let cryptedSecret = cscCrypto.encrypt(element.secret);
         array[index].secret = cryptedSecret;
         array[index].encrypted = true;
       }
@@ -478,40 +463,36 @@ export class WalletService {
     if(this.checkWalletPasswordHash(currentWallet, password, walletObject['hash'])){
       // get all keys
       let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
+      let decryptedKeys: Array<LokiTypes.LokiKey> = [];
+      let cscCrypto = new CSCCrypto(password);
       allKeys.forEach( (element, index, array) => {
         // decrypt key
         this.logger.debug("Decrypt["+index+"]: " + JSON.stringify(element));
-        let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-        passwordHash = passwordHash.slice(0, 32);
-        let decipher = crypto.createDecipheriv(this.algorithm, passwordHash, element.initVector);
-        let secretTagBuffer = Buffer.from(element.secretTag, 'hex');
-        decipher.setAuthTag(secretTagBuffer);
-        let decodedSecret:string = decipher.update(element.secret, 'hex', 'utf8');
-        decodedSecret += decipher.final('utf8');
+        let decodedSecret:string = cscCrypto.decrypt(element.secret);
         this.logger.debug("decoded secret: " + decodedSecret);
         let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
         // check if public key is the same
         if(decodedKeypair.publicKey == element.publicKey){
           // save decrypted values onto object
-          array[index].privateKey = decodedKeypair.privateKey;
-          array[index].secret = decodedSecret;
-          array[index].encrypted = false;
+          let decodedKey: LokiKey = {
+            accountID: element.accountID,
+            publicKey: decodedKeypair.publicKey,
+            privateKey: decodedKeypair.privateKey,
+            secret: decodedSecret,
+            encrypted: false
+          }
+          decryptedKeys.push(decodedKey);
         }
       });
-      return allKeys;
+      return decryptedKeys;
     } else {
       return [];
     }
   }
 
   getDecryptPrivateKey(password: string, walletKey: LokiTypes.LokiKey): string {
-    let passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-    passwordHash = passwordHash.slice(0, 32);
-    let decipher = crypto.createDecipheriv(this.algorithm, passwordHash, walletKey.initVector);
-    let secretTagBuffer = Buffer.from(walletKey.secretTag, 'hex');
-    decipher.setAuthTag(secretTagBuffer);
-    let decodedSecret:string = decipher.update(walletKey.secret, 'hex', 'utf8');
-    decodedSecret += decipher.final('utf8');
+    let cscCrypto = new CSCCrypto(password);
+    let decodedSecret:string = cscCrypto.decrypt(walletKey.secret);
     let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
     if(decodedKeypair.publicKey == walletKey.publicKey){
       // password was correct, return decoded private key
@@ -542,16 +523,12 @@ export class WalletService {
       publicKey: "", 
       accountID: "", 
       secret: "", 
-      initVector: "", 
-      keyTag: "",
-      secretTag: "",
       encrypted: false
     };
     let keypair = cscKeyAPI.deriveKeypair(keySeed);
     newKeyPair.privateKey = keypair.privateKey;
     newKeyPair.publicKey = keypair.publicKey;
     newKeyPair.accountID = cscKeyAPI.deriveAddress(keypair.publicKey);
-    newKeyPair.initVector = crypto.randomBytes(32).toString('hex');
     newKeyPair.secret = keySeed;
     // save the new private key
     this.addKey(newKeyPair);

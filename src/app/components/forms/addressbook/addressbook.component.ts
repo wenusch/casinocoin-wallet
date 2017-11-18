@@ -18,10 +18,12 @@ export class AddressbookComponent implements OnInit {
   addresses: Array<LokiAddress> = [];
   showCreateAddressDialog: boolean = false;
   addressLabel: string = "";
+  accountID: string = "";
   showDialogFooter: boolean = false;
   errorMessage: string = "";
   addressMenuItems: MenuItem[];
   selectedAddressRow: LokiAddress;
+  address_context_menu: ElectronMenu;
 
   constructor(private logger: Logger,
               private casinocoinService: CasinocoinService,
@@ -39,7 +41,29 @@ export class AddressbookComponent implements OnInit {
     });
 
     // init address context menu
+    let address_context_menu_template = [
+      { label: 'Copy Address', 
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('address-context-menu-event', 'copy-address');
+        }
+      }
+    ];
+    this.address_context_menu = this.electronService.remote.Menu.buildFromTemplate(address_context_menu_template);
+    
+    // listen to address context menu events
+    this.electronService.ipcRenderer.on('address-context-menu-event', (event, arg) => {
+      this.logger.debug("### Addressbook Menu Event: " + arg);
+      if(arg == 'copy-address')
+        this.copyAddress();
+      else
+        this.logger.debug("### Context menu not implemented: " + arg);
+    });
+  }
 
+  onAddressContextMenu(event){
+    this.selectedAddressRow = event.data;
+    this.logger.debug("### onAddressContextMenu: " + JSON.stringify(this.selectedAddressRow));
+    this.address_context_menu.popup(this.electronService.remote.getCurrentWindow());
   }
 
   onAddressRowClick(e:any) {
@@ -57,14 +81,11 @@ export class AddressbookComponent implements OnInit {
     this.logger.debug("### onAddressEditCancel: " + JSON.stringify(event));
   }
 
-  onContextMenu(event){
-    this.logger.debug("### onContextMenu: " + JSON.stringify(event));
-    this.selectedAddressRow = event.data;
-  }
-
   copyAddress(){
-    this.logger.debug("Copy to clipboard: " + this.selectedAddressRow.accountID);
-    this.electronService.clipboard.writeText(this.selectedAddressRow.accountID);
+    if(this.selectedAddressRow){
+      this.logger.debug("Copy to clipboard: " + this.selectedAddressRow.accountID);
+      this.electronService.clipboard.writeText(this.selectedAddressRow.accountID);
+    }
   }
 
   showCreateAddress(){
@@ -76,8 +97,17 @@ export class AddressbookComponent implements OnInit {
     // first disable footer on submit
     this.showDialogFooter = false;
     // create addressbook entry
-
+    let newAddress:LokiAddress = {
+      accountID: this.accountID,
+      label: this.addressLabel,
+      owner: false
+    }
+    this.walletService.addAddress(newAddress);
+    this.accountID = "";
+    this.addressLabel = "";
     // hide dialog
     this.showCreateAddressDialog = false;
+    // refresh addresses
+    this.addresses = this.walletService.getAllAddresses();
   }
 }

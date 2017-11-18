@@ -88,14 +88,21 @@ export class TransactionsComponent implements OnInit {
     this.tx_context_menu = this.electronService.remote.Menu.buildFromTemplate(tx_context_menu_template);
     // listen to connection context menu events
     this.electronService.ipcRenderer.on('tx-context-menu-event', (event, arg) => {
-      if(arg == 'copy-to')
-        this.electronService.clipboard.writeText(this.selectedTxRow.destination);
-      else if(arg == 'copy-from')
-        this.electronService.clipboard.writeText(this.selectedTxRow.accountID);
-      else if(arg == 'copy-txid')
-        this.electronService.clipboard.writeText(this.selectedTxRow.txID);
-      else
+      if(arg == 'copy-to'){
+        if(this.selectedTxRow){
+          this.electronService.clipboard.writeText(this.selectedTxRow.destination);
+        }
+      } else if(arg == 'copy-from'){
+        if(this.selectedTxRow){
+          this.electronService.clipboard.writeText(this.selectedTxRow.accountID);
+        }
+      } else if(arg == 'copy-txid'){
+        if(this.selectedTxRow){
+          this.electronService.clipboard.writeText(this.selectedTxRow.txID);
+        }
+      } else {
         this.logger.debug("### Context menu not implemented: " + arg);
+      }        
     });
   }
 
@@ -137,7 +144,7 @@ export class TransactionsComponent implements OnInit {
     if(rowData.memos && rowData.memos.length > 0){
       return rowData.memos[0].memo.memoData;
     } else {
-      return"-";
+      return null;
     }
   }
 

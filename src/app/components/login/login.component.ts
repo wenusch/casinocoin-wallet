@@ -2,12 +2,13 @@ import { Component, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { WalletService } from '../../providers/wallet.service';
-import { LocalStorage, SessionStorage } from "ngx-store";
+import { LocalStorage, SessionStorage, LocalStorageService } from "ngx-store";
 import { SelectItem } from 'primeng/primeng';
 import { CSCUtil } from '../../domain/csc-util';
 import { AppConstants } from '../../domain/app-constants';
 import { Logger } from 'angular2-logger/core';
 import { MessageService } from 'primeng/components/common/messageservice';
+import { AppComponent } from 'app/app.component';
  
 @Component({
     moduleId: module.id,
@@ -22,7 +23,6 @@ export class LoginComponent implements OnInit {
     @ViewChild('inputPassword') inputPasswordElementRef;
 
     @LocalStorage() public availableWallets: Array<Object>;
-    @LocalStorage() public walletLocation: string;
     @SessionStorage() public currentWallet: string = "";
 
     wallets: SelectItem[];
@@ -35,13 +35,16 @@ export class LoginComponent implements OnInit {
  
     login_icon: string = "fa-check";
 
+    dialog_visible: boolean = true;
+
     constructor(
         private logger: Logger,
         private route: ActivatedRoute,
         private router: Router,
         private walletService: WalletService,
         private messageService: MessageService,
-        private datePipe: DatePipe) { 
+        private datePipe: DatePipe,
+        private localStorageService: LocalStorageService) { 
     }
  
     ngOnInit() {
@@ -59,6 +62,9 @@ export class LoginComponent implements OnInit {
                 walletLabel = walletLabel + "... [Imported: " + this.datePipe.transform(walletImportDate, "yyyy-MM-dd") + "]";
             } else {
                 walletLabel = walletLabel + "... [Created: " + this.datePipe.transform(walletCreationDate, "yyyy-MM-dd") + "]";
+            }
+            if(this.availableWallets[i]['network']){
+                walletLabel = walletLabel + " " + this.availableWallets[i]['network'];
             }
             this.logger.debug("Wallet Label: " + walletLabel);
             this.wallets.push({label: walletLabel, value: this.availableWallets[i]['walletUUID']});
@@ -95,10 +101,16 @@ export class LoginComponent implements OnInit {
                         this.footer_visible = false;
                         this.error_message = "";
                     } else if (result == AppConstants.KEY_LOADED){
+                        // set network to Production or Test
+                        if(walletObject['network'] == "TEST"){
+                            this.localStorageService.set(AppConstants.KEY_PRODUCTION_NETWORK, false);
+                        } else {
+                            this.localStorageService.set(AppConstants.KEY_PRODUCTION_NETWORK, true);
+                        }
                         // Navigate to Home 
                         this.currentWallet = walletObject['walletUUID'];
-                        this.walletLocation = walletObject['location'];
-                        this.router.navigate([this.returnUrl]);
+                        this.localStorageService.set(AppConstants.KEY_WALLET_LOCATION, walletObject['location']);
+                        this.router.navigate(['home']);
                     } else if (result == AppConstants.KEY_ERRORED) {
                         // there was an error opening the wallet
                         this.logger.debug("### LoginComponent - there was an error opening the wallet");

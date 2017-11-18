@@ -14,7 +14,7 @@ import { TransactionsComponent }    from './components/forms/transactions/transa
 import { SupportComponent }         from './components/forms/support/support.component';
 
 const routes: Routes = [
-    { path: '', component: HomeComponent, canActivate: [AuthGuard],
+    { path: 'home', component: HomeComponent, canActivate: [AuthGuard],
         children: [
             { path: 'overview', component: OverviewComponent },
             { path: 'send', component: SendCoinsComponent },
@@ -29,7 +29,7 @@ const routes: Routes = [
     { path: 'login', component: LoginComponent },
 
     // otherwise redirect to home
-    { path: '**', redirectTo: 'login' }
+    { path: '**', redirectTo: 'home' }
 ];
 
 @NgModule({

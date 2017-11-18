@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 import { WebsocketService } from './websocket.service';
 import { WalletService } from './wallet.service';
+import { LocalStorageService } from "ngx-store";
 import { LedgerStreamMessages, ValidationStreamMessages, 
          TransactionStreamMessages, ServerStateMessage, 
          ServerDefinition } from '../domain/websocket-types';
@@ -26,12 +27,13 @@ export class CasinocoinService implements OnDestroy {
     private defaultMinimalFee = 100000;
 
     private isConnected: boolean = false;
+    private makingConnectionStarted: boolean = false;
+    private disconnectStarted: boolean = false;
     private ledgersLoaded: boolean = false;
     private connectedSubscription: Subscription;
     private socketSubscription: Subscription;
     public ledgerSubject = new Subject<LedgerStreamMessages>();
     public ledgers: Array<LedgerStreamMessages> = [];
-    public serverState: ServerStateMessage;
     public serverStateSubject = new BehaviorSubject<ServerStateMessage>(this.initServerState());
     public accounts: Array<LokiAccount> = [];
     public accountSubject = new Subject<LokiAccount>();
@@ -44,7 +46,8 @@ export class CasinocoinService implements OnDestroy {
                 private wsService: WebsocketService,
                 private walletService: WalletService,
                 private notificationService: NotificationService,
-                private decimalPipe: DecimalPipe ) {
+                private decimalPipe: DecimalPipe,
+                private localStorageService: LocalStorageService ) {
         logger.debug("### INIT  CasinocoinService ###");
         // Initialize server state
         this.initServerState();
@@ -57,23 +60,36 @@ export class CasinocoinService implements OnDestroy {
 
     connect(): Observable<any> {
         this.logger.debug("### CasinocoinService Connect() - isConnected: " + this.isConnected);
+        let connectToProduction: boolean = this.localStorageService.get(AppConstants.KEY_PRODUCTION_NETWORK);
+        this.logger.debug("### CasinocoinService Connect() - Connect To Production?: " + connectToProduction);
         let connectSubject;
         if(!this.isConnected){
-            connectSubject = new BehaviorSubject<string>(AppConstants.KEY_DISCONNECTED);
+            connectSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
+            // re-initialize server state
+            this.initServerState();
+            // find server to connect to 
+            this.wsService.findBestServer(connectToProduction);
             // check if the server is found, otherwise wait till it is
             const serverFoundSubscription = this.wsService.isServerFindComplete$.subscribe(serverFound => {
-                if(serverFound){
+                if(serverFound && !this.makingConnectionStarted){
+                    this.logger.debug("### CasinocoinService serverFound - Wait for websocket connected");
                     // check if websocket is open, otherwise wait till it is
                     const connectedSubscription = this.wsService.isConnected$.subscribe(connected => {
-                        this.logger.debug("### CasinocoinService isConnected: " + connected);
+                        this.logger.debug("### CasinocoinService connected: " + connected + " isConnected: " + this.isConnected + " disconnectStarted: " + this.disconnectStarted);
                         if(!connected && !this.isConnected){
-                            // subscribe to incomming messages on the websocket to initiate connection
-                            this.subscribeToMessages();
+                            if(this.disconnectStarted){
+                                // disconnect complete
+                                this.disconnectStarted = false;
+                            } else {
+                                // subscribe to incomming messages on the websocket to initiate connection
+                                this.subscribeToMessages();
+                                this.makingConnectionStarted = true;
+                            }
                         } else if(connected && !this.isConnected){
-                            // inform listeners we are connected
-                            connectSubject.next(AppConstants.KEY_CONNECTED);
                             this.isConnected = true;
                             this.currentServer = this.wsService.currentServer;
+                            // inform listeners we are connected
+                            connectSubject.next(AppConstants.KEY_CONNECTED);
                             // start KeepAlive messages
                             // this.keepAlive();
                             // get the current server state
@@ -113,11 +129,20 @@ export class CasinocoinService implements OnDestroy {
     }
 
     disconnect(){
+        this.disconnectStarted = true;
+        // disconnect socket
         this.socketSubscription.unsubscribe();
+        // empty command queue
+        this.wsService.initCommandQueue();
+        // reset server state
+        this.initServerState();
+        // set disconnected
+        this.isConnected = false;
+        this.makingConnectionStarted = false;
     }
 
     initServerState(): ServerStateMessage {
-        this.serverState = {
+       return {
             build_version: "",
             complete_ledgers: "",
             io_latency_ms: null,
@@ -139,7 +164,6 @@ export class CasinocoinService implements OnDestroy {
             },
             validation_quorum: null
         };
-        return this.serverState;
     }
 
     addLedger(ledger: LedgerStreamMessages){
@@ -175,6 +199,7 @@ export class CasinocoinService implements OnDestroy {
                 this.logger.debug("### CasinocoinService - Incomming TX: " + JSON.stringify(msg_tx));
                 // check if we already have the TX
                 let dbTX: LokiTransaction = this.walletService.getTransaction(msg_tx.hash);
+                this.logger.debug("### CasinocoinService - dbTX: " + JSON.stringify(dbTX));
                 if(dbTX == undefined){
                     dbTX = this.addTxToWallet(msg_tx, false);
                 } else {
@@ -215,8 +240,7 @@ export class CasinocoinService implements OnDestroy {
                     this.logger.debug("### CasinocoinService - Pong");
                 } else if(incommingMessage['id'] == 'server_state'){
                     // we received a server_state
-                    this.serverState = incommingMessage.result.state;
-                    this.serverStateSubject.next(this.serverState);
+                    this.serverStateSubject.next(incommingMessage.result.state);
                 } else if(incommingMessage['id'] == 'getLedger'){
                     // we received a ledger
                     let ledgerMessage: LedgerStreamMessages = {
@@ -308,6 +332,14 @@ export class CasinocoinService implements OnDestroy {
                         if(msg_tx.Memos){
                             dbTX.memos = CSCUtil.decodeMemos(msg_tx.Memos);
                         }
+                        // add Destination Tag if defined
+                        if(msg_tx.DestinationTag){
+                            dbTX.destinationTag = msg_tx.DestinationTag;
+                        }
+                        // add Invoice ID if defined
+                        if(msg_tx.InvoiceID && msg_tx.InvoiceID.length > 0){
+                            dbTX.invoiceID = CSCUtil.decodeInvoiceID(msg_tx.InvoiceID);
+                        }
                         // insert into the wallet
                         this.walletService.addTransaction(dbTX);
                         this.notificationService.addMessage(
@@ -366,11 +398,17 @@ export class CasinocoinService implements OnDestroy {
                     // Upsert all transactions
                     accountTxArray.forEach(element => {
                         this.logger.debug("### CasinocoinService - Account TX: " + JSON.stringify(element.tx));
+                        this.logger.debug("### CasinocoinService - Account TX validated?: " + JSON.stringify(element.validated));
                         let dbTx: LokiTransaction = this.walletService.getTransaction(element.tx.hash);
                         this.logger.debug("### CasinocoinService - DB TX: " + JSON.stringify(dbTx));
                         if(dbTx == undefined){
                             // Tx does not exist yet so add it
                             dbTx = this.addTxToWallet(element.tx, element.validated);
+                            this.transactionSubject.next(dbTx);
+                        } else if( dbTx.validated == false && element.validated == true){
+                            dbTx.validated = element.validated;
+                            dbTx.inLedger = element.inLedger;
+                            this.walletService.updateTransaction(dbTx);
                             this.transactionSubject.next(dbTx);
                         }
                     });
@@ -483,9 +521,6 @@ export class CasinocoinService implements OnDestroy {
             publicKey: "", 
             accountID: "", 
             secret: "", 
-            initVector: "", 
-            keyTag: "",
-            secretTag: "",
             encrypted: false
         };
         newKeyPair.secret = cscKeyAPI.generateSeed();
@@ -493,7 +528,6 @@ export class CasinocoinService implements OnDestroy {
         newKeyPair.privateKey = keypair.privateKey;
         newKeyPair.publicKey = keypair.publicKey;
         newKeyPair.accountID = cscKeyAPI.deriveAddress(keypair.publicKey);
-        newKeyPair.initVector = crypto.randomBytes(32).toString('hex');
         return newKeyPair;
     }
 
@@ -517,7 +551,7 @@ export class CasinocoinService implements OnDestroy {
 
     createPaymentTx(input: PrepareTxPayment): CasinocoinTxObject {
         // we allow the transaction to be included in the next 15 ledgers
-        let lastLedgerForTx = this.serverState.validated_ledger.seq + 15;
+        let lastLedgerForTx = this.ledgers[0].ledger_index + 15;
         // get account sequence
         let txWalletAccount:LokiAccount = this.walletService.getAccount(input.source);
         let txJSON: CasinocoinTxObject = {
@@ -607,6 +641,14 @@ export class CasinocoinService implements OnDestroy {
         // add Memos if defined
         if(tx.Memos){
             dbTX.memos = CSCUtil.decodeMemos(tx.Memos);
+        }
+        // add Destination Tag if defined
+        if(tx.DestinationTag){
+            dbTX.destinationTag = tx.DestinationTag;
+        }
+        // add Invoice ID if defined
+        if(tx.InvoiceID && tx.InvoiceID.length > 0){
+            dbTX.invoiceID = CSCUtil.decodeInvoiceID(tx.InvoiceID);
         }
         // insert into the wallet
         this.walletService.addTransaction(dbTX);

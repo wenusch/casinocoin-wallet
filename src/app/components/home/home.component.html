@@ -77,9 +77,10 @@
                         </mat-list>
                     </div>
                 </div>
-                <div id="copyright-and-version">
-                    Wallet Version: {{dbMetadata.appVersion}}<br>
-                    DB Version: {{dbMetadata.dbVersion}}
+                <div id="wallet-version">
+                    Wallet Version: {{applicationVersion}}<br>
+                    DB Version: {{dbMetadata?.dbVersion}}<br>
+                    Network: {{dbMetadata?.environment}}
                 </div>
             </mat-sidenav>
             <!-- primary content -->
@@ -114,8 +115,8 @@
                         </div>
                         <div class="ui-g-5" style="text-align: right">
                             <div (click)="onConnectionClick($event)" [matTooltip]="connected_tooltip">
-                                <img [src]="connection_image" alt="Connection" class="footer-icon" />
-                                <span [ngClass]="getConnectionColorClass()">{{connected_tooltip}}</span>
+                                <img [src]="connectionImage" alt="Connection" class="footer-icon" />
+                                <span [ngClass]="connectionColorClass">{{connected_tooltip}}</span>
                             </div>
                         </div>
                     </div>
@@ -124,7 +125,8 @@
         </mat-sidenav-container>
     </div>
 </div>
-<p-dialog class="dialog-header" [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="300" [closable]="true" [modal]="true">
+<p-dialog class="dialog-header" [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="300" [closable]="true" 
+        [modal]="true" appendTo="body">
     <p-header>Import private key</p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
@@ -137,16 +139,17 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
-                <input type="text" pInputText placeholder="Private Key Seed" [(ngModel)]="privateKeySeed">         
+                <span class="ui-inputgroup-addon"><i class="fa fa-key"></i></span>
+                <input type="text" pInputText placeholder="Private Key Seed" [(ngModel)]="privateKeySeed" style="width: 100%; padding-left: 5px;">
             </div>
         </div>
         <div class="ui-g-1"></div>
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
-                <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" (keyup.enter)="onImportPrivateKey()">         
+                <span class="ui-inputgroup-addon"><i class="fa fa-key"></i></span>
+                <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" 
+                        (keyup.enter)="onImportPrivateKey()" style="width: 100%; padding-left: 5px;">
             </div>
         </div>
         <div class="ui-g-1"></div>
@@ -156,12 +159,17 @@
                 style="width: 115px;"></button>
     </div>
 </p-dialog>
-<p-dialog class="dialog-header" [(visible)]="showSettingsDialog" [width]="640" [height]="480" [closable]="true" [modal]="true">
+<p-dialog class="dialog-header" [(visible)]="showSettingsDialog" [width]="480" [height]="320" [closable]="true" 
+        [modal]="true" appendTo="body">
     <p-header>Settings</p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            
+            <div class="ui-g">
+                <div class="ui-g-6">Wallet Language</div><div class="ui-g-6 bold-value">English</div>
+                <div class="ui-g-6">Fiat value currency</div><div class="ui-g-6 bold-value">USD</div>
+                <div class="ui-g-6">Show desktop notifications</div><div class="ui-g-6 bold-value">Yes</div>
+            </div>
         </div>
         <div class="ui-g-1"></div>
     </div>
@@ -170,21 +178,23 @@
                 style="width: 115px;"></button>
     </div>
 </p-dialog>
-<p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="500" [height]="475" [closable]="true" [modal]="true">
+<p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="640" [height]="480" [closable]="true" 
+        [modal]="true" appendTo="body">
     <p-header>Server Information</p-header>
     <div class="ui-g">
-        <div class="ui-g-8">Server</div><div class="ui-g-4 bold-value">{{currentServer.server_id}}</div>
-        <div class="ui-g-8">Server Version</div><div class="ui-g-4 bold-value">{{serverState.build_version}}</div>
-        <div class="ui-g-8">Available Ledgers</div><div class="ui-g-4 bold-value">{{serverState.complete_ledgers}}</div>
-        <div class="ui-g-8">Server Status</div><div class="ui-g-4 bold-value">{{serverState.server_state}}</div>
-        <div class="ui-g-8">Server Latency (ms)</div><div class="ui-g-4 bold-value">{{serverState.io_latency_ms}}</div>
-        <div class="ui-g-8">Connected Peers</div><div class="ui-g-4 bold-value">{{serverState.peers}}</div>
-        <div class="ui-g-8">Last Ledger Sequence</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.seq}}</div>
-        <div class="ui-g-8">Last Closing Time</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.close_time | cscDate: 'HH:mm:ss'}}</div>
-        <div class="ui-g-8">Close Duration (ms)</div><div class="ui-g-4 bold-value">{{serverState.last_close.converge_time}}</div>
-        <div class="ui-g-8">Last Close Proposers</div><div class="ui-g-4 bold-value">{{serverState.last_close.proposers}}</div>
-        <div class="ui-g-8">Current Fee</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.base_fee | cscAmount}}</div>
-        <div class="ui-g-8">Current Account Reserve</div><div class="ui-g-4 bold-value">{{serverState.validated_ledger.reserve_base | cscAmount}}</div>
+        <div class="ui-g-6">Server</div><div class="ui-g-6 bold-value">{{currentServer?.server_id}}</div>
+        <div class="ui-g-6">Server Version</div><div class="ui-g-6 bold-value">{{serverState?.build_version}}</div>
+        <div class="ui-g-6">Environment</div><div class="ui-g-6 bold-value">{{dbMetadata?.environment}}</div>
+        <div class="ui-g-6">Available Ledgers</div><div class="ui-g-6 bold-value">{{serverState?.complete_ledgers}}</div>
+        <div class="ui-g-6">Server Status</div><div class="ui-g-6 bold-value">{{serverState?.server_state}}</div>
+        <div class="ui-g-6">Server Latency (ms)</div><div class="ui-g-6 bold-value">{{serverState?.io_latency_ms}}</div>
+        <div class="ui-g-6">Connected Peers</div><div class="ui-g-6 bold-value">{{serverState?.peers}}</div>
+        <div class="ui-g-6">Last Ledger Sequence</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger.seq}}</div>
+        <div class="ui-g-6">Last Closing Time</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger.close_time | cscDate: 'HH:mm:ss'}}</div>
+        <div class="ui-g-6">Close Duration (ms)</div><div class="ui-g-6 bold-value">{{serverState?.last_close.converge_time}}</div>
+        <div class="ui-g-6">Last Close Proposers</div><div class="ui-g-6 bold-value">{{serverState?.last_close.proposers}}</div>
+        <div class="ui-g-6">Current Fee</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger.base_fee | cscAmount}}</div>
+        <div class="ui-g-6">Current Account Reserve</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger.reserve_base | cscAmount}}</div>
     </div>
 </p-dialog>
 
@@ -195,7 +205,7 @@
 <div class="ui-g ui-fluid">
     <div class="ui-g-1"></div>
     <div class="ui-g-10">
-        <p>Please enter the password that belongs to the wallet you want to import.</p>
+        <p>Please enter the password for the wallet.</p>
     </div>
     <div class="ui-g-1"></div>
 </div>
@@ -205,7 +215,7 @@
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
             <input type="password" pInputText placeholder="Wallet Password" style="width: 100%; padding-left: 5px;"
-                   [(ngModel)]="importWalletPassword" (keyup.enter)="doWalletImport()" #passwordInput>         
+                   [(ngModel)]="walletPassword" (keyup.enter)="executePasswordCallback()" #passwordInput>         
         </div>
     </div>
     <div class="ui-g-1"></div>
@@ -216,8 +226,8 @@
     </div>
     <div class="ui-g-5">
         <span>
-            <button pButton type="button" (click)="doWalletImport()" icon="fa-check" iconPos="right" 
-                    label="Import Wallet" style="width: 150px;"></button>
+            <button pButton type="button" (click)="executePasswordCallback()" icon="fa-check" iconPos="right" 
+                    label="Ok" style="width: 150px;"></button>
         </span>
     </div>
     <div class="ui-g-1"></div>

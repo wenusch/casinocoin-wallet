@@ -24,10 +24,10 @@
         </span>
     </div>
     <div class="ui-g-12">
-        <p-contextMenu #cm [model]="swapMenuItems" [style]="{'width':'250px'}"></p-contextMenu>
+        <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
         <p-dataTable [value]="swaps" [immutable]="false" scrollable="true" scrollHeight="35vh" 
                         [contextMenu]="cm" selectionMode="single" [(selection)]="selectedSwap" 
-                        (onRowSelect)="onSwapRowSelect($event)">
+                        (onContextMenuSelect)="showSwapContextMenu($event)">
             <p-column field="swapID" header="Swap ID" [style]="{'width':'75px'}">
                 <ng-template let-col let-swap="rowData" pTemplate="body">
                     <span>{{swap[col.field].substring(0,15) + '...'}}</span>

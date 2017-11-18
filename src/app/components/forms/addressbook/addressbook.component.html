@@ -5,9 +5,9 @@
                 class="ui-button-secondary" label="Create New Address"></button>
     </div>
     <div class="ui-g-12">
-        <p-contextMenu #cm [model]="addressMenuItems" [style]="{'width':'200px'}"></p-contextMenu>
+        <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
         <p-dataTable [value]="addresses" [immutable]="false" scrollable="true" scrollHeight="100%"
-                        [contextMenu]="cm" (onRowClick)="onAddressRowClick($event)" (onContextMenuSelect)="onContextMenu($event)"
+                        [contextMenu]="cm" (onRowClick)="onAddressRowClick($event)" (onContextMenuSelect)="onAddressContextMenu($event)"
                         [(selection)]="selectedAddressRow" editable="true" (onEditComplete)="onAddressEditComplete($event)"
                         (onEditCancel)="onAddressEditCancel($event)">
             <p-column field="accountID" header="Account" [style]="{'width':'160px'}"></p-column>
@@ -36,12 +36,18 @@
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 40px;"><i class="fa fa-tag"></i></span>
+                <input type="text" pInputText placeholder="Label" [(ngModel)]="addressLabel" style="width: 100%; padding-left: 5px;">         
+            </div>
         </div>
         <div class="ui-g-1"></div>
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 40px;"><i class="fa fa-credit-card"></i></span>
+                <input type="text" pInputText placeholder="Address" [(ngModel)]="accountID" style="width: 100%; padding-left: 5px;">         
+            </div>
         </div>
         <div class="ui-g-1"></div>
     </div>

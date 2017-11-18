@@ -8,6 +8,7 @@ import { ElectronService } from '../../../providers/electron.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { LokiSwap } from '../../../domain/lokijs';
 import { environment } from '../../../../environments';
+import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
 
 @Component({
   selector: 'app-coin-swap',
@@ -25,6 +26,7 @@ export class CoinSwapComponent implements OnInit {
   selectedSwap: LokiSwap;
   swapMenuItems: MenuItem[];
   private refreshInterval: any;
+  swap_context_menu: ElectronMenu;
 
   refresh_icon: string = "fa-refresh";
 
@@ -36,21 +38,45 @@ export class CoinSwapComponent implements OnInit {
 
   ngOnInit() {
     this.logger.debug("### INIT CoinSwapComponent ###");
-    // init swap context menu
-    this.swapMenuItems = [
-      {label: 'Copy Deposit Address', icon: 'fa-copy', command: (event) => this.copyDepositAddress()},
-      {label: 'Show Deposit Transaction', icon: 'fa-info', command: (event) => this.showTransactionDetails()},
-      {label: 'Refresh', icon: 'fa-refresh', command: (event) => this.doRefreshSwaps()}
+    // define Swap context menu
+    let swap_context_menu_template = [
+      { label: 'Copy Deposit Address', 
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('swap-context-menu-event', 'copy-deposit-address');
+        }
+      },  
+      { label: 'Show Deposit Transaction', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('swap-context-menu-event', 'show-transaction');
+        }
+      },
+      { label: 'Refresh', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('swap-context-menu-event', 'refresh');
+        }
+      }
     ];
+    this.swap_context_menu = this.electronService.remote.Menu.buildFromTemplate(swap_context_menu_template);
+    
+    // listen to tools context menu events
+    this.electronService.ipcRenderer.on('swap-context-menu-event', (event, arg) => {
+      this.logger.debug("### SWAP Menu Event: " + arg);
+      if(arg == 'copy-deposit-address')
+        this.copyDepositAddress();
+      else if(arg == 'show-transaction')
+        this.showTransactionDetails();
+      else if(arg == 'refresh')
+        this.doRefreshSwaps();
+      else
+        this.logger.debug("### Context menu not implemented: " + arg);
+    });
+
     // get swaps
     this.swaps = this.swapService.swaps;
     // get accounts from wallet
     if(this.walletService.isWalletOpen){
       this.walletService.getAllAccounts().forEach( element => {
-        let accountLabel = element.accountID;
-        if(element.label.length > 0){
-          accountLabel = accountLabel + " [" + element.label + "]";
-        }
+        let accountLabel = element.label + " [" + element.accountID.substring(0,15) + '...' + "]";
         this.accounts.push({label: accountLabel, value: element.accountID});
       });
       // refresh the swaps to the latest status
@@ -100,36 +126,49 @@ export class CoinSwapComponent implements OnInit {
     }
   }
 
-  onSwapRowSelect(event) {
-    this.logger.debug("Swap Selected: " + JSON.stringify(event.data));
-    this.logger.debug("Swap Selected: " + this.selectedSwap);
+  showSwapContextMenu(event){
+    this.selectedSwap = event.data;
+    this.logger.debug("### showSwapContextMenu: " + JSON.stringify(this.selectedSwap));
+    this.swap_context_menu.popup(this.electronService.remote.getCurrentWindow());
   }
+
+  // onSwapRowSelect(event) {
+  //   this.logger.debug("Swap Selected: " + JSON.stringify(event.data));
+  //   this.logger.debug("Swap Selected: " + this.selectedSwap);
+  // }
 
   copySwapID(){
     this.logger.debug("Copy to clipboard: " + this.selectedSwap.swapID);
     this.electronService.clipboard.writeText(this.selectedSwap.swapID);
   }
   copyDepositAddress(){
-    this.logger.debug("Copy to clipboard: " + this.selectedSwap.depositAddress);
-    this.electronService.clipboard.writeText(this.selectedSwap.depositAddress);
+    if(this.selectedSwap){
+      this.logger.debug("Copy to clipboard: " + this.selectedSwap.depositAddress);
+      this.electronService.clipboard.writeText(this.selectedSwap.depositAddress);
+    }
   }
 
   showTransactionDetails(){
-    if(this.selectedSwap.deposit){
-      let infoUrl = environment.insight_endpoint_url + "/tx/" + this.selectedSwap.deposit['txid'];
-      this.electronService.remote.shell.openExternal(infoUrl);
+    if(this.selectedSwap){
+      this.logger.debug("showTransactionDetails: " + JSON.stringify(this.selectedSwap));
+      if(this.selectedSwap.deposit){
+        let infoUrl = environment.insight_endpoint_url + "/tx/" + this.selectedSwap.deposit['txid'];
+        this.electronService.remote.shell.openExternal(infoUrl);
+      }
     }
   }
 
   doRefreshSwaps(){
-    this.logger.debug("### Refresh Swaps");
-    this.refresh_icon = "fa-refresh fa-spin";
-    this.swapService.refreshSwaps().subscribe(result => {
-      this.logger.debug("### Refresh Swaps Result: " + result);
-      if(result){
-        this.refresh_icon = "fa-refresh";
-      }
-    });
+    if(this.selectedSwap){
+      this.logger.debug("### Refresh Swaps");
+      this.refresh_icon = "fa-refresh fa-spin";
+      this.swapService.refreshSwaps().subscribe(result => {
+        this.logger.debug("### Refresh Swaps Result: " + result);
+        if(result){
+          this.refresh_icon = "fa-refresh";
+        }
+      });
+    }
   }
 
 }

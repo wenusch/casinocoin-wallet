@@ -30,7 +30,9 @@
                     <span class="text-small">
                         <p class="item-p"><span class="item-label">from: </span><span class="item-value"> {{ data.accountID }}</span></p>
                         <p class="item-p"><span class="item-label">to: </span><span class="item-value"> {{ data.destination }}</span></p>
-                        <p class="item-p"><span class="item-label">message: </span><span class="item-value"> {{ getDescription(data) }}</span></p>
+                        <p class="item-p" *ngIf="getDescription(data) != null"><span class="item-label">message: </span><span class="item-value"> {{ getDescription(data) }}</span></p>
+                        <p class="item-p" *ngIf="data.destinationTag"><span class="item-label">tag: </span><span class="item-value"> {{ data.destinationTag }}</span></p>
+                        <p class="item-p" *ngIf="data.invoiceID"><span class="item-label">invoice: </span><span class="item-value"> {{ data.invoiceID }}</span></p>
                     </span>
                 </ng-template>
             </p-column>

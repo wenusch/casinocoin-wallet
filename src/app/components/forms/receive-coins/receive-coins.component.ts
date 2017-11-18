@@ -6,9 +6,9 @@ import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
 import { Logger } from 'angular2-logger/core';
 import { AppConstants } from '../../../domain/app-constants';
-import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron"; 
 import { ElectronService } from '../../../providers/electron.service';
 import { SelectItem, MenuItem } from 'primeng/primeng';
+import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
 
 @Component({
   selector: 'app-receive-coins',
@@ -26,8 +26,8 @@ export class ReceiveCoinsComponent implements OnInit {
   accountLabel: string = "";
   showDialogFooter: boolean = false;
   errorMessage: string = "";
-  receiveMenuItems: MenuItem[];
   selectedReceiveRow: LokiAccount;
+  receive_context_menu: ElectronMenu;
 
   constructor(private logger: Logger,
               private casinocoinService: CasinocoinService,
@@ -45,10 +45,24 @@ export class ReceiveCoinsComponent implements OnInit {
       }
     });
 
-    // init swap context menu
-    this.receiveMenuItems = [
-      {label: 'Copy Address', icon: 'fa-copy', command: (event) => this.copyAddress()}
+    // define receive context menu
+    let receive_context_menu_template = [
+      { label: 'Copy Address', 
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('receive-context-menu-event', 'copy-address');
+        }
+      }
     ];
+    this.receive_context_menu = this.electronService.remote.Menu.buildFromTemplate(receive_context_menu_template);
+    
+    // listen to receive context menu events
+    this.electronService.ipcRenderer.on('receive-context-menu-event', (event, arg) => {
+      this.logger.debug("### Receive Menu Event: " + arg);
+      if(arg == 'copy-address')
+        this.copyReceiveAddress();
+      else
+        this.logger.debug("### Context menu not implemented: " + arg);
+    });
 
   }
 
@@ -56,9 +70,10 @@ export class ReceiveCoinsComponent implements OnInit {
     return CSCUtil.casinocoinToUnixTimestamp(inputTime);
   }
 
-  onReceiveRowClick(e:any) {
-    this.logger.debug("### onReceiveRowClick: " + JSON.stringify(e));
-    this.selectedReceiveRow = e.data;
+  showReceiveContextMenu(event){
+    this.selectedReceiveRow = event.data;
+    this.logger.debug("### showReceiveContextMenu: " + JSON.stringify(this.selectedReceiveRow));
+    this.receive_context_menu.popup(this.electronService.remote.getCurrentWindow());
   }
 
   onLabelEditComplete(event){
@@ -71,14 +86,11 @@ export class ReceiveCoinsComponent implements OnInit {
     this.logger.debug("### onLabelEditCancel: " + JSON.stringify(event));
   }
 
-  onContextMenu(event){
-    this.logger.debug("### onContextMenu: " + JSON.stringify(event));
-    this.selectedReceiveRow = event.data;
-  }
-
-  copyAddress(){
-    this.logger.debug("Copy to clipboard: " + this.selectedReceiveRow.accountID);
-    this.electronService.clipboard.writeText(this.selectedReceiveRow.accountID);
+  copyReceiveAddress(){
+    if(this.selectedReceiveRow) {
+      this.logger.debug("Copy to clipboard: " + this.selectedReceiveRow.accountID);
+      this.electronService.clipboard.writeText(this.selectedReceiveRow.accountID);
+    }
   }
 
   showCreateAccount(){
