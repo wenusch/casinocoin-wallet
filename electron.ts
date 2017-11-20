@@ -141,6 +141,11 @@ function createWindow() {
     }
   })
 
+  win.on('closed', (e) => {
+    win = null;
+    console.log('OSX kill');
+  });
+
   // Disable menu bar
   win.setMenu(null);
 
@@ -171,13 +176,16 @@ try {
     // dock icon is clicked and there are no other windows open.
     if (win === null) {
       createWindow();
+    } else {
+      win.show();
     }
   });
 
   app.on('before-quit', () => {
-    console.log('Quiting Casinocoin Wallet, save the database!!!');
-    win.webContents.send('wallet-save');
-    showExitPrompt = true;
+    if(showExitPrompt == false){
+      console.log('Quiting Casinocoin Wallet, save the database!!!');
+      // win.webContents.send('wallet-save');
+    }
   });
 
 } catch (e) {
