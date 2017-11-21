@@ -178,23 +178,23 @@
                 style="width: 115px;"></button>
     </div>
 </p-dialog>
-<p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="640" [height]="480" [closable]="true" 
+<p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="640" [height]="500" [closable]="true" 
         [modal]="true" appendTo="body">
     <p-header>Server Information</p-header>
     <div class="ui-g">
         <div class="ui-g-6">Server</div><div class="ui-g-6 bold-value">{{currentServer?.server_id}}</div>
         <div class="ui-g-6">Server Version</div><div class="ui-g-6 bold-value">{{serverState?.build_version}}</div>
         <div class="ui-g-6">Environment</div><div class="ui-g-6 bold-value">{{dbMetadata?.environment}}</div>
+        <div class="ui-g-6">Response Time (msec)</div><div class="ui-g-6 bold-value">{{currentServer?.response_time}}</div>
         <div class="ui-g-6">Available Ledgers</div><div class="ui-g-6 bold-value">{{serverState?.complete_ledgers}}</div>
         <div class="ui-g-6">Server Status</div><div class="ui-g-6 bold-value">{{serverState?.server_state}}</div>
-        <div class="ui-g-6">Server Latency (ms)</div><div class="ui-g-6 bold-value">{{serverState?.io_latency_ms}}</div>
         <div class="ui-g-6">Connected Peers</div><div class="ui-g-6 bold-value">{{serverState?.peers}}</div>
-        <div class="ui-g-6">Last Ledger Sequence</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger.seq}}</div>
-        <div class="ui-g-6">Last Closing Time</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger.close_time | cscDate: 'HH:mm:ss'}}</div>
-        <div class="ui-g-6">Close Duration (ms)</div><div class="ui-g-6 bold-value">{{serverState?.last_close.converge_time}}</div>
-        <div class="ui-g-6">Last Close Proposers</div><div class="ui-g-6 bold-value">{{serverState?.last_close.proposers}}</div>
-        <div class="ui-g-6">Current Fee</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger.base_fee | cscAmount}}</div>
-        <div class="ui-g-6">Current Account Reserve</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger.reserve_base | cscAmount}}</div>
+        <div class="ui-g-6">Last Ledger Sequence</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.seq}}</div>
+        <div class="ui-g-6">Last Closing Time</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.close_time | cscDate: 'HH:mm:ss'}}</div>
+        <div class="ui-g-6">Close Duration (msec)</div><div class="ui-g-6 bold-value">{{serverState?.last_close?.converge_time}}</div>
+        <div class="ui-g-6">Last Close Proposers</div><div class="ui-g-6 bold-value">{{serverState?.last_close?.proposers}}</div>
+        <div class="ui-g-6">Current Fee</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.base_fee | cscAmount}}</div>
+        <div class="ui-g-6">Current Account Reserve</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.reserve_base | cscAmount}}</div>
     </div>
 </p-dialog>
 
