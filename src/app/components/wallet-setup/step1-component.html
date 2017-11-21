@@ -17,7 +17,7 @@
         <div class="ui-g-10">
             <small style="font-weight: bolder;">
             <p-checkbox [(ngModel)]="walletTestNetwork" binary="false" (onChange)="onNetworkChanged($event)" 
-                        label="Connect to the test network"></p-checkbox>
+                        label="Connect to the test network" [disabled]="networkChoiceDisabled"></p-checkbox>
             </small>
         </div>
         <div class="ui-g-1"></div>

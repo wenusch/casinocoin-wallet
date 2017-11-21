@@ -112,7 +112,6 @@ export class HomeComponent implements OnInit, OnDestroy {
                private datePipe: DatePipe,
                private currenyPipe: CurrencyPipe ) {
     this.logger.debug("### INIT HOME ###");
-    this.casinocoinConnectionSubject = this.casinocoinService.connect();
     this.applicationVersion = this.electron.remote.app.getVersion();
   }
 
@@ -147,7 +146,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
       { label: 'Create New Wallet', 
         click(menuItem, browserWindow, event) { 
-          browserWindow.webContents.send('context-menu-event', 'new-wallet');
+          browserWindow.webContents.send('context-menu-event', 'create-wallet');
         }, enabled: false
       })
     );
@@ -199,8 +198,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.onRestoreBackup();
       else if(arg == 'add-wallet')
         this.onAddWallet();
-      else if(arg == 'new-wallet')
-        this.newWallet();
+      else if(arg == 'create-wallet')
+        this.createWallet();
       else if(arg == 'close-wallet')
         this.closeWallet();
       else if(arg == 'quit')
@@ -242,10 +241,13 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.router.navigate(['/login']);
       }
     });
-    // get casinocoinservice connection updates
-    this.casinocoinConnectionSubject.subscribe( connectResult => {
+    // Connect to the casinocoin network
+    let casinocoinConnectionSubject = this.casinocoinService.connect();
+    casinocoinConnectionSubject.subscribe( connectResult => {
       this.logger.debug("### HOME Connect Result: " + connectResult);
-      if(connectResult == AppConstants.KEY_CONNECTED){
+    });
+    this.casinocoinService.casinocoinConnectedSubject.subscribe( connected => {
+      if(connected){
         this.logger.debug("### HOME Set GUI Connected ###");
         this.isConnected.next(true);
         this.currentServer = this.casinocoinService.currentServer;
@@ -262,21 +264,19 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.isConnected.subscribe( connected => {
       this.logger.debug("### HOME Connection Status Changed: " + connected);
       if(connected){
-        setTimeout( () => {
           this.logger.debug("### HOME Update UI to Connected");
           this.connectionColorClass = "connected-color";
           this.connectionImage = "assets/icons/connected.png"
           this.connected_tooltip = "Connected";
           this.setConnectedMenuItem(true);
-        }, 1000);
+          this.currentServer = this.casinocoinService.currentServer;
       } else {
-        setTimeout( () => {
           this.logger.debug("### HOME Update UI to Disconnected");
           this.connectionColorClass = "disconnected-color";
           this.connectionImage = "assets/icons/connected-red.png";
           this.connected_tooltip = "Disconnected";
           this.setConnectedMenuItem(false);
-        }, 0);
+          this.currentServer = { server_id: '', server_url: '', response_time: -1 };
       }
     })
 
@@ -299,6 +299,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(){
     this.logger.debug("### HOME ngOnDestroy() ###");
+    if(this.isConnected && this.casinocoinService != undefined){
+      this.casinocoinService.disconnect();
+    }
   }
 
   onMenuClick() {
@@ -496,7 +499,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['login']);
   }
 
-  newWallet(){
+  createWallet(){
     this.casinocoinService.disconnect();
     this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
     this.walletService.openWalletSubject.next(AppConstants.KEY_INIT);

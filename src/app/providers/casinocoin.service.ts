@@ -41,6 +41,7 @@ export class CasinocoinService implements OnDestroy {
     public transactionSubject = new Subject<LokiTransaction>();
     public lastTransactionHash: string = "";
     public currentServer: ServerDefinition;
+    public casinocoinConnectedSubject = new BehaviorSubject<boolean>(false);
 
     constructor(private logger: Logger, 
                 private wsService: WebsocketService,
@@ -74,12 +75,13 @@ export class CasinocoinService implements OnDestroy {
                 if(serverFound && !this.makingConnectionStarted){
                     this.logger.debug("### CasinocoinService serverFound - Wait for websocket connected");
                     // check if websocket is open, otherwise wait till it is
-                    const connectedSubscription = this.wsService.isConnected$.subscribe(connected => {
+                    this.connectedSubscription = this.wsService.isConnected$.subscribe(connected => {
                         this.logger.debug("### CasinocoinService connected: " + connected + " isConnected: " + this.isConnected + " disconnectStarted: " + this.disconnectStarted);
                         if(!connected && !this.isConnected){
                             if(this.disconnectStarted){
                                 // disconnect complete
                                 this.disconnectStarted = false;
+                                this.casinocoinConnectedSubject.next(false);
                             } else {
                                 // subscribe to incomming messages on the websocket to initiate connection
                                 this.subscribeToMessages();
@@ -87,6 +89,7 @@ export class CasinocoinService implements OnDestroy {
                             }
                         } else if(connected && !this.isConnected){
                             this.isConnected = true;
+                            this.casinocoinConnectedSubject.next(true);
                             this.currentServer = this.wsService.currentServer;
                             // inform listeners we are connected
                             connectSubject.next(AppConstants.KEY_CONNECTED);
@@ -108,6 +111,8 @@ export class CasinocoinService implements OnDestroy {
                                     this.subscribeToAccountsStream(subscribeAccounts);
                                     // update all accounts from the network
                                     this.checkAllAccounts();
+                                    // do some checks on all transactions
+                                    this.checkAllTransactions();
                                 }
                             });
                         } else if(!connected && this.isConnected) {
@@ -115,8 +120,10 @@ export class CasinocoinService implements OnDestroy {
                             // inform listeners we are disconnected
                             connectSubject.next(AppConstants.KEY_DISCONNECTED);
                             this.isConnected = false;
+                            this.casinocoinConnectedSubject.next(false);
                         } else if(!connected){
                             connectSubject.next(AppConstants.KEY_DISCONNECTED);
+                            this.casinocoinConnectedSubject.next(false);
                         }
                     });
                 }
@@ -132,7 +139,12 @@ export class CasinocoinService implements OnDestroy {
         // let disconnectSubject = new Subject<string>();
         this.disconnectStarted = true;
         // disconnect socket
-        this.socketSubscription.unsubscribe();
+        if(this.socketSubscription != undefined){
+            this.socketSubscription.unsubscribe();
+        }
+        if(this.connectedSubscription != undefined){
+            this.connectedSubscription.unsubscribe();
+        }
         // empty command queue
         this.wsService.initCommandQueue();
         // reset server state
@@ -547,6 +559,17 @@ export class CasinocoinService implements OnDestroy {
             // get the account info for every account
             // accounts are already updated in the wallet on receiving
             this.getAccountInfo(account.accountID);
+        });
+    }
+
+    checkAllTransactions(){
+        // loop all wallet transactions
+        let transactions:Array<LokiTransaction> = this.walletService.getAllTransactions();
+        transactions.forEach((tx, index, arr) => {
+            // check if the inLedger property is set
+            if(tx.inLedger == null && tx.validated){
+                this.getTransaction(tx.txID);
+            }
         });
     }
 

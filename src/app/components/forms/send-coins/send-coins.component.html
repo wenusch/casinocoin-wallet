@@ -3,8 +3,9 @@
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-credit-card"></i></span>
-            <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
-                        placeholder="Select Account to send from ..." autofocus #accountDropdown></p-dropdown>
+            <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount"  [disabled]="!isConnected"
+                        [matTooltip]="connected_tooltip" placeholder="Select Account to send from ..." 
+                        autofocus #accountDropdown></p-dropdown>
         </div>
     </div>
     <div class="ui-g-12">
@@ -75,7 +76,7 @@
     -->
     <div class="ui-g-6">
         <button pButton type="button" (click)="doSendCoins()" icon="fa-sign-out" iconPos="left" label="Send Coins"
-                class="ui-button-secondary" [disabled]="!isSendValid"></button>
+                class="ui-button-secondary" [disabled]="!isSendValid || !isConnected"></button>
     </div>
 </div>
 <p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="250" [closable]="true" 

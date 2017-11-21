@@ -9,6 +9,7 @@ import { CSCUtil } from '../../../domain/csc-util';
 import { AppConstants } from '../../../domain/app-constants';
 import Big from 'big.js';
 import { CasinocoinTxObject, PrepareTxPayment } from 'app/domain/csc-types';
+import { AppComponent } from 'app/app.component';
 
 @Component({
   selector: 'app-send-coins',
@@ -43,6 +44,8 @@ export class SendCoinsComponent implements OnInit {
   includeReserve:boolean = false;
   invalidReceipient: boolean = true;
   isSendValid:boolean = true;
+  isConnected: boolean =false;
+  connected_tooltip: string = "";
 
   allowSendFromCurrentConnection: boolean = false;
 
@@ -62,6 +65,15 @@ export class SendCoinsComponent implements OnInit {
             this.accounts.push({label: accountLabel, value: element.accountID});
           }
         });
+      }
+    });
+    this.casinocoinService.casinocoinConnectedSubject.subscribe(connected => {
+      if(connected){
+        this.isConnected = true;
+        this.connected_tooltip = "";
+      } else {
+        this.isConnected = false;
+        this.connected_tooltip = AppConstants.NOT_CONNECTED_ON_SEND_TEXT;
       }
     });
     // set the default fee and account reserve

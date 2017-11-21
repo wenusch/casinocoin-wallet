@@ -88,7 +88,8 @@ export class WalletSetupComponent implements OnInit {
   ngOnInit() {
     let userHome = this.electron.remote.app.getPath("home");
     this.walletLocation = path.join(userHome, '.casinocoin');
-    this.walletTestNetwork = false;
+    // until we go live we set this to TRUE !!!!
+    this.walletTestNetwork = true;
 
     let availableWallets: Array<any> = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
     if(availableWallets != null &&  availableWallets.length >= 1){

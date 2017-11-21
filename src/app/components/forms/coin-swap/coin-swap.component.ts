@@ -44,7 +44,12 @@ export class CoinSwapComponent implements OnInit {
         click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('swap-context-menu-event', 'copy-deposit-address');
         }
-      },  
+      },
+      { label: 'Copy Swap ID', 
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('swap-context-menu-event', 'copy-swap-id');
+        }
+      },
       { label: 'Show Deposit Transaction', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('swap-context-menu-event', 'show-transaction');
@@ -63,6 +68,8 @@ export class CoinSwapComponent implements OnInit {
       this.logger.debug("### SWAP Menu Event: " + arg);
       if(arg == 'copy-deposit-address')
         this.copyDepositAddress();
+      if(arg == 'copy-swap-id')
+        this.copySwapID();
       else if(arg == 'show-transaction')
         this.showTransactionDetails();
       else if(arg == 'refresh')
