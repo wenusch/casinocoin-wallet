@@ -129,6 +129,7 @@ export class CasinocoinService implements OnDestroy {
     }
 
     disconnect(){
+        // let disconnectSubject = new Subject<string>();
         this.disconnectStarted = true;
         // disconnect socket
         this.socketSubscription.unsubscribe();

@@ -44,6 +44,8 @@ export class SendCoinsComponent implements OnInit {
   invalidReceipient: boolean = true;
   isSendValid:boolean = true;
 
+  allowSendFromCurrentConnection: boolean = false;
+
   constructor(private logger:Logger, 
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
@@ -65,12 +67,19 @@ export class SendCoinsComponent implements OnInit {
     // set the default fee and account reserve
     this.casinocoinService.serverStateSubject.subscribe(serverState => {
       this.logger.debug("### SendCoins - serverState: " + JSON.stringify(serverState));
-      if(serverState.validated_ledger.base_fee != null){
-        this.fees = CSCUtil.dropsToCsc(serverState.validated_ledger.base_fee.toString());
-        this.minimalFee = this.fees;
-        this.accountReserve = CSCUtil.dropsToCsc(serverState.validated_ledger.reserve_base.toString());
+      if(serverState.server_state == 'full'){
+        if(serverState.validated_ledger != null && serverState.validated_ledger.base_fee != null){
+          this.allowSendFromCurrentConnection = true;
+          this.fees = CSCUtil.dropsToCsc(serverState.validated_ledger.base_fee.toString());
+          this.minimalFee = this.fees;
+          this.accountReserve = CSCUtil.dropsToCsc(serverState.validated_ledger.reserve_base.toString());
+        } else {
+          this.allowSendFromCurrentConnection = false;
+        }
+      } else {
+        this.allowSendFromCurrentConnection = false;
       }
-    })
+    });
     // this.casinocoinService.ledgerSubject.subscribe( ledger => {
     //   this.logger.debug("### SendCoins - ledger: " + JSON.stringify(ledger));
     //   this.fees = CSCUtil.dropsToCsc(ledger.fee_base.toString());

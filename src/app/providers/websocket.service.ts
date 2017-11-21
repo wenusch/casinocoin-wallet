@@ -105,17 +105,18 @@ export class WebsocketService {
     const connectionStatusSubscription = websocket.connectionStatus.subscribe(numberConnected => {
       this.logger.debug('### findBestServer - id: '+value.server_id + ' connected sockets:', numberConnected);
       if(numberConnected > 0) {
-        // we have an open socket now send a ping
-        commands.next(JSON.stringify({id: value.server_id, command: 'ping'}));
+        // we have an open socket now send a server_state
+        commands.next(JSON.stringify({id: value.server_id, command: 'server_state'}));
       }
     });
     // the websocket connection is created lazily when the messages observable is subscribed to
     const messagesSubscription = websocket.messages.subscribe((message: string) => {
       // this.logger.debug('### findBestServer - id: ' + value.server_id + ', received message:' + message);
+      let msg = JSON.parse(message);
       let responseTime = Date.now() - request_time;
-      this.logger.debug('### findBestServer id: ' + value.server_id + ' response: ' + responseTime + ' msec');
-      // only connect to a server if its response time was below 10 seconds otherwise its of no use
-      if((this.currentServer.response_time == -1) && responseTime < 10000){
+      this.logger.debug('### findBestServer id: ' + value.server_id + ' response: ' + responseTime + ' msec server_state: ' + msg.result.state.server_state);
+      // only connect to a server if its response time was below 10 seconds and its state is full, otherwise its of no use
+      if(((this.currentServer.response_time == -1) && responseTime < 10000) && msg.result.state.server_state == 'full') {
         // we found our first server
         this.logger.debug("### findBestServer - we found our first server: " + JSON.stringify(value));
         this.currentServer = value;

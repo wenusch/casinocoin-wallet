@@ -122,6 +122,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     let serverStateSubject = this.casinocoinService.serverStateSubject;
     serverStateSubject.subscribe( state => {
       this.serverState = state;
+      this.logger.debug("### HOME Server State: " + JSON.stringify(this.serverState));
     });
     // define Tools context menu
     let tools_context_menu_template = [
