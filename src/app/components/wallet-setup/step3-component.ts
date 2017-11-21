@@ -1,4 +1,5 @@
-import { Component, OnInit, ViewEncapsulation, Input, Output, EventEmitter, SimpleChanges } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Input, Output, 
+         EventEmitter, SimpleChanges, ViewChild } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
 import { Logger } from 'angular2-logger/core';
 import { PasswordModule } from 'primeng/primeng';
@@ -21,8 +22,14 @@ import { PasswordModule } from 'primeng/primeng';
     ]
   })
   export class SetupStep3Component {
+
     @Input() newWalletPassword:string;
     @Output() passwordChange:EventEmitter<string> = new EventEmitter();
+    @ViewChild('passwordInput') passwordInput;
+    @ViewChild('passwordInputConfirmed') passwordInputConfirmed;
+
+    newWalletPasswordConfirmed: string = "";
+    paswordConfirmationEnabled: boolean = false;
 
     passwordPattern: string = "(?=.*[0-9])(?=.*[a-z]).{8,}";
 
@@ -31,7 +38,18 @@ import { PasswordModule } from 'primeng/primeng';
     checkPasswordUpdate(newValue: string) {
       let testResult = newValue.match(this.passwordPattern);
       if(testResult != null) {
-        this.passwordChange.emit(newValue);
+        this.paswordConfirmationEnabled = true;
+      } else {
+        this.passwordChange.emit("");
+        this.paswordConfirmationEnabled = false;
+      }
+    }
+
+    checkPasswordConfirmedUpdate(newConfirmValue: string){
+      if(newConfirmValue == this.newWalletPassword){
+        this.passwordChange.emit(this.newWalletPassword);
+      } else {
+        this.passwordChange.emit("");
       }
     }
 

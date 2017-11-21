@@ -359,8 +359,12 @@ export class WalletSetupComponent implements OnInit {
 
   onPasswordUpdated(newPassword: string) {
     this.logger.debug("onPasswordUpdated: " + newPassword);
-    this.walletPassword = newPassword;
-    this.enableFinishPassword = true;
+    if(newPassword.length > 0){
+      this.walletPassword = newPassword;
+      this.enableFinishPassword = true;
+    } else {
+      this.enableFinishPassword = false;
+    }
   }
 
   onRecoveryAcceptChanged(recoveryAccepted: boolean) {
