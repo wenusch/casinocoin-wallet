@@ -39,7 +39,7 @@ export class NotificationService {
     addMessage(msg: NotificationType){
         this.logger.debug("### NotificationService: " + JSON.stringify(msg));
         let notificationOptions: NotificationOptions = {
-            tag: "Casinocoin",
+            tag: "CasinoCoin",
             icon: path.join(__dirname, 'assets/casinocoin-icon-256x256.png'),
             body: msg.body
         }

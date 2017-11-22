@@ -48,6 +48,7 @@ export class WalletService {
   public balance:string = this.getWalletBalance();
   public txCount:number = this.getWalletTxCount();
   public lastTx:LokiTypes.LokiTransaction = this.getWalletLastTx();
+  public currentDBMetadata: LokiTypes.LokiDBMetadata;
 
   constructor(private logger: Logger, 
               private electron: ElectronService,
@@ -85,6 +86,7 @@ export class WalletService {
     createSubject.subscribe(result => {
       if(result == AppConstants.KEY_FINISHED){
         this.openWalletSubject.next(AppConstants.KEY_LOADED);
+        this.currentDBMetadata = this.getDBMetadata();
       }
     });
 
@@ -152,6 +154,7 @@ export class WalletService {
     openSubject.subscribe(result => {
       this.logger.debug("openWallet: " + result);
       if(result == AppConstants.KEY_LOADED){
+        this.currentDBMetadata = this.getDBMetadata();
         this.openWalletSubject.next(result);
         let msg: NotificationType = {severity: SeverityType.info, title:'Wallet Message', body:'Succesfully opened the wallet.'};
         this.notificationService.addMessage(msg);
@@ -220,6 +223,26 @@ export class WalletService {
     return this.openWalletSubject.asObservable();
   }
   
+  // close the wallet
+  closeWallet(){
+    // first save any open changes
+    this.walletDB.saveDatabase();
+    // reset all collection objects
+    this.dbMetadata = null;
+    this.accounts = null;
+    this.transactions = null;
+    this.addressbook = null;
+    this.logs = null;
+    this.keys = null;
+    this.swaps = null;
+    // set wallet open to false
+    this.isWalletOpen = false;
+    // reset wallet object
+    this.walletDB = null;
+    // publish result
+    this.openWalletSubject.next(AppConstants.KEY_INIT);
+  }
+
   // allow for a hard save on app exit
   saveWallet(){
     this.walletDB.saveDatabase();
@@ -424,7 +447,19 @@ export class WalletService {
     return passwordHash;
   }
 
-  checkWalletPasswordHash(walletUUID:string, password:string, walletHash: string): boolean {
+  checkWalletPasswordHash(password:string, inputWalletUUID?:string, inputWalletHash?:string): boolean {
+    let walletUUID;
+    if(inputWalletUUID){
+      walletUUID = inputWalletUUID;
+    } else {
+      walletUUID = this.currentDBMetadata.walletUUID;
+    }
+    let walletHash;
+    if(inputWalletHash){
+      walletHash = inputWalletHash;
+    } else {
+      walletHash = this.currentDBMetadata.walletHash;
+    }
     let passwordHash = crypto.createHmac('sha256', password).update(walletUUID).digest('hex');
     return (walletHash == passwordHash);
   }
@@ -455,12 +490,12 @@ export class WalletService {
 
   decryptAllKeys(password: string): Array<LokiTypes.LokiKey>{
     // check the wallet password
-    let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
-    let currentWallet = this.localStorageService.get(AppConstants.KEY_CURRENT_WALLET);
-    let walletIndex = availableWallets.findIndex( item => item['walletUUID'] == currentWallet);
-    let walletObject = availableWallets[walletIndex];
-    this.logger.debug("### Check Wallet Password: " + JSON.stringify(walletObject));
-    if(this.checkWalletPasswordHash(currentWallet, password, walletObject['hash'])){
+    // let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
+    // let currentWallet = this.localStorageService.get(AppConstants.KEY_CURRENT_WALLET);
+    // let walletIndex = availableWallets.findIndex( item => item['walletUUID'] == currentWallet);
+    // let walletObject = availableWallets[walletIndex];
+    // this.logger.debug("### Check Wallet Password: " + JSON.stringify(walletObject));
+    if(this.checkWalletPasswordHash(password)){
       // get all keys
       let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
       let decryptedKeys: Array<LokiTypes.LokiKey> = [];
@@ -502,20 +537,20 @@ export class WalletService {
     }
   }
 
-  encryptWalletPassword(password: string, words:Array<string>){
-    // encrypt the wallet password with the words
-    let encryptedPassword;
-    // store the wallet password
-    this.localStorageService.set(AppConstants.KEY_WALLET_PASSWORD, encryptedPassword);
-  }
+  // encryptWalletPassword(password: string, words:Array<string>){
+  //   // encrypt the wallet password with the words
+  //   let encryptedPassword;
+  //   // store the wallet password
+  //   this.localStorageService.set(AppConstants.KEY_WALLET_PASSWORD, encryptedPassword);
+  // }
 
-  decryptWalletPassword(words: Array<string>): string {
-    // get the encrypted password
-    let encryptedPassword = this.localStorageService.get(AppConstants.KEY_WALLET_PASSWORD);
-    // decrypt the password
-    let decryptedPassword;
-    return decryptedPassword;
-  }
+  // decryptWalletPassword(words: Array<string>): string {
+  //   // get the encrypted password
+  //   let encryptedPassword = this.localStorageService.get(AppConstants.KEY_WALLET_PASSWORD);
+  //   // decrypt the password
+  //   let decryptedPassword;
+  //   return decryptedPassword;
+  // }
 
   importPrivateKey(keySeed:string, password:string){
     let newKeyPair: LokiTypes.LokiKey = { 

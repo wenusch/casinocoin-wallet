@@ -5,6 +5,7 @@ import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
+import { ElectronService } from '../../../providers/electron.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { AppConstants } from '../../../domain/app-constants';
 import Big from 'big.js';
@@ -49,10 +50,14 @@ export class SendCoinsComponent implements OnInit {
 
   allowSendFromCurrentConnection: boolean = false;
 
+  footer_visible: boolean = false;
+  error_message: string = "";
+
   constructor(private logger:Logger, 
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
-              private messageService: MessageService ) { }
+              private messageService: MessageService,
+              private electronService: ElectronService ) { }
 
   ngOnInit() {
     this.logger.debug("### SendCoin onInit ###")
@@ -134,52 +139,78 @@ export class SendCoinsComponent implements OnInit {
     this.feesInput.nativeElement.focus();
   }
 
+  initPasswordCheck(){
+    this.walletPassword = "";
+    this.error_message = "";
+    this.footer_visible = false;
+  }
+
   doCancelSignAndSubmitTx(){
     this.showPasswordDialog = false;
   }
 
   doSignAndSubmitTx(){
-    this.signAndSubmitIcon = "fa-refresh";
-    let preparePayment: PrepareTxPayment = 
-      { source: this.selectedAccount, 
-        destination: this.receipient, 
-        amountDrops: CSCUtil.cscToDrops(this.amount),
-        feeDrops: CSCUtil.cscToDrops(this.fees),
-        description: this.description
-      };
-    if(this.destinationTag){
-      preparePayment.destinationTag = this.destinationTag;
-    }
-    if(this.invoiceID && this.invoiceID.length > 0){
-      preparePayment.invoiceID = CSCUtil.encodeInvoiceID(this.invoiceID);
-    }
-    let txObject = this.casinocoinService.createPaymentTx(preparePayment);
-    this.logger.debug("### Sign: " + JSON.stringify(txObject));
-    let txBlob:string = this.casinocoinService.signTx(txObject, this.walletPassword);
-    if(txBlob == AppConstants.KEY_ERRORED){
-      // probably a wrong password!
-      this.messageService.add({severity:'error', summary:'Transaction Signing', detail:'There was an error signing the transactions. Verify your password.'});
-    } else {
-      this.casinocoinService.submitTx(txBlob);
-      // reset form and dialog fields
-      this.selectedAccount = "";
-      this.receipient = "";
-      this.description = "";
+    this.signAndSubmitIcon = "fa-refresh fa-spin";
+    // check the user password for the current wallet
+    if(this.walletPassword.length == 0 ){
+      this.error_message = "Please enter your password.";
+      this.footer_visible = true;
+      this.signAndSubmitIcon = "fa-check";
+    } else if(!this.walletService.checkWalletPasswordHash(this.walletPassword)){
+      this.error_message = "You entered an invalid password.";
+      this.footer_visible = true;
       this.walletPassword = "";
-      this.amount = "";
-      this.accountDropdown.resetFilter();
-      this.invoiceID = "";
-      this.destinationTag = undefined;
-      this.totalSend = "";
+      this.signAndSubmitIcon = "fa-check";
+    } else {
+      let preparePayment: PrepareTxPayment = 
+          { source: this.selectedAccount, 
+            destination: this.receipient, 
+            amountDrops: CSCUtil.cscToDrops(this.amount),
+            feeDrops: CSCUtil.cscToDrops(this.fees),
+            description: this.description
+          };
+        if(this.destinationTag){
+          preparePayment.destinationTag = this.destinationTag;
+        }
+        if(this.invoiceID && this.invoiceID.length > 0){
+          preparePayment.invoiceID = CSCUtil.encodeInvoiceID(this.invoiceID);
+        }
+        let txObject = this.casinocoinService.createPaymentTx(preparePayment);
+        this.logger.debug("### Sign: " + JSON.stringify(txObject));
+        let txBlob:string = this.casinocoinService.signTx(txObject, this.walletPassword);
+        if(txBlob == AppConstants.KEY_ERRORED){
+          // probably a wrong password!
+          this.messageService.add({severity:'error', summary:'Transaction Signing', detail:'There was an error signing the transactions. Verify your password.'});
+        } else {
+          this.casinocoinService.submitTx(txBlob);
+          // reset form and dialog fields
+          this.selectedAccount = "";
+          this.receipient = "";
+          this.description = "";
+          this.walletPassword = "";
+          this.amount = "";
+          this.accountDropdown.resetFilter();
+          this.invoiceID = "";
+          this.destinationTag = undefined;
+          this.totalSend = "";
+        }
+        this.showPasswordDialog = false;
+        this.signAndSubmitIcon = "fa-check";
+      }
     }
-    this.showPasswordDialog = false;
-    this.signAndSubmitIcon = "fa-check";
-  }
 
   doSendCoins(){
     this.logger.debug("### SendCoinsComponent - doSendCoins ###");
-    this.showPasswordDialog = true;
-    this.passwordInput.nativeElement.focus();
+    this.initPasswordCheck();
+    if(!this.allowSendFromCurrentConnection){
+      this.electronService.remote.dialog.showMessageBox(
+        { message: "The server you are connected to can not relay your transaction at this moment. Reconnect or close and re-open your wallet to retry.", 
+          buttons: ["OK"] 
+        });
+    } else {
+      this.showPasswordDialog = true;
+      this.passwordInput.nativeElement.focus();
+    }
   }
 
   calculateTotal(includeReserve: boolean){

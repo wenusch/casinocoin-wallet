@@ -21,7 +21,7 @@ function getInstallerConfig (arch) {
 
   return Promise.resolve({
     appDirectory: path.join(appPath, 'casinocoin-wallet-win32-' + arch + '/'),
-    authors: 'Casinocoin Foundation',
+    authors: 'CasinoCoin Foundation',
     noMsi: true,
     noDelta: true,
     outputDirectory: path.join(outPath, 'windows-'+arch),

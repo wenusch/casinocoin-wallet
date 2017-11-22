@@ -3,7 +3,7 @@
         <mat-sidenav-container class="home-sidenav-container">
             <mat-sidenav mode="side" opened="true">
                 <div class="app-nav">
-                    <img src="../../../assets/casinocoin-logo.png" alt="Casinocoin" class="csc-logo" />
+                    <img src="../../../assets/casinocoin-logo.png" alt="CasinoCoin" class="csc-logo" />
                     <mat-list>
                         <mat-list-item class="menu-item">
                             <div class="ui-g">
@@ -200,7 +200,7 @@
 
 <p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="250" [closable]="true" [modal]="true" appendTo="body">
 <p-header>
-    Casinocoin Wallet Password
+    CasinoCoin Wallet Password
 </p-header>
 <div class="ui-g ui-fluid">
     <div class="ui-g-1"></div>
@@ -232,4 +232,7 @@
     </div>
     <div class="ui-g-1"></div>
 </div>
+<p-footer *ngIf="footer_visible">
+    Error: {{error_message}}
+</p-footer>
 </p-dialog>

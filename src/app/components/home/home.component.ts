@@ -101,6 +101,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   transaction_count:number;
   last_transaction:number;
 
+  footer_visible: boolean = false;
+  error_message: string = "";
+
   constructor( private logger: Logger, 
                private router: Router,
                private electron: ElectronService,
@@ -155,7 +158,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       { label: 'Close Wallet', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'close-wallet');
-        }, enabled: false
+        }, enabled: true
       })
     );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
@@ -350,43 +353,62 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.showPasswordCallback();
   }
 
+  initPasswordCheck(){
+    this.walletPassword = "";
+    this.error_message = "";
+    this.footer_visible = false;
+  }
+
   onPrivateKeyImport() {
     this.showPrivateKeyImportDialog = true;
   }
 
   onPrivateKeysExport() {
     // show password dialog
-    this.walletPassword = "";
+    this.initPasswordCheck();
     this.showPasswordCallback = this.selectPrivateKeysExportLocation;
     this.showPasswordDialog = true;
   }
 
 
   selectPrivateKeysExportLocation() {
-    this.logger.debug("selectPrivateKeysExportLocation()");
-    this.showPasswordDialog = false;
-    this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("documents"));
-    this.electron.remote.dialog.showOpenDialog(
-        { title: 'Private Key Export Location',
-          defaultPath: this.electron.remote.app.getPath("documents"), 
-          properties: ['openDirectory']}, (result) => {
-          this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
-          if(result && result.length>0) {
-            this.privateKeyExportLocation = result[0];
-            // get all decrypted private keys
-            let allPrivateKeys = this.walletService.decryptAllKeys(this.walletPassword);
-            // create a filename
-            let keyFilePath = path.join(result[0], (this.currentWallet + '.keys'));
-            // Write the JSON array to the file 
-            fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
-              if(err){
-                  alert("An error ocurred creating the file "+ err.message)
-              }           
-              alert("The file has been succesfully saved");
-            });
+    this.logger.debug("### selectPrivateKeysExportLocation()");
+    // first check the password
+    if(this.walletPassword.length == 0 ){
+      this.error_message = "Please enter your password.";
+      this.footer_visible = true;
+    } else if(!this.walletService.checkWalletPasswordHash(this.walletPassword)){
+      this.error_message = "You entered an invalid password.";
+      this.footer_visible = true;
+    } else {
+      this.showPasswordDialog = false;
+      this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("documents"));
+      this.electron.remote.dialog.showOpenDialog(
+          { title: 'Private Key Export Location',
+            defaultPath: this.electron.remote.app.getPath("documents"), 
+            properties: ['openDirectory']}, (result) => {
+            this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
+            if(result && result.length>0) {
+              this.privateKeyExportLocation = result[0];
+              // get all decrypted private keys
+              let allPrivateKeys = this.walletService.decryptAllKeys(this.walletPassword);
+              // create a filename
+              let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss-") + this.currentWallet + '.keys';
+              let keyFilePath = path.join(result[0], filename);
+              // Write the JSON array to the file 
+              fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
+                if(err){
+                  this.electron.remote.dialog.showErrorBox("Error saving private keys", "An error ocurred writing your private keys to a file: " + err.message);
+                }
+                this.electron.remote.dialog.showMessageBox(
+                  { message: "Your private keys have been saved to a file. Make sure you put it in a save place as it contains your private keys!!", 
+                    buttons: ["OK"] 
+                  });
+              });
+            }
           }
-        }
-    );
+      );
+    }
   }
 
   onBackupWallet(){
@@ -509,8 +531,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   closeWallet(){
     this.casinocoinService.disconnect();
     this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
-    this.walletService.openWalletSubject.next(AppConstants.KEY_INIT);
-    this.router.navigate(['login']);
+    this.walletService.closeWallet();
+    this.electron.remote.getCurrentWindow().reload();
   }
 
   setConnectedMenuItem(connected: boolean){

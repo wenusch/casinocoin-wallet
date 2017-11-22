@@ -27,6 +27,7 @@ export class CoinSwapComponent implements OnInit {
   swapMenuItems: MenuItem[];
   private refreshInterval: any;
   swap_context_menu: ElectronMenu;
+  swapDisabled: boolean = true;
 
   refresh_icon: string = "fa-refresh";
 
@@ -38,6 +39,8 @@ export class CoinSwapComponent implements OnInit {
 
   ngOnInit() {
     this.logger.debug("### INIT CoinSwapComponent ###");
+    // disable swap after 2018-02-14 12:00:00 GMT
+    this.setSwapDisabled();
     // define Swap context menu
     let swap_context_menu_template = [
       { label: 'Copy Deposit Address', 
@@ -176,6 +179,16 @@ export class CoinSwapComponent implements OnInit {
         }
       });
     }
+  }
+
+  setSwapDisabled(){
+    let currentTime = Date.now();
+    let swapEnd = 1518609600000;
+    if(currentTime < swapEnd){
+      // Before Februari 14th at 12:00:00 PM GMT we can swap
+      this.swapDisabled = false;
+    }
+    this.logger.debug("Now(): " + currentTime + " Swap End: " + swapEnd + " Swap Disabled: " + this.swapDisabled);
   }
 
 }

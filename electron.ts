@@ -13,7 +13,7 @@ const version = app.getVersion();
 const platform = os.platform() + '_' + os.arch();
 
 // set app id
-app.setAppUserModelId("Casinocoin Wallet");
+app.setAppUserModelId("CasinoCoin Wallet");
 
 // set property for exit dialog
 let showExitPrompt = true;
@@ -177,6 +177,7 @@ try {
     if (win === null) {
       createWindow();
     } else {
+      win.reload();
       win.show();
     }
   });

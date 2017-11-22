@@ -92,7 +92,7 @@ export class LoginComponent implements OnInit {
                 let walletObject = this.availableWallets[walletIndex];
                 this.footer_visible = false;
                 this.logger.debug("### LoginComponent - Check Wallet Password: " + JSON.stringify(walletObject));
-                if(this.walletService.checkWalletPasswordHash(this.selectedWallet, this.walletPassword, walletObject['hash'])){
+                if(this.walletService.checkWalletPasswordHash(this.walletPassword, this.selectedWallet, walletObject['hash'])){
                     this.logger.debug("### LoginComponent - Open Wallet Location: " + walletObject['location']);
                     this.walletService.openWallet( walletObject['location'], 
                                                    walletObject['walletUUID'],
@@ -120,7 +120,7 @@ export class LoginComponent implements OnInit {
                             this.footer_visible = true;
                             this.login_icon = "fa fa-check";
                         } else {
-                            // this.logger.error("### Error Opening Wallet !!!!");
+                            this.logger.error("### Error Opening Wallet !!!!");
                             this.login_icon = "fa fa-check";
                         }
                     });

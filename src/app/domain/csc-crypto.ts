@@ -36,7 +36,7 @@ export class CSCCrypto {
     // encrypt password
     let key:Buffer = new Buffer(crypto.pbkdf2Sync(this.passwordKey, salt, this.pbkdf2Rounds, this.pbkdf2KeyLength, this.pbkdf2Digest));
     let cipher = crypto.createCipheriv(this.algorithm, key, iv);
-    let encryptedData = Buffer.concat([new Buffer(cipher.update(inputValue, 'utf8')), new Buffer(cipher.final())]);
+    let encryptedData = Buffer.concat([new Buffer(cipher.update(inputValue, 'utf8')), new Buffer(cipher.final('utf8'))]);
     let authTag:Buffer = new Buffer(cipher.getAuthTag());
     return this.urlsafe_escape(Buffer.concat([salt, iv, authTag, encryptedData]).toString('base64'));
    }
