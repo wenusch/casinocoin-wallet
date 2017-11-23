@@ -134,11 +134,9 @@ export class TransactionsComponent implements OnInit {
   }
 
   getStatusIconClasses(tx: LokiTransaction){
-    if(this.ledgers[0] == undefined){
-      return ["fa", "fa-clock-o", "color_orange"];
-    } else if(tx.validated){
+    if(tx.validated){
       return ["fa", "fa-check", "color_green"];
-    } else if(tx.lastLedgerSequence < this.ledgers[0].ledger_index){
+    } else if((this.ledgers[0] != undefined) && (tx.lastLedgerSequence < this.ledgers[0].ledger_index)){
       return ["fa", "fa-clock-o", "color_orange"];
     } else {
       return ["fa", "fa-ban", "color_red"];

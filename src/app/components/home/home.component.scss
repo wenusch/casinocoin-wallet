@@ -159,7 +159,7 @@
   user-select: none;
 }
 
-:host p-footer {
-  text-align: center;
+::ng-deep .footer-error {
   color: $casinocoinRed;
+  font-weight: bolder;
 }

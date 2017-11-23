@@ -90,7 +90,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   // connection_image: string = "assets/icons/connected-red.png";
   connectionColorClass: string = "disconnected-color";
   connectionImage: string = "assets/icons/connected-red.png";
-
+  manualDisconnect: boolean = false;
   searchDate: Date;
 
   serverState: ServerStateMessage;
@@ -223,7 +223,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
 
     // navigate to the transactions
-    this.router.navigate(['transactions']);
+    this.router.navigate(['transactions']).then(navResult => {
+      if(navResult){
+        // connect to casinocoin network
+        this.doConnectToCasinocoinNetwork();
+      }
+    });
     // subscribe to the openWallet subject
     let openWalletSubject = this.walletService.openWalletSubject;
     openWalletSubject.subscribe( result => {
@@ -232,8 +237,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         // get the DB Metadata
         this.dbMetadata = this.walletService.getDBMetadata();
         this.logger.debug("### HOME DB Metadata: " + JSON.stringify(this.dbMetadata));
-        // connect to casinocoin network
-        this.doConnectToCasinocoinNetwork();
         // update balance
         this.doBalanceUpdate();
         // update transaction count
@@ -243,6 +246,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.router.navigate(['/login']);
       }
     });
+
+    
 
     // listen to connection changes
     // this.isConnected.subscribe( connected => {
@@ -289,6 +294,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   doConnectToCasinocoinNetwork(){
+    this.logger.debug("### HOME doConnectToCasinocoinNetwork() ###");
     // Connect to the casinocoin network
     this.casinocoinService.connect().subscribe(connected => {
       // this.casinocoinService.casinocoinConnectedSubject.subscribe( connected => {
@@ -302,24 +308,19 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.casinocoinService.accountSubject.subscribe( account => {
             this.doBalanceUpdate();
           });
-          setTimeout(() => {
-            this.logger.debug("### HOME Set GUI Connected ###");
-            this.connectionColorClass = "connected-color";
-            this.connectionImage = "assets/icons/connected.png"
-            this.connected_tooltip = "Connected";
-            this.setConnectedMenuItem(true);
-            this.currentServer = this.casinocoinService.getCurrentServer();
-          }, 500);
+          this.logger.debug("### HOME Set GUI Connected ###");
+          this.connectionColorClass = "connected-color";
+          this.connectionImage = "assets/icons/connected.png"
+          this.connected_tooltip = "Connected";
+          this.setConnectedMenuItem(true);
+          this.currentServer = this.casinocoinService.getCurrentServer();
         } else {
-          this.logger.debug("### HOME Disconnected ###");
-          setTimeout(() => {
-            this.logger.debug("### HOME Set GUI Disconnected ###");
-            this.connectionColorClass = "disconnected-color";
-            this.connectionImage = "assets/icons/connected-red.png";
-            this.connected_tooltip = "Disconnected";
-            this.setConnectedMenuItem(false);
-            this.currentServer = { server_id: '', server_url: '', response_time: -1 };
-          }, 500);
+          this.logger.debug("### HOME Set GUI Disconnected ###");
+          this.connectionColorClass = "disconnected-color";
+          this.connectionImage = "assets/icons/connected-red.png";
+          this.connected_tooltip = "Disconnected";
+          this.setConnectedMenuItem(false);
+          this.currentServer = { server_id: '', server_url: '', response_time: -1 };
           // this.isConnected.next(false);
           // this.currentServer = { server_id: '', server_url: '', response_time: -1 };
           // this.logger.debug("### HOME Disconnected currentServer: " + JSON.stringify(this.currentServer));
@@ -351,12 +352,14 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   onConnect(){
     this.logger.debug("### HOME Connect ###");
+    this.manualDisconnect = false;
     this.casinocoinService.connect();
     // this.connectToCasinocoinNetwork();
   }
 
   onDisconnect(){
     this.logger.debug("### HOME Disconnect ###");
+    this.manualDisconnect = true;
     this.casinocoinService.disconnect();
   }
 
