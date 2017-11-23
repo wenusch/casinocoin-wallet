@@ -11,6 +11,7 @@ import { AppConstants } from '../../../domain/app-constants';
 import Big from 'big.js';
 import { CasinocoinTxObject, PrepareTxPayment } from 'app/domain/csc-types';
 import { AppComponent } from 'app/app.component';
+import { CSCAmountPipe } from '../../../app-pipes.module';
 
 @Component({
   selector: 'app-send-coins',
@@ -57,7 +58,8 @@ export class SendCoinsComponent implements OnInit {
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
               private messageService: MessageService,
-              private electronService: ElectronService ) { }
+              private electronService: ElectronService,
+              private cscAmountPipe: CSCAmountPipe ) { }
 
   ngOnInit() {
     this.logger.debug("### SendCoin onInit ###")

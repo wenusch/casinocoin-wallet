@@ -128,22 +128,25 @@ export class WebsocketService {
         if(!this.isServerFindComplete) {
           this.isServerFindComplete = true;
         }
-      // } else if (this.currentServer.response_time > 0 && (responseTime < this.currentServer.response_time)) {
-      //   // we found a faster server than before
-      //   this.logger.debug("### findBestServer - we found a faster server: " + JSON.stringify(value));
-      //   this.currentServer = value;
-      //   this.currentServer.response_time = responseTime;
-      //   serverResponses = serverResponses + 1;
-      //   findCompleteSubject.next(true);
-      //   // indicate server find complete
-      //   if(!this.isServerFindComplete) {
-      //     this.isServerFindComplete = true;
-      //   }
-      // } else {
-      //   // we found a server but slower than before
-      //   this.logger.debug("### findBestServer - we found a slower server: " + JSON.stringify(value));
-      //   serverResponses = serverResponses + 1;
-      //   findCompleteSubject.next(false);
+      } else if (this.currentServer.response_time > 0 && (responseTime < this.currentServer.response_time)) {
+        // we found a faster server than before
+        this.logger.debug("### findBestServer - we found a faster server: " + JSON.stringify(value));
+        // IGNORE FOR NOW ....
+        
+        // this.currentServer = value;
+        // this.currentServer.response_time = responseTime;
+        // findCompleteSubject.next(true);
+        
+        // indicate server find complete
+        // if(!this.isServerFindComplete) {
+        //   this.isServerFindComplete = true;
+        // }
+        this.serverResponses = this.serverResponses + 1;
+      } else {
+        // we found a server but slower than before
+        this.logger.debug("### findBestServer - we found a slower server: " + JSON.stringify(value));
+        this.serverResponses = this.serverResponses + 1;
+        // findCompleteSubject.next(false);
       }
       // check if all servers responded or timed-out
       if(!this.productionConnection){

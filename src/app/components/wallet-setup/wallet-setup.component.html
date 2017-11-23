@@ -23,22 +23,23 @@
     <div style="text-align: right;">
         <!-- Cancel Setup -->
         <button pButton type="button" (click)="cancelSetup()" icon="fa-ban" iconPos="right" label="Cancel" 
-            *ngIf="enableCancelCreation && ((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted && connectedToNetwork)))" style="width: 115px;"></button>
+            *ngIf="enableCancelCreation && ((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted && connectedToNetwork)))" 
+            style="width: 115px;" #cancelButton></button>
 
         <!-- Previous Step -->
         <button pButton type="button" (click)="navigateToPreviousStep()" icon="fa-arrow-left" iconPos="left" label="Previous" 
-                *ngIf="activeIndex > 1 && activeIndex < 6" style="width: 115px;"></button>
+                *ngIf="activeIndex > 1 && activeIndex < 6" style="width: 115px;" #previousButton></button>
 
         <!-- Next Step -->
         <button pButton type="button" (click)="navigateToNextStep()" icon="fa-arrow-right" iconPos="right" label="Next" 
                 *ngIf="activeIndex < maxActiveIndex" 
                 [disabled]="((activeIndex == 2) && (!enableFinishDisclaimer)) || ((activeIndex == 3) && (!enableFinishPassword)) || ((activeIndex == 4) && (!recoveryAccepted))" 
-                style="width: 115px;"></button>
+                style="width: 115px;" #nextButton></button>
 
         <!-- Finish Setup -->
         <button pButton type="button" (click)="finishSetup()" icon="fa-check" label="Finish" iconPos="right"
                 *ngIf="activeIndex == maxActiveIndex" style="width: 115px;"
-                [disabled]="((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted && connectedToNetwork)))"></button>
+                [disabled]="((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted && connectedToNetwork)))" #finishButton></button>
     </div>
     <p-footer style="text-align: center">
         <p-steps [model]="steps" styleClass="steps-custom" [activeIndex]="activeIndex-1"></p-steps>

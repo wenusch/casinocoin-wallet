@@ -89,7 +89,7 @@ export class SwapService {
         if(mySwaps.length > 0){
             mySwaps.forEach( (swap, index, arr) => {
                 // only process unfinished swaps
-                if(swap.swapStatus != 'moved_to_storage'){
+                if(swap.swapStatus != 'new_coins_transferred'){
                     // refresh swap info
                     this.getSwap(swap.swapID).subscribe(onlineSwap => {
                         let updateSwapIndex = this.swaps.findIndex( item => item.swapID == swap.swapID);

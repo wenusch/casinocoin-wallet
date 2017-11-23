@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
 import { Router } from '@angular/router';
 import { Logger } from 'angular2-logger/core';
@@ -75,6 +75,11 @@ export class WalletSetupComponent implements OnInit {
   // Server connection will be done via native WebSockets instead of casinocoin libjs
   // cscAPI = new CasinocoinAPI({ server: 'ws://158.69.59.142:7007' });
   // cscAPI = new CasinocoinAPI();
+
+  @ViewChild('cancelButton') cancelButton;
+  @ViewChild('previousButton') previousButton;
+  @ViewChild('nextButton') nextButton;
+  @ViewChild('finishButton') finishButton;
 
   constructor( private logger: Logger, 
                private electron: ElectronService,
@@ -179,7 +184,7 @@ export class WalletSetupComponent implements OnInit {
     } else if(this.activeIndex == 6) {
       this.finishStep5();
     }
-    
+    this.nextButton.nativeElement.blur();
     this.logger.debug("Next, New Active Step: " + this.activeIndex);
   }
 
@@ -198,6 +203,7 @@ export class WalletSetupComponent implements OnInit {
     if(this.activeIndex > 1){
       this.activeIndex -= 1;
     }
+    this.previousButton.nativeElement.blur();
     this.logger.debug("Previous, New Active Step: " + this.activeIndex);
   }
 
@@ -326,6 +332,7 @@ export class WalletSetupComponent implements OnInit {
 
   cancelSetup(){
     this.logger.debug("Setup New Wallet Canceled");
+    this.cancelButton.nativeElement.blur();
     this.router.navigate(['/login']);
   }
 

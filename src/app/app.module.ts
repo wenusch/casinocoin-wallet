@@ -102,6 +102,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
   providers: [
     Logger, Options,
     DatePipe, DecimalPipe, CurrencyPipe,
+    CSCDatePipe, CSCAmountPipe,
     HttpClient,
     ElectronService,
     AuthGuard,

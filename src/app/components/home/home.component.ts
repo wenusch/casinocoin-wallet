@@ -224,6 +224,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // navigate to the transactions
     this.router.navigate(['transactions']).then(navResult => {
+      this.logger.debug("### HOME navResult: " + navResult);
       if(navResult){
         // connect to casinocoin network
         this.doConnectToCasinocoinNetwork();
@@ -309,15 +310,15 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.doBalanceUpdate();
           });
           this.logger.debug("### HOME Set GUI Connected ###");
-          this.connectionColorClass = "connected-color";
           this.connectionImage = "assets/icons/connected.png"
+          this.connectionColorClass = "connected-color";
           this.connected_tooltip = "Connected";
           this.setConnectedMenuItem(true);
           this.currentServer = this.casinocoinService.getCurrentServer();
         } else {
           this.logger.debug("### HOME Set GUI Disconnected ###");
-          this.connectionColorClass = "disconnected-color";
           this.connectionImage = "assets/icons/connected-red.png";
+          this.connectionColorClass = "disconnected-color";
           this.connected_tooltip = "Disconnected";
           this.setConnectedMenuItem(false);
           this.currentServer = { server_id: '', server_url: '', response_time: -1 };

@@ -58,6 +58,10 @@ export class TransactionsComponent implements OnInit {
             this.accounts.push({label: accountLabel, value: element.accountID});
           }
         });
+        // subscribe to account updates
+        this.casinocoinService.accountSubject.subscribe( account => {
+          this.doBalanceUpdate();
+        });
         // subscribe to transaction updates
         this.casinocoinService.transactionSubject.subscribe( tx => {
           let updateTxIndex = this.transactions.findIndex( item => item.txID == tx.txID);
@@ -104,6 +108,18 @@ export class TransactionsComponent implements OnInit {
       } else {
         this.logger.debug("### Context menu not implemented: " + arg);
       }        
+    });
+  }
+
+  doBalanceUpdate(){
+    // add empty item to accounts dropdown
+    this.accounts = [];
+    this.accounts.push({label:'Select Account ...', value:null});
+    this.walletService.getAllAccounts().forEach( element => {
+      if(new Big(element.balance) > 0){
+        let accountLabel = element.label + "(" + element.accountID.substring(0,8)+ "...) [Balance: " + CSCUtil.dropsToCsc(element.balance) + "]";
+        this.accounts.push({label: accountLabel, value: element.accountID});
+      }
     });
   }
 

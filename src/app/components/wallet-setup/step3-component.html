@@ -15,7 +15,7 @@
         <div class="ui-g-10">
             <input type="password" pPassword [(ngModel)]="newWalletPassword" (ngModelChange)="checkPasswordUpdate($event)" 
                    style="width: 100%;" title="Password must be minmal 8 characters long including letter and numeric characters" 
-                   required [(pattern)]="passwordPattern" placeholder="Wallet Password"/>
+                   required [(pattern)]="passwordPattern" placeholder="Wallet Password" #passwordInput/>
         </div>
         <div class="ui-g-1"></div>
         <div class="ui-g-1"></div>

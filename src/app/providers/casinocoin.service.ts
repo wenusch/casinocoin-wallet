@@ -67,6 +67,7 @@ export class CasinocoinService implements OnDestroy {
             connectSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
             // re-initialize server state
             this.initServerState();
+            this.disconnectStarted = false;
             // find server to connect to 
             this.wsService.findBestServer(connectToProduction);
             // check if the server is found, otherwise wait till it is
@@ -110,7 +111,7 @@ export class CasinocoinService implements OnDestroy {
                                     // update all accounts from the network
                                     this.checkAllAccounts();
                                     // do some checks on all transactions
-                                    this.checkAllTransactions();
+                                    // this.checkAllTransactions();
                                 }
                             });
                         } else if(!connected && this.isConnected) {
@@ -285,12 +286,37 @@ export class CasinocoinService implements OnDestroy {
                     this.accounts = this.walletService.getAllAccounts();
                     // notify change
                     this.accountSubject.next(walletAccount);
+                    // get account transactions from database to check sequence and total
+                    let dbAccountTransactions = this.walletService.getAccountTransactions(walletAccount.accountID);
+                    let outgoingCount = 0;
+                    let lastSequence = 0;
+                    let lastTxLedgerIndex = 1;
+                    dbAccountTransactions.forEach(tx => {
+                        if((tx.direction == AppConstants.KEY_WALLET_TX_OUT) || (tx.direction == AppConstants.KEY_WALLET_TX_BOTH)){
+                            outgoingCount = outgoingCount + 1;
+                            if(tx.sequence > lastSequence){
+                                lastSequence = tx.sequence;
+                                lastTxLedgerIndex = tx.lastLedgerSequence;
+                            }
+                        }
+                    });
+                    this.logger.debug("### CasinocoinService - Account TX - OUT: " + outgoingCount + 
+                                        " TOTAL: " + dbAccountTransactions.length + 
+                                        " Sequence: " + account_result.Sequence +
+                                        " Last DB Sequence: " + lastSequence + 
+                                        " Get Ledgers From: " + lastTxLedgerIndex);
                     // the account transaction total from the database to check if we are missing transactions
                     let accountTxBalance = this.walletService.getAccountTXBalance(walletAccount.accountID);
                     this.logger.debug("### CasinocoinService - Account TX Balance: " + walletAccount.accountID + " => " + accountTxBalance);
                     if(walletAccount.balance !== accountTxBalance){
-                        // we are missing transactions or have still unvalidated transactions for this account so check all
-                        this.getAccountTx(walletAccount.accountID);
+                         // we are missing transactions or have still unvalidated transactions for this account so check all
+                         //this.getAccountTx(walletAccount.accountID);
+                         if(outgoingCount != account_result.Sequence){
+                            if(account_result.Sequence > lastSequence){
+                                // get missing tx from ledger
+                                this.getAccountTx(walletAccount.accountID, lastTxLedgerIndex);
+                            }
+                        }
                     }
                 } else if(incommingMessage['id'] == 'ValidatedLedgers'){
                     this.logger.debug("### CasinocoinService - Validated Ledger: " + JSON.stringify(incommingMessage.result));
@@ -429,7 +455,7 @@ export class CasinocoinService implements OnDestroy {
                     });
                     // if we received a marker then there is more so get next batch
                     if(incommingMessage.result.marker){
-                        this.getAccountTx(incommingMessage.result.account, incommingMessage.result.marker);
+                        this.getAccountTx(incommingMessage.result.account, -1, incommingMessage.result.marker);
                     }
                 }
             } else if(incommingMessage.status === 'error'){
@@ -491,12 +517,12 @@ export class CasinocoinService implements OnDestroy {
         this.sendCommand(accountInfoRequest);
     }
 
-    getAccountTx(accountID: string, startMarker?: Object){
+    getAccountTx(accountID: string, fromLedger: number, startMarker?: Object){
         let accountTxRequest = {
             id: "getAccountTx",
             command: "account_tx",
             account: accountID,
-            ledger_index_min: -1,
+            ledger_index_min: fromLedger,
             ledger_index_max: -1,
             forward: true,
             limit: 10

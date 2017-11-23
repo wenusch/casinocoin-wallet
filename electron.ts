@@ -143,7 +143,6 @@ function createWindow() {
 
   win.on('closed', (e) => {
     win = null;
-    console.log('OSX kill');
   });
 
   // Disable menu bar
