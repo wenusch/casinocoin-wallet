@@ -96,18 +96,24 @@ export class AddressbookComponent implements OnInit {
   doCreateNewAddressbookEntry(){
     // first disable footer on submit
     this.showDialogFooter = false;
-    // create addressbook entry
-    let newAddress:LokiAddress = {
-      accountID: this.accountID,
-      label: this.addressLabel,
-      owner: false
+    this.errorMessage = "";
+    if((this.addressLabel.length == 0) || (this.accountID.length == 0)){
+      this.errorMessage = "Both account label and account id must be entered.";
+      this.showDialogFooter = true;
+    } else {
+      // create addressbook entry
+      let newAddress:LokiAddress = {
+        accountID: this.accountID,
+        label: this.addressLabel,
+        owner: false
+      }
+      this.walletService.addAddress(newAddress);
+      this.accountID = "";
+      this.addressLabel = "";
+      // hide dialog
+      this.showCreateAddressDialog = false;
+      // refresh addresses
+      this.addresses = this.walletService.getAllAddresses();
     }
-    this.walletService.addAddress(newAddress);
-    this.accountID = "";
-    this.addressLabel = "";
-    // hide dialog
-    this.showCreateAddressDialog = false;
-    // refresh addresses
-    this.addresses = this.walletService.getAllAddresses();
   }
 }

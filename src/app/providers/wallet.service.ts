@@ -226,7 +226,9 @@ export class WalletService {
   // close the wallet
   closeWallet(){
     // first save any open changes
-    this.walletDB.saveDatabase();
+    if(this.walletDB != null){
+      this.walletDB.saveDatabase();
+    }
     // reset all collection objects
     this.dbMetadata = null;
     this.accounts = null;

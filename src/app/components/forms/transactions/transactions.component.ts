@@ -45,6 +45,7 @@ export class TransactionsComponent implements OnInit {
               private electronService: ElectronService, ) { }
 
   ngOnInit() {
+    this.logger.debug("### Online: " + navigator.onLine);
     // get transactions from wallet
     this.walletService.openWalletSubject.subscribe( result => {
       if(result == AppConstants.KEY_LOADED){
@@ -132,11 +133,15 @@ export class TransactionsComponent implements OnInit {
     }
   }
 
-  getValidatedIconClasses(validated: boolean){
-    if(validated){
+  getStatusIconClasses(tx: LokiTransaction){
+    if(this.ledgers[0] == undefined){
+      return ["fa", "fa-clock-o", "color_orange"];
+    } else if(tx.validated){
       return ["fa", "fa-check", "color_green"];
+    } else if(tx.lastLedgerSequence < this.ledgers[0].ledger_index){
+      return ["fa", "fa-clock-o", "color_orange"];
     } else {
-      return ["fa", "fa-times", "color_red"];
+      return ["fa", "fa-ban", "color_red"];
     }
   }
 

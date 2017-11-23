@@ -93,7 +93,9 @@ export class SwapService {
                     // refresh swap info
                     this.getSwap(swap.swapID).subscribe(onlineSwap => {
                         let updateSwapIndex = this.swaps.findIndex( item => item.swapID == swap.swapID);
-                        this.swaps[updateSwapIndex].swapStatus = onlineSwap[0].status[0];
+                        if(onlineSwap[0].status){
+                            this.swaps[updateSwapIndex].swapStatus = onlineSwap[0].status[0];
+                        }
                         if(onlineSwap[0].deposit){
                             this.swaps[updateSwapIndex].swapAmount = onlineSwap[0].deposit.amount;
                             this.swaps[updateSwapIndex].deposit = onlineSwap[0].deposit;

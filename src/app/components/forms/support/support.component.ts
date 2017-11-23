@@ -24,6 +24,11 @@ export class SupportComponent implements OnInit {
     this.electronService.remote.shell.openExternal("https://casinocoin.org/faq/");
   }
 
+  openReddit(){
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("https://www.reddit.com/r/casinocoin/");
+  }
+
   openDiscord(){
     event.preventDefault();
     this.electronService.remote.shell.openExternal("http://casinocoin.chat/");
@@ -47,5 +52,15 @@ export class SupportComponent implements OnInit {
   openEmail(){
     event.preventDefault();
     this.electronService.remote.shell.openExternal("mailto:support@casinocoin.org");
+  }
+
+  openFacebook(){
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("https://www.facebook.com/casinocoin.org/");
+  }
+
+  openTwitter(){
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("https://twitter.com/CasinoCoin_org");
   }
 }

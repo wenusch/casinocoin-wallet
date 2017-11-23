@@ -73,7 +73,7 @@
         <button pButton type="button" (click)="doCreateNewAccount()" icon="fa-save" iconPos="right" label="Create" 
                 style="width: 115px;"></button>
     </div>
-    <p-footer *ngIf="showDialogFooter" style="height: 30px;">
+    <p-footer *ngIf="showDialogFooter" class="footer-error">
         <p>{{errorMessage}}</p>
     </p-footer>
 </p-dialog>

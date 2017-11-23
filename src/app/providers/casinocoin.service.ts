@@ -40,7 +40,6 @@ export class CasinocoinService implements OnDestroy {
     public transactions: Array<LokiTransaction> = [];
     public transactionSubject = new Subject<LokiTransaction>();
     public lastTransactionHash: string = "";
-    public currentServer: ServerDefinition;
     public casinocoinConnectedSubject = new BehaviorSubject<boolean>(false);
 
     constructor(private logger: Logger, 
@@ -90,7 +89,6 @@ export class CasinocoinService implements OnDestroy {
                         } else if(connected && !this.isConnected){
                             this.isConnected = true;
                             this.casinocoinConnectedSubject.next(true);
-                            this.currentServer = this.wsService.currentServer;
                             // inform listeners we are connected
                             connectSubject.next(AppConstants.KEY_CONNECTED);
                             // start KeepAlive messages
@@ -424,6 +422,10 @@ export class CasinocoinService implements OnDestroy {
                             this.walletService.updateTransaction(dbTx);
                             this.transactionSubject.next(dbTx);
                         }
+                        // check if we had inLedger
+                        if(!element.inLedger || element.inLedger.length == 0){
+                            this.getTransaction(element.tx.hash);
+                        }
                     });
                     // if we received a marker then there is more so get next batch
                     if(incommingMessage.result.marker){
@@ -677,5 +679,9 @@ export class CasinocoinService implements OnDestroy {
         // insert into the wallet
         this.walletService.addTransaction(dbTX);
         return dbTX;
+    }
+
+    getCurrentServer(): ServerDefinition {
+        return this.wsService.currentServer;
     }
 }

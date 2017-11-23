@@ -86,8 +86,15 @@ export class WalletSetupComponent implements OnInit {
                private websocketService: WebsocketService ) { }
 
   ngOnInit() {
+    this.logger.debug("### WalletSetup INIT ###")
     let userHome = this.electron.remote.app.getPath("home");
     this.walletLocation = path.join(userHome, '.casinocoin');
+    // check if connect to network -> disconnect first
+    if(this.casinocoinService.casinocoinConnectedSubject.getValue()){
+      this.logger.debug("### WalletSetup Disconnect from network");
+      this.casinocoinService.disconnect();
+    }
+
     // until we go live we set this to TRUE !!!!
     this.walletTestNetwork = true;
 
@@ -307,13 +314,14 @@ export class WalletSetupComponent implements OnInit {
       walletArray = [];
     }
     walletArray.push(newAvailableWallet);
-    this.sessionStorageService.set(AppConstants.KEY_CURRENT_WALLET, this.walletUUID);
     this.localStorageService.set(AppConstants.KEY_CURRENT_WALLET, this.walletUUID);
     this.localStorageService.set(AppConstants.KEY_AVAILABLE_WALLETS, walletArray);
     this.localStorageService.set(AppConstants.KEY_WALLET_LOCATION, this.walletLocation);
     this.localStorageService.set(AppConstants.KEY_PRODUCTION_NETWORK, !this.walletTestNetwork);
     this.localStorageService.set(AppConstants.KEY_SETUP_COMPLETED, true);
-    this.router.navigate(['']);
+    // navigate user back to login to select and open new wallet
+    this.router.navigate(['/login']);
+    // this.electron.remote.getCurrentWindow().reload();
   }
 
   cancelSetup(){

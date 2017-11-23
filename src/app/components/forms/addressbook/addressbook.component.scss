@@ -3,3 +3,8 @@
 ::ng-deep .hide-context-menu {
     display: none;
 }
+
+::ng-deep .footer-error {
+    color: $casinocoinRed;
+    font-weight: bolder;
+}

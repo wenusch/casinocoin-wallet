@@ -38,7 +38,7 @@
             </p-column>
             <p-column field="validated" [style]="{'width':'50px'}">
                 <ng-template let-data="rowData" pTemplate="body">
-                    <p class="item-p"><span class="item-label">validated: </span><i [ngClass]="getValidatedIconClasses(data.validated)"></i></p>
+                    <p class="item-p"><span class="item-label">status: </span><i [ngClass]="getStatusIconClasses(data)"></i></p>
                     <p class="item-p"><span class="item-label">ledger: </span><span class="item-value"> {{ data.inLedger }}</span></p>
                 </ng-template>
             </p-column>

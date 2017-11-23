@@ -35,6 +35,7 @@ export class WebsocketService {
     private connected = new BehaviorSubject<boolean>(false); // false is your initial value
     public isConnected$ = this.connected.asObservable();
     public connectionCount: number = 0;
+    private serverResponses: number = 0;
     private set isConnected(value: boolean) { this.connected.next(value); }
     private get isConnected():boolean { return this.connected.getValue(); }
 
@@ -96,7 +97,6 @@ export class WebsocketService {
   }
 
   executeServerFind(value: ServerDefinition, findCompleteSubject: Subject<boolean>){
-    let serverResponses = 0;
     let request_time = Date.now();
     const commands = new QueueingSubject<string>();
     const websocket: Connection = websocketConnect(value.server_url, commands);
@@ -121,7 +121,7 @@ export class WebsocketService {
         this.logger.debug("### findBestServer - we found our first server: " + JSON.stringify(value));
         this.currentServer = value;
         this.currentServer.response_time = responseTime;
-        serverResponses =  serverResponses + 1;
+        this.serverResponses =  this.serverResponses + 1;
         this.connect();
         findCompleteSubject.next(true);
         // indicate server find complete
@@ -147,16 +147,16 @@ export class WebsocketService {
       }
       // check if all servers responded or timed-out
       if(!this.productionConnection){
-        this.logger.debug("### findBestServer - serverResponses: ", serverResponses, " total servers: ", this.TEST_SERVERS.length);
-        if(serverResponses == this.TEST_SERVERS.length){
+        this.logger.debug("### findBestServer TEST - serverResponses: ", this.serverResponses, " total servers: ", this.TEST_SERVERS.length);
+        if(this.serverResponses == this.TEST_SERVERS.length){
           // close find server subscriptions
           // this.logger.debug("### findBestServer - Unsubscribe and Close");
           connectionStatusSubscription.unsubscribe();
           messagesSubscription.unsubscribe();
         }
       } else {
-        this.logger.debug("### findBestServer - serverResponses: ", serverResponses, " total servers: ", this.PROD_SERVERS.length);
-        if(serverResponses == this.PROD_SERVERS.length){
+        this.logger.debug("### findBestServer PROD - serverResponses: ", this.serverResponses, " total servers: ", this.PROD_SERVERS.length);
+        if(this.serverResponses == this.PROD_SERVERS.length){
           // close find server subscriptions
           // this.logger.debug("### findBestServer - Unsubscribe and Close");
           connectionStatusSubscription.unsubscribe();
@@ -166,19 +166,19 @@ export class WebsocketService {
       
     }, (error) => {
       this.logger.debug('### findBestServer - id: ' + value.server_id + ', error: ' + ', response time: ' + (Date.now() - request_time));
-      serverResponses = serverResponses + 1;
+      this.serverResponses = this.serverResponses + 1;
       findCompleteSubject.next(false);
       // check if all servers responded or timed-out
       // this.logger.debug("### findBestServer - serverResponses: ", serverResponses, " total servers: ", this.TEST_SERVERS.length);
       if(! this.productionConnection){
-        if(serverResponses == this.TEST_SERVERS.length){
+        if(this.serverResponses == this.TEST_SERVERS.length){
           // close find server subscriptions
           // this.logger.debug("### findBestServer - Unsubscribe and Close");
           connectionStatusSubscription.unsubscribe();
           messagesSubscription.unsubscribe();
         }
       } else {
-        if(serverResponses == this.PROD_SERVERS.length){
+        if(this.serverResponses == this.PROD_SERVERS.length){
           // close find server subscriptions
           // this.logger.debug("### findBestServer - Unsubscribe and Close");
           connectionStatusSubscription.unsubscribe();
@@ -196,6 +196,7 @@ export class WebsocketService {
     // if(!this.currentServer){
     this.currentServer = { server_id: '', server_url: '', response_time: -1 };
     this.isServerFindComplete = false;
+    this.serverResponses = 0;
     // }
     if( !production || (production === null)) {
       // Find TEST Server

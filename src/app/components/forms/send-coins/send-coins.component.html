@@ -11,7 +11,7 @@
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-address-book"></i></span>
-            <input type="text" pInputText placeholder="Receipient" [(ngModel)]="receipient" (keyup.enter)="focusDescription()"
+            <input type="text" pInputText placeholder="Recipient" [(ngModel)]="receipient" (keyup.enter)="focusDescription()"
                      [disabled]="!selectedAccount" (ngModelChange)="onReceipientChange($event)">
             <button pButton type="button" icon="fa-search" class="ui-button-secondary"></button>
         </div>
@@ -114,7 +114,7 @@
         </div>
         <div class="ui-g-1"></div>
     </div>
-    <p-footer *ngIf="footer_visible">
+    <p-footer *ngIf="footer_visible" class="footer-error">
         Error: {{error_message}}
     </p-footer>
 </p-dialog>

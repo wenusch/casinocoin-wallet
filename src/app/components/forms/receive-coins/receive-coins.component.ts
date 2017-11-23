@@ -105,46 +105,40 @@ export class ReceiveCoinsComponent implements OnInit {
     if((this.walletPassword.length == 0) || (this.accountLabel.length == 0)){
       this.errorMessage = "Both account label and password must be entered.";
       this.showDialogFooter = true;
+    } else if(!this.walletService.checkWalletPasswordHash(this.walletPassword)){
+      this.errorMessage = "You entered an invalid password.";
+      this.showDialogFooter = true;
+      this.walletPassword = "";
     } else {
-      // check the wallet password
-      let walletIndex = this.availableWallets.findIndex( item => item['walletUUID'] == this.currentWallet);
-      let walletObject = this.availableWallets[walletIndex];
-      this.logger.debug("### Check Wallet Password: " + JSON.stringify(walletObject));
-      if(this.walletService.checkWalletPasswordHash(this.currentWallet, this.walletPassword, walletObject['hash'])){
-        // generate new key pair offline
-        let newKeyPair:LokiKey = this.casinocoinService.generateNewKeyPair();
-        let password = "";
-        let accountLabel = "";
-        if (newKeyPair.accountID.length > 0){
-          // add keypair to database
-          this.walletService.addKey(newKeyPair);
-          // create new account
-          let walletAccount: LokiAccount = {
-            accountID: newKeyPair.accountID, 
-            balance: "0", 
-            lastSequence: 0, 
-            label: this.accountLabel,
-            activated: false,
-            ownerCount: 0,
-            lastTxID: "",
-            lastTxLedger: 0
-          };
-          this.walletService.addAccount(walletAccount);
-          this.logger.debug("### Create Account - Encrypt Wallet Keys");
-          this.walletService.encryptAllKeys(password).subscribe( result => {
-            if(result == AppConstants.KEY_FINISHED){
-              this.logger.debug("### Account Created: " + walletAccount.accountID);
-              // refresh account list
-              this.accounts = this.walletService.getAllAccounts();
-              // hide dialog
-              this.showCreateAccountDialog = false;
-            }
-          });
-        }
-      } else {
-        this.errorMessage = "Invalid wallet password!!";
-        this.walletPassword = "";
-        this.showDialogFooter = true;
+      // generate new key pair offline
+      let newKeyPair:LokiKey = this.casinocoinService.generateNewKeyPair();
+      let password = "";
+      let accountLabel = "";
+      if (newKeyPair.accountID.length > 0){
+        // add keypair to database
+        this.walletService.addKey(newKeyPair);
+        // create new account
+        let walletAccount: LokiAccount = {
+          accountID: newKeyPair.accountID, 
+          balance: "0", 
+          lastSequence: 0, 
+          label: this.accountLabel,
+          activated: false,
+          ownerCount: 0,
+          lastTxID: "",
+          lastTxLedger: 0
+        };
+        this.walletService.addAccount(walletAccount);
+        this.logger.debug("### Create Account - Encrypt Wallet Keys");
+        this.walletService.encryptAllKeys(password).subscribe( result => {
+          if(result == AppConstants.KEY_FINISHED){
+            this.logger.debug("### Account Created: " + walletAccount.accountID);
+            // refresh account list
+            this.accounts = this.walletService.getAllAccounts();
+            // hide dialog
+            this.showCreateAccountDialog = false;
+          }
+        });
       }
     }
   }

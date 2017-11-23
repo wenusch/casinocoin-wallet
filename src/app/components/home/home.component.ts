@@ -64,6 +64,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   privateKeySeed:string;
   walletPassword:string;
   importFileObject:Object;
+  currentWalletObject:Object;
 
   privateKeyExportLocation: string = "";
 
@@ -120,6 +121,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.logger.debug("### HOME ngOnInit() - currentWallet: " + this.currentWallet);
+    // get the complete wallet object
+    let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
+    let walletIndex = availableWallets.findIndex( item => item['walletUUID'] == this.currentWallet);
+    this.currentWalletObject = availableWallets[walletIndex];
     // get server state
     let serverStateSubject = this.casinocoinService.serverStateSubject;
     serverStateSubject.subscribe( state => {
@@ -150,7 +155,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       { label: 'Create New Wallet', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'create-wallet');
-        }, enabled: false
+        }, enabled: true
       })
     );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
@@ -227,61 +232,37 @@ export class HomeComponent implements OnInit, OnDestroy {
         // get the DB Metadata
         this.dbMetadata = this.walletService.getDBMetadata();
         this.logger.debug("### HOME DB Metadata: " + JSON.stringify(this.dbMetadata));
+        // connect to casinocoin network
+        this.doConnectToCasinocoinNetwork();
         // update balance
         this.doBalanceUpdate();
         // update transaction count
         this.doTransacionUpdate();
-        // subscribe to transaction updates
-        this.casinocoinService.transactionSubject.subscribe( tx => {
-          this.doTransacionUpdate();
-        });
-        // subscribe to account updates
-        this.casinocoinService.accountSubject.subscribe( account => {
-          this.doBalanceUpdate();
-        });
       } else if(result == AppConstants.KEY_INIT && this.currentWallet){
         // wallet is not open but we seem to have a session, not good so redirect to login
         this.router.navigate(['/login']);
       }
     });
-    // Connect to the casinocoin network
-    let casinocoinConnectionSubject = this.casinocoinService.connect();
-    casinocoinConnectionSubject.subscribe( connectResult => {
-      this.logger.debug("### HOME Connect Result: " + connectResult);
-    });
-    this.casinocoinService.casinocoinConnectedSubject.subscribe( connected => {
-      if(connected){
-        this.logger.debug("### HOME Set GUI Connected ###");
-        this.isConnected.next(true);
-        this.currentServer = this.casinocoinService.currentServer;
-        this.logger.debug("### HOME Connected currentServer: " + JSON.stringify(this.currentServer));
-      } else {
-        this.logger.debug("### HOME Set GUI Disconnected ###");
-        this.isConnected.next(false);
-        this.currentServer = { server_id: '', server_url: '', response_time: -1 };
-        this.logger.debug("### HOME Connected currentServer: " + JSON.stringify(this.currentServer));
-      }
-    });
 
     // listen to connection changes
-    this.isConnected.subscribe( connected => {
-      this.logger.debug("### HOME Connection Status Changed: " + connected);
-      if(connected){
-          this.logger.debug("### HOME Update UI to Connected");
-          this.connectionColorClass = "connected-color";
-          this.connectionImage = "assets/icons/connected.png"
-          this.connected_tooltip = "Connected";
-          this.setConnectedMenuItem(true);
-          this.currentServer = this.casinocoinService.currentServer;
-      } else {
-          this.logger.debug("### HOME Update UI to Disconnected");
-          this.connectionColorClass = "disconnected-color";
-          this.connectionImage = "assets/icons/connected-red.png";
-          this.connected_tooltip = "Disconnected";
-          this.setConnectedMenuItem(false);
-          this.currentServer = { server_id: '', server_url: '', response_time: -1 };
-      }
-    })
+    // this.isConnected.subscribe( connected => {
+    //   this.logger.debug("### HOME Connection Status Changed: " + connected);
+    //   if(connected){
+    //       this.logger.debug("### HOME Update UI to Connected");
+    //       this.connectionColorClass = "connected-color";
+    //       this.connectionImage = "assets/icons/connected.png"
+    //       this.connected_tooltip = "Connected";
+    //       this.setConnectedMenuItem(true);
+    //       this.currentServer = this.casinocoinService.currentServer;
+    //   } else {
+    //       this.logger.debug("### HOME Update UI to Disconnected");
+    //       this.connectionColorClass = "disconnected-color";
+    //       this.connectionImage = "assets/icons/connected-red.png";
+    //       this.connected_tooltip = "Disconnected";
+    //       this.setConnectedMenuItem(false);
+    //       this.currentServer = { server_id: '', server_url: '', response_time: -1 };
+    //   }
+    // })
 
     // connect to the network
     // this.logger.debug("### HOME INIT connectToCasinocoinNetwork() ###");
@@ -305,6 +286,46 @@ export class HomeComponent implements OnInit, OnDestroy {
     if(this.isConnected && this.casinocoinService != undefined){
       this.casinocoinService.disconnect();
     }
+  }
+
+  doConnectToCasinocoinNetwork(){
+    // Connect to the casinocoin network
+    this.casinocoinService.connect().subscribe(connected => {
+      // this.casinocoinService.casinocoinConnectedSubject.subscribe( connected => {
+        if(connected == AppConstants.KEY_CONNECTED){
+          this.logger.debug("### HOME Connected ###");
+          // subscribe to transaction updates
+          this.casinocoinService.transactionSubject.subscribe( tx => {
+            this.doTransacionUpdate();
+          });
+          // subscribe to account updates
+          this.casinocoinService.accountSubject.subscribe( account => {
+            this.doBalanceUpdate();
+          });
+          setTimeout(() => {
+            this.logger.debug("### HOME Set GUI Connected ###");
+            this.connectionColorClass = "connected-color";
+            this.connectionImage = "assets/icons/connected.png"
+            this.connected_tooltip = "Connected";
+            this.setConnectedMenuItem(true);
+            this.currentServer = this.casinocoinService.getCurrentServer();
+          }, 500);
+        } else {
+          this.logger.debug("### HOME Disconnected ###");
+          setTimeout(() => {
+            this.logger.debug("### HOME Set GUI Disconnected ###");
+            this.connectionColorClass = "disconnected-color";
+            this.connectionImage = "assets/icons/connected-red.png";
+            this.connected_tooltip = "Disconnected";
+            this.setConnectedMenuItem(false);
+            this.currentServer = { server_id: '', server_url: '', response_time: -1 };
+          }, 500);
+          // this.isConnected.next(false);
+          // this.currentServer = { server_id: '', server_url: '', response_time: -1 };
+          // this.logger.debug("### HOME Disconnected currentServer: " + JSON.stringify(this.currentServer));
+        }
+        this.logger.debug("### HOME currentServer: " + JSON.stringify(this.currentServer));
+      });
   }
 
   onMenuClick() {
@@ -524,6 +545,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   createWallet(){
     this.casinocoinService.disconnect();
     this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
+    this.walletService.closeWallet();
     this.walletService.openWalletSubject.next(AppConstants.KEY_INIT);
     this.router.navigate(['wallet-setup']);
   }
