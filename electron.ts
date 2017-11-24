@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, autoUpdater, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, screen, autoUpdater, ipcMain, dialog, Menu, MenuItem } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -151,7 +151,42 @@ function createWindow() {
   // show the windows
   win.once('ready-to-show', () => {
       win.show();
-  })
+  });
+
+  // Create the Application's main menu
+  const template : Electron.MenuItemConstructorOptions[] = [{
+    label: 'CasinoCoin Wallet',
+    submenu: [
+      {
+        label: 'Cut',
+        accelerator: 'Command+X',
+        role: 'cut'
+      },
+      {
+        label: 'Copy',
+        accelerator: 'Command+C',
+        role: 'copy'
+      },
+      {
+        label: 'Paste',
+        accelerator: 'Command+V',
+        role: 'paste'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        label: 'Quit',
+        accelerator: 'Command+Q',
+        click: function() { app.quit(); }
+      }
+    ]
+  }];
+
+  let menu = Menu.buildFromTemplate(template);
+  if (process.platform == 'darwin') {
+    Menu.setApplicationMenu(menu);
+  }
 }
 
 try {

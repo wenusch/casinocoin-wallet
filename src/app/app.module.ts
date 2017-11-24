@@ -31,7 +31,8 @@ import { WebStorageModule,
 import { DatePipe, DecimalPipe,
          CurrencyPipe }             from '@angular/common';
 import { CSCDatePipe, 
-         CSCAmountPipe }            from './app-pipes.module';
+         CSCAmountPipe,
+         ToNumberPipe }             from './app-pipes.module';
 
 import { AppComponent }             from './app.component';
 import { HomeComponent }            from './components/home/home.component';
@@ -66,7 +67,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 @NgModule({
   declarations: [
     AppComponent,
-    CSCDatePipe, CSCAmountPipe,
+    CSCDatePipe, CSCAmountPipe,ToNumberPipe,
     HomeComponent,
     WalletSetupComponent,
     SetupStep1Component, SetupStep2Component, 
@@ -102,7 +103,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
   providers: [
     Logger, Options,
     DatePipe, DecimalPipe, CurrencyPipe,
-    CSCDatePipe, CSCAmountPipe,
+    CSCDatePipe, CSCAmountPipe, ToNumberPipe,
     HttpClient,
     ElectronService,
     AuthGuard,

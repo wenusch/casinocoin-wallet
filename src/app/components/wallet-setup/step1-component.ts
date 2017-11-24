@@ -15,17 +15,17 @@ import { MenuItem, MessagesModule, Message, CheckboxModule } from 'primeng/prime
     @Input() walletTestNetwork: boolean;
     @Output() walletNetworkChange:EventEmitter<boolean> = new EventEmitter();
 
-    networkChoiceDisabled:boolean = true;
+    networkChoiceDisabled:boolean = false;
     keys_pressed: string = "";
 
-    @HostListener('document:keypress', ['$event'])
-    handleKeyboardEvent(event: KeyboardEvent) { 
-      this.keys_pressed = this.keys_pressed + event.key;
-      if(this.keys_pressed === "allowlive"){
-        this.networkChoiceDisabled = false;
-        this.keys_pressed = "";
-      }
-    }
+    // @HostListener('document:keypress', ['$event'])
+    // handleKeyboardEvent(event: KeyboardEvent) { 
+    //   this.keys_pressed = this.keys_pressed + event.key;
+    //   if(this.keys_pressed === "allowlive"){
+    //     this.networkChoiceDisabled = false;
+    //     this.keys_pressed = "";
+    //   }
+    // }
     
     onNetworkChanged(newValue) {
       this.walletNetworkChange.emit(newValue);

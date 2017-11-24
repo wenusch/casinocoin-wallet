@@ -12,6 +12,7 @@ import Big from 'big.js';
 import { CasinocoinTxObject, PrepareTxPayment } from 'app/domain/csc-types';
 import { AppComponent } from 'app/app.component';
 import { CSCAmountPipe } from '../../../app-pipes.module';
+import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-send-coins',
@@ -20,7 +21,7 @@ import { CSCAmountPipe } from '../../../app-pipes.module';
 })
 export class SendCoinsComponent implements OnInit {
 
-  @ViewChild('receipientInput') receipientInput;
+  @ViewChild('recipientInput') recipientInput;
   @ViewChild('descriptionInput') descriptionInput;
   @ViewChild('amountInput') amountInput;
   @ViewChild('accountDropdown') accountDropdown: Dropdown;
@@ -29,7 +30,7 @@ export class SendCoinsComponent implements OnInit {
 
   accounts: SelectItem[] = [];
   selectedAccount: string;
-  receipient: string = "";
+  recipient: string = "";
   description: string = "";
   invoiceID: string;
   destinationTag: number;
@@ -74,6 +75,7 @@ export class SendCoinsComponent implements OnInit {
         });
       }
     });
+    // subscribe to connected messages
     this.casinocoinService.casinocoinConnectedSubject.subscribe(connected => {
       if(connected){
         this.isConnected = true;
@@ -99,12 +101,30 @@ export class SendCoinsComponent implements OnInit {
         this.allowSendFromCurrentConnection = false;
       }
     });
+
+    // subscribe to account updates
+    this.casinocoinService.accountSubject.subscribe( account => {
+      this.doBalanceUpdate();
+    });
+    
     // this.casinocoinService.ledgerSubject.subscribe( ledger => {
     //   this.logger.debug("### SendCoins - ledger: " + JSON.stringify(ledger));
     //   this.fees = CSCUtil.dropsToCsc(ledger.fee_base.toString());
     //   this.minimalFee = this.fees;
     //   this.logger.debug("### SendCoins - minimalFee: " + this.minimalFee);
     // });
+  }
+
+  doBalanceUpdate(){
+    // add empty item to accounts dropdown
+    this.accounts = [];
+    this.accounts.push({label:'Select Account ...', value:null});
+    this.walletService.getAllAccounts().forEach( element => {
+      if(new Big(element.balance) > 0){
+        let accountLabel = element.label + "(" + element.accountID.substring(0,8)+ "...) [Balance: " + CSCUtil.dropsToCsc(element.balance) + "]";
+        this.accounts.push({label: accountLabel, value: element.accountID});
+      }
+    });
   }
 
   onAmountChange(event){
@@ -122,11 +142,18 @@ export class SendCoinsComponent implements OnInit {
     this.checkSendValid();
   }
 
-  onReceipientChange(event){
+  onRecipientChange(event){
     let valid:boolean = CSCUtil.validateAccountID(event);
-    this.logger.debug("### SendCoins - receipient: " + event + " valid: " + valid);
+    this.logger.debug("### SendCoins - recipient: " + event + " valid: " + valid);
     this.invalidReceipient = !valid;
     this.checkSendValid();
+  }
+
+  onDestinationTagChange(event){
+    if((event <= 0) || (event % 1 != 0)){
+      this.logger.debug(event + " is not an whole number");
+      this.messageService.add({severity:'error', summary:'Destination Tag', detail:'The Destination Tag must be a positive whole number.'});
+    }
   }
 
   focusDescription(){
@@ -148,6 +175,7 @@ export class SendCoinsComponent implements OnInit {
   }
 
   doCancelSignAndSubmitTx(){
+    this.checkSendValid();
     this.showPasswordDialog = false;
   }
 
@@ -166,7 +194,7 @@ export class SendCoinsComponent implements OnInit {
     } else {
       let preparePayment: PrepareTxPayment = 
           { source: this.selectedAccount, 
-            destination: this.receipient, 
+            destination: this.recipient, 
             amountDrops: CSCUtil.cscToDrops(this.amount),
             feeDrops: CSCUtil.cscToDrops(this.fees),
             description: this.description
@@ -187,7 +215,7 @@ export class SendCoinsComponent implements OnInit {
           this.casinocoinService.submitTx(txBlob);
           // reset form and dialog fields
           this.selectedAccount = "";
-          this.receipient = "";
+          this.recipient = "";
           this.description = "";
           this.walletPassword = "";
           this.amount = "";
@@ -199,7 +227,12 @@ export class SendCoinsComponent implements OnInit {
         this.showPasswordDialog = false;
         this.signAndSubmitIcon = "fa-check";
       }
-    }
+  }
+
+  cancelSend(){
+    this.showPasswordDialog = false;
+    this.signAndSubmitIcon = "fa-check";
+  }
 
   doSendCoins(){
     this.logger.debug("### SendCoinsComponent - doSendCoins ###");
@@ -231,6 +264,7 @@ export class SendCoinsComponent implements OnInit {
         // we need to reduce the amount so we do not pass maxToSend
         amountToSend = maxToSend;
         this.amount = CSCUtil.dropsToCsc(amountToSend.toString());
+        this.logger.debug("### Set amount to limited: " + this.amount);
       }
       // set total to send
       if(!includeReserve){
@@ -251,8 +285,8 @@ export class SendCoinsComponent implements OnInit {
   }
 
   checkSendValid(){
-    if( CSCUtil.validateAccountID(this.receipient) && this.amount){
-      if(this.receipient == this.selectedAccount){
+    if( CSCUtil.validateAccountID(this.recipient) && this.amount){
+      if(this.recipient == this.selectedAccount){
         this.isSendValid = false;
       } else if (new Big(CSCUtil.cscToDrops(this.totalSend)) > 0) {
          this.isSendValid = true;

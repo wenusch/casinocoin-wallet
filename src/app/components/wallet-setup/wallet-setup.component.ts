@@ -100,8 +100,8 @@ export class WalletSetupComponent implements OnInit {
       this.casinocoinService.disconnect();
     }
 
-    // until we go live we set this to TRUE !!!!
-    this.walletTestNetwork = true;
+    // set default network to LIVE
+    this.walletTestNetwork = false;
 
     let availableWallets: Array<any> = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
     if(availableWallets != null &&  availableWallets.length >= 1){

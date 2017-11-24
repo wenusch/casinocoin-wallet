@@ -21,7 +21,7 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <input type="password" pPassword [(ngModel)]="newWalletPasswordConfirmed" (ngModelChange)="checkPasswordConfirmedUpdate($event)" 
-                   style="width: 100%;" required [(pattern)]="passwordPattern" placeholder="Paswword Confirmation"
+                   style="width: 100%;" required [(pattern)]="passwordPattern" placeholder="Password Confirmation"
                    [disabled]="!paswordConfirmationEnabled" #passwordInputConfirmed/>
         </div>
         <div class="ui-g-1"></div>

@@ -41,6 +41,9 @@ export class CoinSwapComponent implements OnInit {
     this.logger.debug("### INIT CoinSwapComponent ###");
     // disable swap after 2018-02-14 12:00:00 GMT
     this.setSwapDisabled();
+    // only 5 swaps per week allowed
+    this.checkSwapCount();
+    
     // define Swap context menu
     let swap_context_menu_template = [
       { label: 'Copy Deposit Address', 
@@ -98,11 +101,27 @@ export class CoinSwapComponent implements OnInit {
     }
   }
 
+  checkSwapCount(){
+    if(!this.swapDisabled){
+      let nowTimestamp = Date.now();
+      let weekAgoTimestamp = nowTimestamp - 604800000;
+      let dayAgoTimestamp = nowTimestamp - 86400000;
+      // let pastWeekSwaps = this.walletService.getSwapsFromTimestamp(CSCUtil.unixToCasinocoinTimestamp(weekAgoTimestamp));
+      let pastDaySwaps = this.walletService.getSwapsFromTimestamp(CSCUtil.unixToCasinocoinTimestamp(dayAgoTimestamp));
+      this.logger.debug("### Coin Swap - Past Day Swaps Count: " + pastDaySwaps.length);
+      if(pastDaySwaps.length >= 1){
+        this.messageService.add({severity:'error', summary:'Create New Swap', detail:'A maximum of 1 swap per day is allowed!'});
+        this.swapDisabled = true;
+      }
+    }
+  }
+
   doCreateSwap(){
     this.logger.debug("### Create Swap for: " + this.selectedAccount);
     if(this.selectedAccount){
       this.swapService.createSwap(this.selectedAccount);
       this.accountDropdown.resetFilter();
+      this.swapDisabled = true;
     } else {
       this.messageService.add({severity:'error', summary:'Create New Swap', detail:'No account selected to create a new swap.'});
     }

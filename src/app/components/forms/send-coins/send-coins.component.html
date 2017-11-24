@@ -11,9 +11,11 @@
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-address-book"></i></span>
-            <input type="text" pInputText placeholder="Recipient" [(ngModel)]="receipient" (keyup.enter)="focusDescription()"
-                     [disabled]="!selectedAccount" (ngModelChange)="onReceipientChange($event)">
+            <input type="text" pInputText placeholder="Recipient" [(ngModel)]="recipient" (keyup.enter)="focusDescription()"
+                     [disabled]="!selectedAccount" (ngModelChange)="onRecipientChange($event)">
+            <!--       
             <button pButton type="button" icon="fa-search" class="ui-button-secondary"></button>
+            -->
         </div>
     </div>
     <div class="ui-g-12">
@@ -26,10 +28,12 @@
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-tag"></i></span>
-            <input type="number" pInputText placeholder="Destination Tag" [(ngModel)]="destinationTag" (keyup.enter)="focusAmount()"
-                    [disabled]="!selectedAccount || invalidReceipient" min="1" step="1" #destinationTagInput>         
+            <input type="number" placeholder="Destination Tag" [(ngModel)]="destinationTag" (keyup.enter)="focusAmount()"
+                    [disabled]="!selectedAccount || invalidReceipient" min="1" step="1" (ngModelChange)="onDestinationTagChange($event)"
+                    #destinationTagInput>         
         </div>
     </div>
+    <!-- DISABLED InvoiceID for now, need to add checks to validate its contents
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-file-text-o"></i></span>
@@ -37,11 +41,13 @@
                     [disabled]="!selectedAccount || invalidReceipient" #invoiceIDInput>         
         </div>
     </div>
+    -->
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Amount</span>
             <input type="number" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()"
-                    [disabled]="!selectedAccount || invalidReceipient" (ngModelChange)="onAmountChange($event)" #amountInput>
+                    [disabled]="!selectedAccount || invalidReceipient" (ngModelChange)="onAmountChange($event)" 
+                    autocomplete="off" min="0" #amountInput>
             <button pButton type="button" class="ui-button-secondary" (click)="sendAllCoins()" label="all" 
                     [disabled]="!selectedAccount || invalidReceipient"></button>
         </div>
@@ -65,7 +71,7 @@
     <div class="ui-g-12">
         <div class="ui-inputgroup" [matTooltip]="total_tooltip">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Total</span>
-            <input type="number" pInputText [(ngModel)]="totalSend" #totalSendInput disabled>         
+            <input type="text" pInputText [(ngModel)]="totalSend" #totalSendInput disabled>         
         </div>
     </div>
     <!-- We need to have the option to include the reserve as well in the future !!!
@@ -79,15 +85,18 @@
                 class="ui-button-secondary" [disabled]="!isSendValid || !isConnected"></button>
     </div>
 </div>
-<p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="250" [closable]="true" 
+<p-dialog [(visible)]="showPasswordDialog" [width]="480" [height]="325" [closable]="true" 
     [modal]="true" appendTo="body">
     <p-header>
-        CasinoCoin Wallet Password
+        Send CasinoCoins
     </p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            <p>Please enter your wallet password to sign your transaction.</p>
+            <p>You are about to send <span class="confirm-text">{{amount | toNumber | number:'1.2-8'}}</span> 
+                coins to account <span class="confirm-text">{{recipient}}</span> and are paying <span class="confirm-text">{{fees}}</span>  
+                in fees for the transaction.</p>
+            <p>Please enter your wallet password to confirm and sign your transaction.</p>
         </div>
         <div class="ui-g-1"></div>
     </div>
@@ -105,14 +114,14 @@
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-5">
+            <button pButton type="button" (click)="cancelSend()" icon="fa-ban" iconPos="right" label="Cancel" 
+                style="width: 165px;"></button>
         </div>
         <div class="ui-g-5">
-            <span>
-                <button pButton type="button" (click)="doSignAndSubmitTx()" [(icon)]="signAndSubmitIcon" iconPos="right" 
-                        label="Sign And Submit" style="width: 175px;"></button>
-            </span>
-        </div>
+            <button pButton type="button" (click)="doSignAndSubmitTx()" [(icon)]="signAndSubmitIcon" iconPos="right" 
+                        label="Sign And Submit" style="width: 165px;"></button>
         <div class="ui-g-1"></div>
+        </div>
     </div>
     <p-footer *ngIf="footer_visible" class="footer-error">
         Error: {{error_message}}

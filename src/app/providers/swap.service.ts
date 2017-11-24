@@ -92,20 +92,22 @@ export class SwapService {
                 if(swap.swapStatus != 'new_coins_transferred'){
                     // refresh swap info
                     this.getSwap(swap.swapID).subscribe(onlineSwap => {
-                        let updateSwapIndex = this.swaps.findIndex( item => item.swapID == swap.swapID);
-                        if(onlineSwap[0].status){
-                            this.swaps[updateSwapIndex].swapStatus = onlineSwap[0].status[0];
+                        if(onlineSwap.length > 0){
+                            let updateSwapIndex = this.swaps.findIndex( item => item.swapID == swap.swapID);
+                            if(onlineSwap[0].status){
+                                this.swaps[updateSwapIndex].swapStatus = onlineSwap[0].status[0];
+                            }
+                            if(onlineSwap[0].deposit){
+                                this.swaps[updateSwapIndex].swapAmount = onlineSwap[0].deposit.amount;
+                                this.swaps[updateSwapIndex].deposit = onlineSwap[0].deposit;
+                            }
+                            if(onlineSwap[0].storage){
+                                this.swaps[updateSwapIndex].storage = onlineSwap[0].storage;
+                            }
+                            this.swaps[updateSwapIndex].updatedTimestamp = CSCUtil.iso8601ToCasinocoinTime(onlineSwap[0].updated_date);
+                            // save updated swap to the database
+                            this.walletService.updateSwap(this.swaps[updateSwapIndex]);
                         }
-                        if(onlineSwap[0].deposit){
-                            this.swaps[updateSwapIndex].swapAmount = onlineSwap[0].deposit.amount;
-                            this.swaps[updateSwapIndex].deposit = onlineSwap[0].deposit;
-                        }
-                        if(onlineSwap[0].storage){
-                            this.swaps[updateSwapIndex].storage = onlineSwap[0].storage;
-                        }
-                        this.swaps[updateSwapIndex].updatedTimestamp = CSCUtil.iso8601ToCasinocoinTime(onlineSwap[0].updated_date);
-                        // save updated swap to the database
-                        this.walletService.updateSwap(this.swaps[updateSwapIndex]);
                     });
                 }
                 if(index == (arr.length - 1)){

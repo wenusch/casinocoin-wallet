@@ -7,6 +7,7 @@ import { AppConstants } from '../../../domain/app-constants';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron"; 
 import { ElectronService } from '../../../providers/electron.service';
 import { SelectItem, MenuItem } from 'primeng/primeng';
+import { CSCUtil } from '../../../domain/csc-util';
 
 @Component({
   selector: 'app-addressbook',
@@ -24,6 +25,7 @@ export class AddressbookComponent implements OnInit {
   addressMenuItems: MenuItem[];
   selectedAddressRow: LokiAddress;
   address_context_menu: ElectronMenu;
+  invalidAccountID: boolean = true;
 
   constructor(private logger: Logger,
               private casinocoinService: CasinocoinService,
@@ -91,6 +93,12 @@ export class AddressbookComponent implements OnInit {
   showCreateAddress(){
     this.showDialogFooter = false;
     this.showCreateAddressDialog = true;
+  }
+
+  onAccountIDChange(event){
+    let valid:boolean = CSCUtil.validateAccountID(event);
+    this.logger.debug("### Address book - accountID: " + event + " valid: " + valid);
+    this.invalidAccountID = !valid;
   }
 
   doCreateNewAddressbookEntry(){

@@ -331,6 +331,14 @@ export class WalletService {
     }
   }
 
+  getSwapsFromTimestamp(checkTime: number): Array<LokiTypes.LokiSwap> {
+    if(this.isWalletOpen){
+      return this.swaps.find({ initiatedTimestamp: {'$gte': checkTime} });
+    } else {
+      return [];
+    }
+  }
+
   updateSwap(swap: LokiTypes.LokiSwap){
     this.swaps.update(swap);
   }

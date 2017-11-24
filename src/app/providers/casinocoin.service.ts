@@ -234,14 +234,14 @@ export class CasinocoinService implements OnDestroy {
                     this.getAccountInfo(dbTX.accountID);
                     this.notificationService.addMessage(
                         {title: 'Outgoing CSC Transaction', 
-                         body: 'You send '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                         body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
                                ' coins to ' + dbTX.destination});
                 } else {
                     this.getAccountInfo(dbTX.destination);
                     this.getAccountInfo(dbTX.accountID);
                     this.notificationService.addMessage(
                         {title: 'Wallet Transaction', 
-                         body: 'You send '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                         body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
                                ' coins to your own address ' + dbTX.destination});
                 }
             }  else if((incommingMessage['type'] == 'response') && incommingMessage.status === 'success'){
@@ -308,16 +308,16 @@ export class CasinocoinService implements OnDestroy {
                     // the account transaction total from the database to check if we are missing transactions
                     let accountTxBalance = this.walletService.getAccountTXBalance(walletAccount.accountID);
                     this.logger.debug("### CasinocoinService - Account TX Balance: " + walletAccount.accountID + " => " + accountTxBalance);
-                    if(walletAccount.balance !== accountTxBalance){
-                         // we are missing transactions or have still unvalidated transactions for this account so check all
-                         //this.getAccountTx(walletAccount.accountID);
-                         if(outgoingCount != account_result.Sequence){
-                            if(account_result.Sequence > lastSequence){
-                                // get missing tx from ledger
-                                this.getAccountTx(walletAccount.accountID, lastTxLedgerIndex);
-                            }
-                        }
-                    }
+                    // if(walletAccount.balance !== accountTxBalance){
+                    //      // we are missing transactions or have still unvalidated transactions for this account so check all
+                    //      //this.getAccountTx(walletAccount.accountID);
+                    //      if(outgoingCount != account_result.Sequence){
+                    //         if(account_result.Sequence > lastSequence){
+                    //             // get missing tx from ledger
+                    //             this.getAccountTx(walletAccount.accountID, lastTxLedgerIndex);
+                    //         }
+                    //     }
+                    // }
                 } else if(incommingMessage['id'] == 'ValidatedLedgers'){
                     this.logger.debug("### CasinocoinService - Validated Ledger: " + JSON.stringify(incommingMessage.result));
                     if(!this.ledgersLoaded){
@@ -415,7 +415,7 @@ export class CasinocoinService implements OnDestroy {
                         if(notifyUser){
                             this.notificationService.addMessage(
                                 {title: 'Outgoing CSC Transaction', 
-                                body: 'You send '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(tx.amount), "1.2-8") +
+                                body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(tx.amount), "1.2-8") +
                                     ' coins to ' + tx.destination});
                         }
                     } else {
@@ -424,7 +424,7 @@ export class CasinocoinService implements OnDestroy {
                         if(notifyUser){
                             this.notificationService.addMessage(
                                 {title: 'Wallet Transaction', 
-                                body: 'You send '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(tx.amount), "1.2-8") +
+                                body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(tx.amount), "1.2-8") +
                                     ' coins to your own address ' + tx.destination});
                         }
                     }
