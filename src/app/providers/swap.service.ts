@@ -89,7 +89,7 @@ export class SwapService {
         if(mySwaps.length > 0){
             mySwaps.forEach( (swap, index, arr) => {
                 // only process unfinished swaps
-                if(swap.swapStatus != 'new_coins_transferred'){
+                if(swap.swapStatus != 'swap_completed'){
                     // refresh swap info
                     this.getSwap(swap.swapID).subscribe(onlineSwap => {
                         if(onlineSwap.length > 0){

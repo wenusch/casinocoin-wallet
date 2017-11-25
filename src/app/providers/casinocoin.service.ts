@@ -29,6 +29,7 @@ export class CasinocoinService implements OnDestroy {
     private isConnected: boolean = false;
     private makingConnectionStarted: boolean = false;
     private disconnectStarted: boolean = false;
+    private reconnectOnDisconnect: boolean = false;
     private ledgersLoaded: boolean = false;
     private connectedSubscription: Subscription;
     private socketSubscription: Subscription;
@@ -51,6 +52,8 @@ export class CasinocoinService implements OnDestroy {
         logger.debug("### INIT  CasinocoinService ###");
         // Initialize server state
         this.initServerState();
+        // Start server state job
+        this.startServerStateJob();
     }
 
     ngOnDestroy() {
@@ -82,6 +85,10 @@ export class CasinocoinService implements OnDestroy {
                                 // disconnect complete
                                 this.disconnectStarted = false;
                                 this.casinocoinConnectedSubject.next(false);
+                                // check if we need to reconnect?
+                                if(this.reconnectOnDisconnect){
+                                    this.connect();
+                                }
                             } else {
                                 // subscribe to incomming messages on the websocket to initiate connection
                                 this.subscribeToMessages();
@@ -89,6 +96,7 @@ export class CasinocoinService implements OnDestroy {
                             }
                         } else if(connected && !this.isConnected){
                             this.isConnected = true;
+                            this.reconnectOnDisconnect = false;
                             this.casinocoinConnectedSubject.next(true);
                             // inform listeners we are connected
                             connectSubject.next(AppConstants.KEY_CONNECTED);
@@ -135,6 +143,7 @@ export class CasinocoinService implements OnDestroy {
     }
 
     disconnect(){
+        this.logger.debug("### CasinocoinService - disconnect");
         // let disconnectSubject = new Subject<string>();
         this.disconnectStarted = true;
         // disconnect socket
@@ -151,6 +160,12 @@ export class CasinocoinService implements OnDestroy {
         // set disconnected
         this.isConnected = false;
         this.makingConnectionStarted = false;
+    }
+
+    reconnect(){
+        this.logger.debug("### CasinocoinService - reconnect");
+        this.reconnectOnDisconnect = true;
+        this.disconnect();
     }
 
     initServerState(): ServerStateMessage {
@@ -253,6 +268,10 @@ export class CasinocoinService implements OnDestroy {
                 } else if(incommingMessage['id'] == 'server_state'){
                     // we received a server_state
                     this.serverStateSubject.next(incommingMessage.result.state);
+                    if(incommingMessage.result.state.server_state !== 'full'){
+                        // server is not in full state so reconnect to other server
+                        this.reconnect();
+                    }
                 } else if(incommingMessage['id'] == 'getLedger'){
                     // we received a ledger
                     let ledgerMessage: LedgerStreamMessages = {
@@ -573,8 +592,8 @@ export class CasinocoinService implements OnDestroy {
     }
 
     startServerStateJob(){
-        // start job after 1 minute and then repeat every 5 minutes
-        let timer = Observable.timer(60000,300000);
+        // start job after 1 minute and then repeat every 2 minutes
+        let timer = Observable.timer(60000,120000);
         timer.subscribe(t => {
             this.getServerState();
         });
