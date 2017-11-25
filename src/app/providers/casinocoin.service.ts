@@ -310,13 +310,13 @@ export class CasinocoinService implements OnDestroy {
                     this.logger.debug("### CasinocoinService - Account TX Balance: " + walletAccount.accountID + " => " + accountTxBalance);
                     if(walletAccount.balance !== accountTxBalance){
                          // we are missing transactions or have still unvalidated transactions for this account so check all
-                         //this.getAccountTx(walletAccount.accountID);
-                         if(outgoingCount != account_result.Sequence){
-                            if(account_result.Sequence > lastSequence){
-                                // get missing tx from ledger
-                                this.getAccountTx(walletAccount.accountID, lastTxLedgerIndex);
-                            }
-                        }
+                         this.getAccountTx(walletAccount.accountID, -1);
+                        //  if(outgoingCount != account_result.Sequence){
+                        //     if(account_result.Sequence > lastSequence){
+                        //         // get missing tx from ledger
+                        //         this.getAccountTx(walletAccount.accountID, lastTxLedgerIndex);
+                        //     }
+                        // }
                     }
                 } else if(incommingMessage['id'] == 'ValidatedLedgers'){
                     this.logger.debug("### CasinocoinService - Validated Ledger: " + JSON.stringify(incommingMessage.result));
