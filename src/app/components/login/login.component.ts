@@ -23,7 +23,6 @@ export class LoginComponent implements OnInit {
     @ViewChild('inputWallet') inputWalletElementRef;
     @ViewChild('inputPassword') inputPasswordElementRef;
 
-    @LocalStorage() public availableWallets: Array<Object>;
     @SessionStorage() public currentWallet: string = "";
 
     wallets: SelectItem[];
@@ -38,6 +37,8 @@ export class LoginComponent implements OnInit {
 
     dialog_visible: boolean = true;
 
+    public availableWallets: Array<Object>;
+
     constructor(
         private logger: Logger,
         private route: ActivatedRoute,
@@ -50,6 +51,8 @@ export class LoginComponent implements OnInit {
  
     ngOnInit() {
         this.logger.debug("### LoginComponent onInit");
+        // get available wallets
+        this.availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
         // get return url from route parameters or default to '/'
         this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
         this.wallets = [];

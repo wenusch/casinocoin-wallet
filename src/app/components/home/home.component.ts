@@ -426,7 +426,7 @@ export class HomeComponent implements OnInit, OnDestroy {
                   this.electron.remote.dialog.showErrorBox("Error saving private keys", "An error ocurred writing your private keys to a file: " + err.message);
                 }
                 this.electron.remote.dialog.showMessageBox(
-                  { message: "Your private keys have been saved to a file. Make sure you put it in a save place as it contains your private keys!!", 
+                  { message: "Your private keys have been saved to a file in the choosen directory. Make sure you put it in a save place as it contains your decrypted private keys!!", 
                     buttons: ["OK"] 
                   });
               });
@@ -551,6 +551,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
     this.walletService.closeWallet();
     this.walletService.openWalletSubject.next(AppConstants.KEY_INIT);
+    this.sessionStorageService.set(AppConstants.KEY_CREATE_WALLET_RUNNING, true);
     this.router.navigate(['wallet-setup']);
   }
 

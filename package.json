@@ -1,6 +1,6 @@
 {
   "name": "casinocoin-wallet",
-  "version": "4.0.0-beta9",
+  "version": "4.0.0",
   "productName": "CasinoCoin Wallet",
   "description": "CasinoCoin Desktop Wallet",
   "homepage": "https://github.com/casinocoin/casinocoin-wallet",

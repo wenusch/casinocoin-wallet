@@ -308,16 +308,16 @@ export class CasinocoinService implements OnDestroy {
                     // the account transaction total from the database to check if we are missing transactions
                     let accountTxBalance = this.walletService.getAccountTXBalance(walletAccount.accountID);
                     this.logger.debug("### CasinocoinService - Account TX Balance: " + walletAccount.accountID + " => " + accountTxBalance);
-                    // if(walletAccount.balance !== accountTxBalance){
-                    //      // we are missing transactions or have still unvalidated transactions for this account so check all
-                    //      //this.getAccountTx(walletAccount.accountID);
-                    //      if(outgoingCount != account_result.Sequence){
-                    //         if(account_result.Sequence > lastSequence){
-                    //             // get missing tx from ledger
-                    //             this.getAccountTx(walletAccount.accountID, lastTxLedgerIndex);
-                    //         }
-                    //     }
-                    // }
+                    if(walletAccount.balance !== accountTxBalance){
+                         // we are missing transactions or have still unvalidated transactions for this account so check all
+                         //this.getAccountTx(walletAccount.accountID);
+                         if(outgoingCount != account_result.Sequence){
+                            if(account_result.Sequence > lastSequence){
+                                // get missing tx from ledger
+                                this.getAccountTx(walletAccount.accountID, lastTxLedgerIndex);
+                            }
+                        }
+                    }
                 } else if(incommingMessage['id'] == 'ValidatedLedgers'){
                     this.logger.debug("### CasinocoinService - Validated Ledger: " + JSON.stringify(incommingMessage.result));
                     if(!this.ledgersLoaded){

@@ -15,6 +15,7 @@ import { CasinocoinService } from '../../providers/casinocoin.service';
 import { WebsocketService } from '../../providers/websocket.service';
 import { SetupStep1Component } from './step1-component';
 import { CSCCrypto } from 'app/domain/csc-crypto';
+import { setTimeout } from 'timers';
 
 let path = require('path');
 
@@ -170,19 +171,19 @@ export class WalletSetupComponent implements OnInit {
   }
   
   navigateToNextStep() {
+    if(this.activeIndex == 1) {
+      this.finishStep1();
+    } else if (this.activeIndex == 2) {
+      this.finishStep2();
+    } else if(this.activeIndex == 3) {
+      this.finishStep3();
+    } else if(this.activeIndex == 4) {
+      this.finishStep4();
+    } else if(this.activeIndex == 5) {
+      this.finishStep5();
+    }
     if(this.activeIndex < this.maxActiveIndex){
       this.activeIndex += 1;
-    }
-    if(this.activeIndex == 2) {
-      this.finishStep1();
-    } else if (this.activeIndex == 3) {
-      this.finishStep2();
-    } else if(this.activeIndex == 4) {
-      this.finishStep3();
-    } else if(this.activeIndex == 5) {
-      this.finishStep4();
-    } else if(this.activeIndex == 6) {
-      this.finishStep5();
     }
     this.nextButton.nativeElement.blur();
     this.logger.debug("Next, New Active Step: " + this.activeIndex);
@@ -281,21 +282,23 @@ export class WalletSetupComponent implements OnInit {
             this.logger.debug("### WalletSetup - findBestServer Result: " + result);
             if(result && !serverFound){
               serverFound = true;
-              // server found to connect to
-              this.logger.debug("### WalletSetup - Connect to Network");
-              // connect and subscribe to Casinocoin Service messages
-              this.casinocoinService.connect().subscribe((message: any) => {
-                this.logger.debug("### WalletSetup - Connect Message: " + message);
-                if(message == AppConstants.KEY_CONNECTED){
-                  this.connectedToNetwork = true;
-                  this.enableFinishCreation = true;
-                  // the websocket has a queued subject so send out the messages
-                  this.casinocoinService.getServerState();
-                  this.casinocoinService.subscribeToLedgerStream();
-                  this.casinocoinService.subscribeToAccountsStream([walletAccount.accountID]);
-                }
+              this.connectedToNetwork = true;
+              setTimeout( ()=>{ this.enableFinishCreation = true}, 2500);
+              // // server found to connect to
+              // this.logger.debug("### WalletSetup - Connect to Network");
+              // // connect and subscribe to Casinocoin Service messages
+              // this.casinocoinService.connect().subscribe((message: any) => {
+              //   this.logger.debug("### WalletSetup - Connect Message: " + message);
+              //   if(message == AppConstants.KEY_CONNECTED){
+              //     this.connectedToNetwork = true;
+              //     this.enableFinishCreation = true;
+              //     // the websocket has a queued subject so send out the messages
+              //     this.casinocoinService.getServerState();
+              //     this.casinocoinService.subscribeToLedgerStream();
+              //     this.casinocoinService.subscribeToAccountsStream([walletAccount.accountID]);
+              //   }
                 
-              });
+              // });
             }
           });
         }
@@ -325,6 +328,7 @@ export class WalletSetupComponent implements OnInit {
     this.localStorageService.set(AppConstants.KEY_WALLET_LOCATION, this.walletLocation);
     this.localStorageService.set(AppConstants.KEY_PRODUCTION_NETWORK, !this.walletTestNetwork);
     this.localStorageService.set(AppConstants.KEY_SETUP_COMPLETED, true);
+    this.sessionStorageService.remove(AppConstants.KEY_CREATE_WALLET_RUNNING);
     // navigate user back to login to select and open new wallet
     this.router.navigate(['/login']);
     // this.electron.remote.getCurrentWindow().reload();

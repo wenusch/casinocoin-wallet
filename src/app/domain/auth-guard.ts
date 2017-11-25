@@ -15,6 +15,13 @@ export class AuthGuard implements CanActivate {
             ) { }
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) : boolean {
+        this.logger.debug("### AuthGuard route: " + route.toString());
+        this.logger.debug("### AuthGuard state: " + state.toString());
+        // Check if wallet creation is running
+        if (this.sessionStorageService.get(AppConstants.KEY_CREATE_WALLET_RUNNING)){
+            // its ok
+            return false;
+        }
         // Check if we have an opened wallet
         if (this.sessionStorageService.get(AppConstants.KEY_CURRENT_WALLET)) {
             // wallet open so return true
