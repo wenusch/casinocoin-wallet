@@ -29,7 +29,9 @@ npm install -g @angular/cli
 
 ## To build for development
 
-- **in a terminal window** -> npm start  
+- **in a terminal window** -> npm run webpack:watch
+- **Wait till the app finished compiling**
+- **in a second terminal window** -> npm run electron:serve
 
 Voila! You can use your Casinocoin Wallet app in a local development environment with hot reload !
 
@@ -39,19 +41,12 @@ You can desactivate "Developer Tools" by commenting `win.webContents.openDevTool
 
 ## To build for production
 
-- Using development variables (environments/index.ts) :  `npm run electron:dev`
-- Using production variables (environments/index.prod.ts) :  `npm run electron:prod`
+- For windows 32-bit :  `npm run electron:windows32`
+- For windows 64-bit :  `npm run electron:windows64`
+- For Mac OSX :  `npm run electron:mac`
+- For Linux :  `npm run electron:linux`
 
 Your built files are in the /dist folder.
-
-## Included Commands
-
-|Command|Description|
-|--|--|
-|`npm run start:web`| Execute the app in the brower |
-|`npm run electron:linux`| Builds your application and creates an app consumable on linux system |
-|`npm run electron:windows`| On a Windows OS, builds your application and creates an app consumable in windows 32/64 bit systems |
-|`npm run electron:mac`|  On a MAC OS, builds your application and generates a `.app` file of your application that can be run on Ma |
 
 **Your application is optimised. Only the files of /dist folder are included in the executable.**
 
