@@ -1,6 +1,6 @@
 {
   "name": "casinocoin-wallet",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "productName": "CasinoCoin Wallet",
   "description": "CasinoCoin Desktop Wallet",
   "homepage": "https://github.com/casinocoin/casinocoin-wallet",
@@ -37,7 +37,7 @@
     "installer:windows32": "npm run electron:windows32 && node createWinInstaller.js --arch=ia32",
     "installer:windows64": "npm run electron:windows64 && node createWinInstaller.js --arch=x64",
     "installer:windows": "npm run installer:windows32 && npm run installer:windows64",
-    "installer:mac": "npm run electron:mac && npm run electron:mac:sign && electron-installer-dmg ./app-builds/casinocoin-wallet-darwin-x64/casinocoin-wallet.app casinocoin-wallet --out=release-builds --overwrite --icon=./src/assets/icons/casinocoin.icns",
+    "installer:mac": "npm run electron:mac && npm run electron:mac:sign && electron-installer-zip ./app-builds/casinocoin-wallet-darwin-x64/casinocoin-wallet.app release-builds && electron-installer-dmg ./app-builds/casinocoin-wallet-darwin-x64/casinocoin-wallet.app casinocoin-wallet --out=release-builds --overwrite --icon=./src/assets/icons/casinocoin.icns",
     "installer:linux": "npm run electron:linux && node createLinuxInstaller.js",
     "test": "karma start ./karma.conf.js",
     "pree2e": "webdriver-manager update --standalone false --gecko false --quiet && npm run build",
@@ -76,6 +76,7 @@
     "queueing-subject": "0.1.1",
     "rxjs": "5.4.3",
     "rxjs-websockets": "4.0.0",
+    "winston": "^2.4.0",
     "zone.js": "0.8.17"
   },
   "devDependencies": {
@@ -94,6 +95,7 @@
     "electron-builder": "^19.43.0",
     "electron-builder-squirrel-windows": "^19.43.0",
     "electron-installer-dmg": "^0.2.1",
+    "electron-installer-zip": "^0.1.2",
     "electron-packager": "9.1.0",
     "electron-reload": "1.2.1",
     "electron-winstaller": "^2.6.3",

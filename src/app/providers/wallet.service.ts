@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from './log.service';
 import { LedgerStreamMessages, TransactionStreamMessages } from '../domain/websocket-types';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
@@ -9,9 +9,10 @@ import { CSCUtil } from '../domain/csc-util';
 import { CSCCrypto } from '../domain/csc-crypto';
 import { ElectronService } from '../providers/electron.service';
 import { NotificationService, NotificationType, SeverityType } from '../providers/notification.service';
-
+import { WalletUpgrade } from './upgrade/walletupgrade';
 import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
 import Big from 'big.js';
+import int from 'int';
 
 const path = require('path');
 const fs = require('fs');
@@ -30,6 +31,8 @@ const walletSubject = new Subject<any>();
 @Injectable()
 export class WalletService {
 
+  private log_tag = "WalletService";
+  
   private accountSubject = new Subject<any>();
 
   private walletDB;
@@ -50,7 +53,7 @@ export class WalletService {
   public lastTx:LokiTypes.LokiTransaction = this.getWalletLastTx();
   public currentDBMetadata: LokiTypes.LokiDBMetadata;
 
-  constructor(private logger: Logger, 
+  constructor(private logger: LogService, 
               private electron: ElectronService,
               private localStorageService: LocalStorageService,
               private notificationService: NotificationService) {
@@ -152,9 +155,12 @@ export class WalletService {
     let collectionSubject = new Subject<any>();
     let openSubject = new Subject<string>();
     openSubject.subscribe(result => {
-      this.logger.debug("openWallet: " + result);
+      this.logger.debug("### WalletService openWallet: " + result);
       if(result == AppConstants.KEY_LOADED){
+        // notify open complete
         this.currentDBMetadata = this.getDBMetadata();
+        // check for DB upgrades
+        this.checkForUpgrades(walletPassword);                
         this.openWalletSubject.next(result);
         let msg: NotificationType = {severity: SeverityType.info, title:'Wallet Message', body:'Succesfully opened the wallet.'};
         this.notificationService.addMessage(msg);
@@ -248,6 +254,46 @@ export class WalletService {
   // allow for a hard save on app exit
   saveWallet(){
     this.walletDB.saveDatabase();
+  }
+
+  checkForUpgrades(walletPassword: string){
+    this.logger.debug("### WalletService - checkForUpgrades() ### ");
+    let dbVersion:int = CSCUtil.convertStringVersionToNumber( this.getDBMetadata().dbVersion );
+    let appDBVersion:int = CSCUtil.convertStringVersionToNumber( AppConstants.KEY_DB_VERSION);
+    let walletUpgrade: WalletUpgrade = new WalletUpgrade(this.logger, this);
+    let newVersion:string;
+    let walletUpgraded:boolean = false;
+    // check for updates
+    for(let v = dbVersion.add(1); v <= appDBVersion; v++){
+      this.logger.debug("### WalletService - Apply Update: " + v);
+      if(v == 101){
+        walletUpgrade.applyv101();
+        // after upgrade v101 we need te encrypt the keys again
+        this.encryptAllKeys(walletPassword);
+        newVersion = "1.0.1";
+        walletUpgraded = true;
+      }
+    }
+    if(walletUpgraded){
+      // add new dbMetaData record
+      this.updateDBMetadataVersion(newVersion);
+    }
+  }
+
+  updateDBMetadataVersion(newVersion: string){
+    let initDBVersion: LokiTypes.LokiDBMetadata = {
+      dbVersion: newVersion,
+      appVersion: this.electron.remote.app.getVersion(),
+      environment: this.currentDBMetadata.environment,
+      walletUUID: this.currentDBMetadata.walletUUID,
+      walletHash: this.currentDBMetadata.walletHash,
+      mnemonicRecovery: this.currentDBMetadata.mnemonicRecovery,
+      creationTimestamp: this.currentDBMetadata.creationTimestamp,
+      updatedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
+      location: this.currentDBMetadata.location,
+      lastOpenedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now())
+    }
+    this.dbMetadata.insert(initDBVersion);
   }
 
   // #########################################
@@ -479,7 +525,6 @@ export class WalletService {
     let encryptSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
     // get all keys
     let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
-    this.logger.debug(allKeys);
     let cscCrypto = new CSCCrypto(password);
     allKeys.forEach( (element, index, array) => {
       if(!element.encrypted){
@@ -542,6 +587,18 @@ export class WalletService {
     if(decodedKeypair.publicKey == walletKey.publicKey){
       // password was correct, return decoded private key
       return decodedKeypair.privateKey;
+    } else {
+      return AppConstants.KEY_ERRORED;
+    }
+  }
+
+  getDecryptSecret(password: string, walletKey: LokiTypes.LokiKey): string {
+    let cscCrypto = new CSCCrypto(password);
+    let decodedSecret:string = cscCrypto.decrypt(walletKey.secret);
+    let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+    if(decodedKeypair.publicKey == walletKey.publicKey){
+      // password was correct, return decoded private key
+      return decodedSecret;
     } else {
       return AppConstants.KEY_ERRORED;
     }

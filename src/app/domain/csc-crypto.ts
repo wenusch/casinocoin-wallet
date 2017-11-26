@@ -1,4 +1,3 @@
-import { Logger } from "angular2-logger/core";
 import * as crypto  from 'crypto';
 
 export class CSCCrypto {

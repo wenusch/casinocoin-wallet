@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from './log.service';
 import { Router, NavigationStart } from '@angular/router';
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
@@ -28,7 +28,7 @@ export class NotificationService {
     private nativeNotificationSupported: boolean;
  
     constructor(private router: Router,
-                private logger: Logger,
+                private logger: LogService,
                 private electronService: ElectronService,
                 private messageService: MessageService) {
         this.logger.debug("### INIT NotificationService");

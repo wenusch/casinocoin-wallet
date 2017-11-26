@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation, Input, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../providers/log.service';
 import { PasswordModule } from 'primeng/primeng';
 
 @Component({

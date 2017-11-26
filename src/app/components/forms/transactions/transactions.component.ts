@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { InputText } from 'primeng/primeng';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../../providers/log.service';
 import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
@@ -39,7 +39,7 @@ export class TransactionsComponent implements OnInit {
   signAndSubmitIcon:string = "fa-check";
   tx_context_menu: ElectronMenu;
   
-  constructor(private logger:Logger, 
+  constructor(private logger:LogService, 
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
               private electronService: ElectronService, ) { }
@@ -152,7 +152,7 @@ export class TransactionsComponent implements OnInit {
   getStatusIconClasses(tx: LokiTransaction){
     if(tx.validated){
       return ["fa", "fa-check", "color_green"];
-    } else if((this.ledgers[0] != undefined) && (tx.lastLedgerSequence < this.ledgers[0].ledger_index)){
+    } else if((this.ledgers[0] != undefined) && (tx.lastLedgerSequence > this.ledgers[0].ledger_index)){
       return ["fa", "fa-clock-o", "color_orange"];
     } else {
       return ["fa", "fa-ban", "color_red"];

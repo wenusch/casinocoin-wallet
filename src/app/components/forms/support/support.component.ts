@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../../providers/log.service';
 import { AppConstants } from '../../../domain/app-constants';
 import { ElectronService } from '../../../providers/electron.service';
 
@@ -10,7 +10,7 @@ import { ElectronService } from '../../../providers/electron.service';
 })
 export class SupportComponent implements OnInit {
 
-  constructor(private logger: Logger,
+  constructor(private logger: LogService,
               private electronService: ElectronService) { 
           this.logger.debug("### INIT Support ###");
   }

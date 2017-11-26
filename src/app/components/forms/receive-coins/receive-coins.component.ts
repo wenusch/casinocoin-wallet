@@ -4,7 +4,7 @@ import { CSCUtil } from '../../../domain/csc-util';
 import { LocalStorage, SessionStorage } from "ngx-store";
 import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../../providers/log.service';
 import { AppConstants } from '../../../domain/app-constants';
 import { ElectronService } from '../../../providers/electron.service';
 import { SelectItem, MenuItem } from 'primeng/primeng';
@@ -29,7 +29,7 @@ export class ReceiveCoinsComponent implements OnInit {
   selectedReceiveRow: LokiAccount;
   receive_context_menu: ElectronMenu;
 
-  constructor(private logger: Logger,
+  constructor(private logger: LogService,
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
               private electronService: ElectronService) { 
@@ -112,7 +112,6 @@ export class ReceiveCoinsComponent implements OnInit {
     } else {
       // generate new key pair offline
       let newKeyPair:LokiKey = this.casinocoinService.generateNewKeyPair();
-      let password = "";
       let accountLabel = "";
       if (newKeyPair.accountID.length > 0){
         // add keypair to database
@@ -130,7 +129,7 @@ export class ReceiveCoinsComponent implements OnInit {
         };
         this.walletService.addAccount(walletAccount);
         this.logger.debug("### Create Account - Encrypt Wallet Keys");
-        this.walletService.encryptAllKeys(password).subscribe( result => {
+        this.walletService.encryptAllKeys(this.walletPassword).subscribe( result => {
           if(result == AppConstants.KEY_FINISHED){
             this.logger.debug("### Account Created: " + walletAccount.accountID);
             // refresh account list

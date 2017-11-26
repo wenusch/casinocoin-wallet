@@ -11,6 +11,7 @@ const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
 const version = app.getVersion();
 const platform = os.platform() + '_' + os.arch();
+const globalTS:any = global;
 
 // set app id
 app.setAppUserModelId("CasinoCoin Wallet");
@@ -18,12 +19,14 @@ app.setAppUserModelId("CasinoCoin Wallet");
 // set property for exit dialog
 let showExitPrompt = true;
 
+// define auto update url
 let updaterFeedURL = 'https://download.casinocoin.org/update/' + platform + '/' + version;
 if(version.indexOf("beta") !== -1){
 	updaterFeedURL = updaterFeedURL + '/' + 'beta';
 }
 console.log('Update URL: ' + updaterFeedURL);
 
+// if in development add electron reload
 if (serve) {
   require('electron-reload')(__dirname, {
     electron: require('${__dirname}/../../node_modules/electron')
@@ -85,6 +88,43 @@ if (!fs.existsSync(defaultCSCPath)){
 }
 app.setPath('userData', defaultCSCPath);
 
+// configure loggging 
+const winston = require('winston');
+globalTS.loglevel = 'debug';
+var logFolder = path.join(app.getPath("userData"), "logs");
+if (!fs.existsSync(logFolder)){
+  fs.mkdirSync(logFolder);
+}
+let logFilename = new Date().toISOString().replace(/:/g, '.') + '.log';
+let logFile = path.join(logFolder, logFilename)
+
+function customFileFormatter (options) {
+  // Return string will be passed to logger.
+  return new Date().toISOString() +' ['+ options.level.toUpperCase() +'] '+ (undefined !== options.message ? options.message : '') +
+   (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
+}
+
+winston.add(winston.transports.File, 
+  { filename: logFile,
+    level: globalTS.loglevel,
+    maxsize: 100000000,
+    json: false,
+    formatter: customFileFormatter
+  }
+);
+winston.remove(winston.transports.Console);
+winston.level = globalTS.loglevel;
+globalTS.logger = winston;
+
+// configure backup path
+let backupFolder = path.join(app.getPath("userData"), "backup");
+if (!fs.existsSync(backupFolder)){
+  fs.mkdirSync(backupFolder);
+}
+globalTS.backupPath = backupFolder;
+
+
+// create window
 function createWindow() {
 
   const electronScreen = screen;
@@ -219,7 +259,8 @@ try {
   app.on('before-quit', () => {
     if(showExitPrompt == false){
       console.log('Quiting Casinocoin Wallet, save the database!!!');
-      // win.webContents.send('wallet-save');
+      // let backupResult = win.webContents.sendSync('wallet-backup');
+      // console.log("Backup Result: " + backupResult);
     }
   });
 

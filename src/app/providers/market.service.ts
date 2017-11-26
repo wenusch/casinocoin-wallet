@@ -1,5 +1,5 @@
 import { Injectable, OnInit, OnDestroy } from '@angular/core';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from './log.service';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { CoinMarketCapType } from '../domain/service-types';
@@ -13,7 +13,7 @@ export class MarketService {
     public coinMarketInfo: CoinMarketCapType;
     private checkInterval: any;
 
-    constructor(private logger: Logger, 
+    constructor(private logger: LogService, 
                 private http: HttpClient,
                 private localStorageService: LocalStorageService) {
         logger.debug("### INIT  MarketService ###");

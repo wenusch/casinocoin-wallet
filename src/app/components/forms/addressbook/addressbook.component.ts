@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { LokiAddress } from '../../../domain/lokijs';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../../providers/log.service';
 import { AppConstants } from '../../../domain/app-constants';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron"; 
 import { ElectronService } from '../../../providers/electron.service';
@@ -27,7 +27,7 @@ export class AddressbookComponent implements OnInit {
   address_context_menu: ElectronMenu;
   invalidAccountID: boolean = true;
 
-  constructor(private logger: Logger,
+  constructor(private logger: LogService,
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
               private electronService: ElectronService) { 

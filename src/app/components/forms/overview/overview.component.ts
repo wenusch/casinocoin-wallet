@@ -4,7 +4,7 @@ import { WalletService } from '../../../providers/wallet.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { LedgerStreamMessages, ServerStateMessage } from '../../../domain/websocket-types';
 import { LokiTransaction } from '../../../domain/lokijs';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../../providers/log.service';
 import { AppConstants } from '../../../domain/app-constants';
 
 @Component({
@@ -23,7 +23,7 @@ export class OverviewComponent implements OnInit {
   transaction_count:number;
   last_transaction:number;
 
-  constructor(private logger: Logger,
+  constructor(private logger: LogService,
               private casinocoinService: CasinocoinService,
               private walletService: WalletService) { 
     this.logger.debug("### INIT Overview ###");

@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../../providers/log.service';
 import { SelectItem, Dropdown, MenuItem } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { WalletService } from '../../../providers/wallet.service';
@@ -31,7 +31,7 @@ export class CoinSwapComponent implements OnInit {
 
   refresh_icon: string = "fa-refresh";
 
-  constructor(private logger: Logger, 
+  constructor(private logger: LogService, 
               private walletService: WalletService,
               private swapService: SwapService,
               private electronService: ElectronService,

@@ -9,7 +9,7 @@ import { LocalStorageService } from "ngx-store";
 import { LedgerStreamMessages, ValidationStreamMessages, 
          TransactionStreamMessages, ServerStateMessage, 
          ServerDefinition } from '../domain/websocket-types';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from './log.service';
 import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
 import * as cscBinaryAPI from 'casinocoin-libjs-binary-codec';
 import { LokiKey, LokiAccount, LokiTransaction, LokiTxStatus } from '../domain/lokijs';
@@ -43,7 +43,7 @@ export class CasinocoinService implements OnDestroy {
     public lastTransactionHash: string = "";
     public casinocoinConnectedSubject = new BehaviorSubject<boolean>(false);
 
-    constructor(private logger: Logger, 
+    constructor(private logger: LogService, 
                 private wsService: WebsocketService,
                 private walletService: WalletService,
                 private notificationService: NotificationService,
@@ -498,7 +498,7 @@ export class CasinocoinService implements OnDestroy {
         // start keepalive after 5 seconds and then repeat every 10 seconds
         let timer = Observable.timer(5000,10000);
         timer.subscribe( t => {
-            this.logger.debug("### KeepAlive Ticks: ", t);
+            this.logger.debug("### KeepAlive Ticks: " + t);
             this.pingServer();
         });
     }

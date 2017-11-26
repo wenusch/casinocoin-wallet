@@ -14,6 +14,7 @@ import { environment }              from '../environments/index';
 import { AppRoutingModule }         from './app-routing.module';
 
 import { ElectronService }          from './providers/electron.service';
+import { LogService }               from './providers/log.service';
 import { WalletService }            from './providers/wallet.service';
 import { CasinocoinService }        from './providers/casinocoin.service';
 import { WebsocketService }         from './providers/websocket.service';
@@ -106,6 +107,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     CSCDatePipe, CSCAmountPipe, ToNumberPipe,
     HttpClient,
     ElectronService,
+    LogService,
     AuthGuard,
     WebsocketService,
     WalletService,

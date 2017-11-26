@@ -1,5 +1,5 @@
 import { Injectable, OnInit, OnDestroy } from '@angular/core';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from './log.service';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { WalletService } from './wallet.service';
@@ -15,7 +15,7 @@ export class SwapService {
     public swaps: Array<LokiSwap> = [];
     private refreshSubject = new BehaviorSubject<boolean>(false);
 
-    constructor(private logger: Logger, 
+    constructor(private logger: LogService, 
                 private http: HttpClient,
                 private walletService: WalletService) {
         logger.debug("### INIT  SwapService ###");

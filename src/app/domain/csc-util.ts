@@ -193,4 +193,10 @@ export class CSCUtil {
             return false;
         }
     }
+
+    static convertStringVersionToNumber(version:string): int {
+        // remove points
+        let dotlessVersion = version.split(".").join("");
+        return int(dotlessVersion);
+    }
 }

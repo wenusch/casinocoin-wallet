@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation, Input, Output, EventEmitter, ViewChild } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../providers/log.service';
 import { ElectronService } from '../../providers/electron.service';
 import { MenuItem, MessagesModule, Message } from 'primeng/primeng';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
@@ -25,7 +25,7 @@ import { WalletService } from '../../providers/wallet.service';
   })
   export class SetupStep5Component {
 
-    constructor( private logger: Logger, 
+    constructor( private logger: LogService, 
       private electron: ElectronService,
       private localStorageService: LocalStorageService,
       private sessionStorageService: SessionStorageService,

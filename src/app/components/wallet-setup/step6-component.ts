@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation, Input } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../providers/log.service';
 import { ElectronService } from '../../providers/electron.service';
 import { MenuItem, MessagesModule, Message } from 'primeng/primeng';
 

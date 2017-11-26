@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { InputText } from 'primeng/primeng';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../../providers/log.service';
 import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
@@ -55,7 +55,7 @@ export class SendCoinsComponent implements OnInit {
   footer_visible: boolean = false;
   error_message: string = "";
 
-  constructor(private logger:Logger, 
+  constructor(private logger:LogService, 
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
               private messageService: MessageService,

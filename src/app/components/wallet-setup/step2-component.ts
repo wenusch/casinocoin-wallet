@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewEncapsulation, Input, Output, EventEmitter } from '@angular/core';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../providers/log.service';
 import { AppConstants } from '../../domain/app-constants';
 
 import { MenuItem, MessagesModule, Message, CheckboxModule } from 'primeng/primeng';

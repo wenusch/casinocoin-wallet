@@ -2,9 +2,9 @@ import { Component, OnInit, OnDestroy, trigger, state, animate, transition, styl
 import { Router } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common'
 import { Observable, BehaviorSubject } from 'rxjs';
-import { Logger } from 'angular2-logger/core';
 import { LocalStorage, SessionStorage, LocalStorageService, SessionStorageService } from 'ngx-store';
 import { ElectronService } from '../../providers/electron.service';
+import { LogService } from '../../providers/log.service';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
 import { CasinocoinService } from '../../providers/casinocoin.service';
 import { ServerDefinition } from '../../domain/websocket-types';
@@ -105,7 +105,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   footer_visible: boolean = false;
   error_message: string = "";
 
-  constructor( private logger: Logger, 
+  backupPath: string;
+
+  constructor( private logger: LogService, 
                private router: Router,
                private electron: ElectronService,
                private walletService: WalletService,
@@ -117,6 +119,11 @@ export class HomeComponent implements OnInit, OnDestroy {
                private currenyPipe: CurrencyPipe ) {
     this.logger.debug("### INIT HOME ###");
     this.applicationVersion = this.electron.remote.app.getVersion();
+    this.backupPath = this.electron.remote.getGlobal("backupPath");
+    // this.electron.ipcRenderer.on("wallet-backup", (event, arg) => {
+    //   this.backupWallet();
+    //   event.returnValue = "finished";
+    // });
   }
 
   ngOnInit() {
@@ -292,6 +299,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     if(this.isConnected && this.casinocoinService != undefined){
       this.casinocoinService.disconnect();
     }
+    // backup the database
+    this.backupWallet();
   }
 
   doConnectToCasinocoinNetwork(){
@@ -655,4 +664,17 @@ export class HomeComponent implements OnInit, OnDestroy {
   onSettingsSave(){
     
   }
+
+  backupWallet() {
+    this.logger.debug("### HOME Backup DB ###");
+    let dbDump = this.walletService.getWalletDump();
+    // create a filename
+    let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss") + ".backup";
+    let backupFilePath = path.join(this.backupPath, filename);
+    // Write the JSON array to the file 
+    fs.writeFileSync(backupFilePath, dbDump);
+    // signal electron we are done
+    // this.electron.ipcRenderer.sendSync("backup-finished");
+  }
+
 }

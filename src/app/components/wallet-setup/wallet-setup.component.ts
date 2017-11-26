@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
 import { trigger, state, transition, style, animate } from '@angular/animations';
 import { Router } from '@angular/router';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../providers/log.service';
 import { ElectronService } from '../../providers/electron.service';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { AppConstants } from '../../domain/app-constants';
@@ -82,7 +82,7 @@ export class WalletSetupComponent implements OnInit {
   @ViewChild('nextButton') nextButton;
   @ViewChild('finishButton') finishButton;
 
-  constructor( private logger: Logger, 
+  constructor( private logger: LogService, 
                private electron: ElectronService,
                private router: Router,
                private localStorageService: LocalStorageService,

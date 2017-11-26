@@ -6,7 +6,7 @@ import { LocalStorage, SessionStorage, LocalStorageService } from "ngx-store";
 import { SelectItem } from 'primeng/primeng';
 import { CSCUtil } from '../../domain/csc-util';
 import { AppConstants } from '../../domain/app-constants';
-import { Logger } from 'angular2-logger/core';
+import { LogService } from '../../providers/log.service';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { AppComponent } from 'app/app.component';
 import { setTimeout } from 'timers';
@@ -40,7 +40,7 @@ export class LoginComponent implements OnInit {
     public availableWallets: Array<Object>;
 
     constructor(
-        private logger: Logger,
+        private logger: LogService,
         private route: ActivatedRoute,
         private router: Router,
         private walletService: WalletService,
