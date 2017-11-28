@@ -1,30 +1,45 @@
-const createLinuxInstall = require('electron-linux-installer');
+
+const debianInstaller = require('electron-installer-debian');
+const redhatInstaller = require('electron-installer-redhat');
+
 const path = require('path')
 const appVersion = require('./package.json').version;
 
-getInstallerConfig()
-    .then((result) => {
-        createLinuxInstall(result).then(success => {
-            console.log(success)
-        }).catch(e => {
-            throw e
-        });
-    })
-    .catch((error) => {
-        console.error(error.message || error)
-        process.exit(1)
-});
+var debianOptions = {
+  src: 'app-builds/casinocoin-wallet-linux-x64/',
+  dest: 'release-builds/',
+  icon: 'src/assets/icons/casinocoin.png',
+  homepage: 'http://www.casinocoin.org', 
+  arch: 'amd64'
+}
 
-function getInstallerConfig () {
-    console.log('creating linux installer');
-    const rootPath = path.join('./');
-    const appPath = path.join(rootPath, 'app-builds');
-    const outPath = path.join(rootPath, 'release-builds');
-  
-    return Promise.resolve({
-      src: appPath,
-      dest: path.join(outPath, 'linux-x86_64'),
-      arch: 'x86_64',
-      for: 'both'
-    })
+console.log('Creating Debian Package (this may take a while)')
+
+debianInstaller(debianOptions, function (err) {
+  if (err) {
+    console.error(err, err.stack)
+    process.exit(1)
   }
+
+  console.log('Successfully created package at ' + debianOptions.dest)
+})
+
+
+var redhatOptions = {
+  src: 'app-builds/casinocoin-wallet-linux-x64/',
+  dest: 'release-builds/',
+  icon: 'src/assets/icons/casinocoin.png',
+  homepage: 'http://www.casinocoin.org',
+  arch: 'x86_64'
+}
+
+console.log('Creating package (this may take a while)');
+
+redhatInstaller(redhatOptions, function (err) {
+  if (err) {
+    console.error(err, err.stack)
+    process.exit(1)
+  }
+
+  console.log('Successfully created package at ' + redhatOptions.dest);
+});
