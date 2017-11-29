@@ -330,14 +330,20 @@ export class WalletSetupComponent implements OnInit {
     this.localStorageService.set(AppConstants.KEY_SETUP_COMPLETED, true);
     this.sessionStorageService.remove(AppConstants.KEY_CREATE_WALLET_RUNNING);
     // navigate user back to login to select and open new wallet
-    this.router.navigate(['/login']);
-    // this.electron.remote.getCurrentWindow().reload();
+    this.router.navigate(['login']);
   }
 
   cancelSetup(){
     this.logger.debug("Setup New Wallet Canceled");
     this.cancelButton.nativeElement.blur();
-    this.router.navigate(['/login']);
+    this.sessionStorageService.remove(AppConstants.KEY_CREATE_WALLET_RUNNING);
+    this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
+    this.router.navigate(['home','transactions']).then(navResult => {
+      this.logger.debug("### Transactions navResult: " + navResult);
+      if(navResult){
+        this.electron.remote.getCurrentWindow().reload();
+      }
+    });
   }
 
   cancelStep2() {

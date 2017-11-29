@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, trigger, state, animate, transition, style, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, trigger, state, animate, 
+         transition, style, ViewChild, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common'
 import { Observable, BehaviorSubject } from 'rxjs';
@@ -19,6 +20,8 @@ import { LedgerStreamMessages, ServerStateMessage } from '../../domain/websocket
 
 import * as LokiTypes from '../../domain/lokijs';
 import Big from 'big.js';
+import { setTimeout } from 'timers';
+import { Subject } from 'rxjs/Subject';
 
 const path = require('path');
 const fs = require('fs');
@@ -41,7 +44,7 @@ const crypto = require('crypto');
   ]
 })
 
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @SessionStorage() public currentWallet: string;
     
@@ -86,16 +89,17 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   isConnected = new BehaviorSubject<boolean>(false);
   connected_icon: string = "fa fa-wifi fa-2x";
-  connected_tooltip: string = "Disconnected";
+  connected_tooltip: string = "Connected";
   // connection_image: string = "assets/icons/connected-red.png";
-  connectionColorClass: string = "disconnected-color";
-  connectionImage: string = "assets/icons/connected-red.png";
+  connectionColorClass: string = "connected-color";
+  connectionImage: string = "assets/icons/connected.png";
   manualDisconnect: boolean = false;
   searchDate: Date;
 
   serverState: ServerStateMessage;
   currentServer: ServerDefinition;
   casinocoinConnectionSubject: Observable<any>;
+  uiChangeSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
 
   balance:string;;
   fiat_balance:string;
@@ -126,6 +130,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     //   this.backupWallet();
     //   event.returnValue = "finished";
     // });
+  }
+
+  ngAfterViewInit(){
+    this.logger.debug("### HOME ngAfterViewInit() ###");
+    // subscribe to UI changes
+    this.uiChangeSubject.subscribe(status =>{
+      if(status == AppConstants.KEY_CONNECTED){
+        this.setWalletUIConnected();
+      } else if (status == AppConstants.KEY_DISCONNECTED){
+        this.setWalletUIDisconnected();
+      }
+    });
   }
 
   ngOnInit() {
@@ -271,47 +287,10 @@ export class HomeComponent implements OnInit, OnDestroy {
       } else if(result == AppConstants.KEY_INIT && this.currentWallet){
         // wallet is not open but we seem to have a session, not good so redirect to login
         this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
-        this.router.navigate(['/login']);
+        this.router.navigate(['login']);
       }
     });
-
-    
-
-    // listen to connection changes
-    // this.isConnected.subscribe( connected => {
-    //   this.logger.debug("### HOME Connection Status Changed: " + connected);
-    //   if(connected){
-    //       this.logger.debug("### HOME Update UI to Connected");
-    //       this.connectionColorClass = "connected-color";
-    //       this.connectionImage = "assets/icons/connected.png"
-    //       this.connected_tooltip = "Connected";
-    //       this.setConnectedMenuItem(true);
-    //       this.currentServer = this.casinocoinService.currentServer;
-    //   } else {
-    //       this.logger.debug("### HOME Update UI to Disconnected");
-    //       this.connectionColorClass = "disconnected-color";
-    //       this.connectionImage = "assets/icons/connected-red.png";
-    //       this.connected_tooltip = "Disconnected";
-    //       this.setConnectedMenuItem(false);
-    //       this.currentServer = { server_id: '', server_url: '', response_time: -1 };
-    //   }
-    // })
-
-    // connect to the network
-    // this.logger.debug("### HOME INIT connectToCasinocoinNetwork() ###");
-    // this.connectToCasinocoinNetwork();
-
-    // // generate mnemonic
-    // let mnemonicArray = CSCCrypto.getRandomMnemonic();
-    // this.logger.debug("### HOME mnemonic: " + mnemonicArray);
-    // let cscCrypto = new CSCCrypto(mnemonicArray);
-    
-    // // crypto.createHmac('sha256', password).update(walletUUID).digest('hex');
-    // let encryptedPassword = cscCrypto.encrypt('test1234');
-    // this.logger.debug("### HOME mnemonic encrypted: " + encryptedPassword);
-    // let decryptedPassword = cscCrypto.decrypt(encryptedPassword);
-    // this.logger.debug("### HOME Decrypted Password: " + decryptedPassword);
-
+    this.setConnectedMenuItem(true);
   }
 
   ngOnDestroy(){
@@ -341,25 +320,32 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.casinocoinService.accountSubject.subscribe( account => {
             this.doBalanceUpdate();
           });
-          this.logger.debug("### HOME Set GUI Connected ###");
-          this.connectionImage = "assets/icons/connected.png"
-          this.connectionColorClass = "connected-color";
-          this.connected_tooltip = "Connected";
-          this.setConnectedMenuItem(true);
-          this.currentServer = this.casinocoinService.getCurrentServer();
+          this.uiChangeSubject.next(AppConstants.KEY_CONNECTED);
+        } else if(connected == AppConstants.KEY_DISCONNECTED){
+          this.uiChangeSubject.next(AppConstants.KEY_DISCONNECTED);
         } else {
-          this.logger.debug("### HOME Set GUI Disconnected ###");
-          this.connectionImage = "assets/icons/connected-red.png";
-          this.connectionColorClass = "disconnected-color";
-          this.connected_tooltip = "Disconnected";
-          this.setConnectedMenuItem(false);
-          this.currentServer = { server_id: '', server_url: '', response_time: -1 };
-          // this.isConnected.next(false);
-          // this.currentServer = { server_id: '', server_url: '', response_time: -1 };
-          // this.logger.debug("### HOME Disconnected currentServer: " + JSON.stringify(this.currentServer));
+          this.logger.debug("### HOME Connected value: " + connected);
         }
         this.logger.debug("### HOME currentServer: " + JSON.stringify(this.currentServer));
       });
+  }
+
+  setWalletUIConnected(){
+      this.logger.debug("### HOME Set GUI Connected ###");
+      this.connectionImage = "assets/icons/connected.png"
+      this.connectionColorClass = "connected-color";
+      this.connected_tooltip = "Connected";
+      this.setConnectedMenuItem(true);
+      this.currentServer = this.casinocoinService.getCurrentServer();
+  }
+
+  setWalletUIDisconnected(){
+      this.logger.debug("### HOME Set GUI Disconnected ###");
+      this.connectionImage = "assets/icons/connected-red.png";
+      this.connectionColorClass = "disconnected-color";
+      this.connected_tooltip = "Disconnected";
+      this.setConnectedMenuItem(false);
+      // this.currentServer = { server_id: '', server_url: '', response_time: -1 };
   }
 
   onMenuClick() {
@@ -397,6 +383,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   onServerInfo() {
+    this.currentServer = this.casinocoinService.getCurrentServer();
     this.showServerInfoDialog = true;
   }
 
@@ -509,7 +496,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             if(dbDump.length > 0){
               this.walletService.importWalletDump(dbDump);
               // redirect to login
-              this.router.navigate(['/login']);
+              this.router.navigate(['login']);
             }
           } else {
             alert("An error ocurred reading the backup file: "+ result[0]);
@@ -623,14 +610,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   //     return "../../../assets/icons/connected-red.png"
   //   }
   // }
-
-  onOverview() {
-    this.logger.debug("Home Clicked !!");
-    // make overview active and others inactive
-
-    // navigate to overview
-    this.router.navigate(['home', 'overview']);
-  }
 
   onTransactions() {
     this.logger.debug("Transactions Clicked !!");

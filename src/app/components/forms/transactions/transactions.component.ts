@@ -160,6 +160,17 @@ export class TransactionsComponent implements OnInit {
     }
   }
 
+  getStatusTooltipText(tx: LokiTransaction){
+    if(tx.validated){
+      return "Transaction validated and final.";
+    } else if((this.ledgers[0] != undefined) && (tx.lastLedgerSequence > this.ledgers[0].ledger_index)){
+      return "Transaction not yet validated. Waiting to be included until ledger " + tx.lastLedgerSequence + 
+              " (current ledger: "+this.ledgers[0].ledger_index+ ").";
+    } else {
+      return "Transaction cancelled.";
+    }
+  }
+
   getDescription(rowData){
     if(rowData.memos && rowData.memos.length > 0){
       return rowData.memos[0].memo.memoData;

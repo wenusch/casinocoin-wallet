@@ -115,7 +115,7 @@ export class LoginComponent implements OnInit {
                             // Navigate to Home 
                             this.currentWallet = walletObject['walletUUID'];
                             this.localStorageService.set(AppConstants.KEY_WALLET_LOCATION, walletObject['location']);
-                            this.router.navigate(['home']);
+                            this.router.navigate(['home','transactions']);
                         } else if (result == AppConstants.KEY_ERRORED) {
                             // there was an error opening the wallet
                             this.logger.debug("### LoginComponent - there was an error opening the wallet");

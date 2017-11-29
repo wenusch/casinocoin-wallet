@@ -38,8 +38,10 @@
             </p-column>
             <p-column field="validated" [style]="{'width':'50px'}">
                 <ng-template let-data="rowData" pTemplate="body">
-                    <p class="item-p"><span class="item-label">status: </span><i [ngClass]="getStatusIconClasses(data)"></i></p>
-                    <p class="item-p"><span class="item-label">ledger: </span><span class="item-value"> {{ data.inLedger }}</span></p>
+                    <div [matTooltip]="getStatusTooltipText(data)">
+                        <p class="item-p"><span class="item-label">status: </span><i [ngClass]="getStatusIconClasses(data)"></i></p>
+                        <p class="item-p"><span class="item-label">ledger: </span><span class="item-value"> {{ data.inLedger }}</span></p>
+                    </div>
                 </ng-template>
             </p-column>
             <p-column field="amount" [style]="{'width':'75px'}">
