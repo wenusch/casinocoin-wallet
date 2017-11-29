@@ -7,6 +7,7 @@ export class AppConstants {
     public static KEY_WALLET_LOCATION = 'walletLocation';
     public static KEY_WALLET_PASSWORD_HASH = 'walletPasswordHash';
     public static KEY_PRODUCTION_NETWORK = 'productionNetwork';
+    public static KEY_LAST_WALLET_SERVER = 'lastWalletServer';
     public static KEY_COININFO = 'cscCoinInfo';
     public static KEY_INIT = 'INIT';
     public static KEY_LOADED = 'LOADED';

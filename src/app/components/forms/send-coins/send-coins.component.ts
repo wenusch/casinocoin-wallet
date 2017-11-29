@@ -250,38 +250,40 @@ export class SendCoinsComponent implements OnInit {
 
   calculateTotal(includeReserve: boolean){
     this.logger.debug("### SendCoins - calculateTotal: " + this.amount + " fees: " + this.fees);
-    if(new Big(this.amount) > 0 && new Big(this.fees) > 0){
-      // let totalSendSatoshi = new Big(CSCUtil.cscToDrops(this.amount)).plus(new Big(CSCUtil.cscToDrops(this.fees)));
-      // this.totalSend = CSCUtil.dropsToCsc(totalSendSatoshi.toString());
-      let amountToSend = new Big(CSCUtil.cscToDrops(this.amount));
-      let maxToSend = new Big(this.walletService.getAccountBalance(this.selectedAccount))
-                        .minus(new Big(CSCUtil.cscToDrops(this.fees)));
-      if(!includeReserve){
-        maxToSend = maxToSend.minus(new Big(CSCUtil.cscToDrops(this.accountReserve)));
-      }
-      this.logger.debug("amountToSend: " + amountToSend + " maxToSend: " + maxToSend + " this.accountReserve: " + this.accountReserve);
-      if(amountToSend.gt(maxToSend)){
-        // we need to reduce the amount so we do not pass maxToSend
-        amountToSend = maxToSend;
-        this.amount = CSCUtil.dropsToCsc(amountToSend.toString());
-        this.logger.debug("### Set amount to limited: " + this.amount);
-      }
-      // set total to send
-      if(!includeReserve){
-        this.totalSend = CSCUtil.dropsToCsc(
-          amountToSend.plus(new Big(CSCUtil.cscToDrops(this.fees)))
-        );
+    if(this.amount != null){
+      if(new Big(this.amount) > 0 && new Big(this.fees) > 0){
+        // let totalSendSatoshi = new Big(CSCUtil.cscToDrops(this.amount)).plus(new Big(CSCUtil.cscToDrops(this.fees)));
+        // this.totalSend = CSCUtil.dropsToCsc(totalSendSatoshi.toString());
+        let amountToSend = new Big(CSCUtil.cscToDrops(this.amount));
+        let maxToSend = new Big(this.walletService.getAccountBalance(this.selectedAccount))
+                          .minus(new Big(CSCUtil.cscToDrops(this.fees)));
+        if(!includeReserve){
+          maxToSend = maxToSend.minus(new Big(CSCUtil.cscToDrops(this.accountReserve)));
+        }
+        this.logger.debug("amountToSend: " + amountToSend + " maxToSend: " + maxToSend + " this.accountReserve: " + this.accountReserve);
+        if(amountToSend.gt(maxToSend)){
+          // we need to reduce the amount so we do not pass maxToSend
+          amountToSend = maxToSend;
+          this.amount = CSCUtil.dropsToCsc(amountToSend.toString());
+          this.logger.debug("### Set amount to limited: " + this.amount);
+        }
+        // set total to send
+        if(!includeReserve){
+          this.totalSend = CSCUtil.dropsToCsc(
+            amountToSend.plus(new Big(CSCUtil.cscToDrops(this.fees)))
+          );
+        } else {
+          this.totalSend = CSCUtil.dropsToCsc(
+            amountToSend.plus(new Big(CSCUtil.cscToDrops(this.fees)))
+                        .plus(new Big(CSCUtil.cscToDrops(this.accountReserve)))
+          );
+        }
       } else {
-        this.totalSend = CSCUtil.dropsToCsc(
-          amountToSend.plus(new Big(CSCUtil.cscToDrops(this.fees)))
-                      .plus(new Big(CSCUtil.cscToDrops(this.accountReserve)))
-        );
+        this.totalSend = "0.00";
       }
-      
     } else {
-      this.totalSend = "0.00";
+      this.totalSend = "0.00"
     }
-    
   }
 
   checkSendValid(){

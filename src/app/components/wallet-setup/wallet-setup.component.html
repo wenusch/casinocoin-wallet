@@ -23,7 +23,7 @@
     <div style="text-align: right;">
         <!-- Cancel Setup -->
         <button pButton type="button" (click)="cancelSetup()" icon="fa-ban" iconPos="right" label="Cancel" 
-            *ngIf="enableCancelCreation && ((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted && connectedToNetwork)))" 
+            *ngIf="enableCancelCreation && (activeIndex <= 5 || ((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted && connectedToNetwork))))"
             style="width: 115px;" #cancelButton></button>
 
         <!-- Previous Step -->

@@ -18,7 +18,7 @@ export class WebsocketService {
         { server_id: 'wst02.casinocoin.org', server_url: 'ws://wst02.casinocoin.org:7007/', response_time: -1 }
     ];
     private PROD_SERVERS: Array<ServerDefinition> = [
-        { server_id: 'ws01.casinocoin.org', server_url: 'wss://ws01.casinocoin.org:4443/', response_time: -1 },
+        // { server_id: 'ws01.casinocoin.org', server_url: 'wss://ws01.casinocoin.org:4443/', response_time: -1 },
         { server_id: 'ws02.casinocoin.org', server_url: 'wss://ws02.casinocoin.org:4443/', response_time: -1 },
         { server_id: 'ws03.casinocoin.org', server_url: 'wss://ws03.casinocoin.org:4443/', response_time: -1 },
         { server_id: 'ws04.casinocoin.org', server_url: 'wss://ws04.casinocoin.org:4443/', response_time: -1 }
@@ -97,20 +97,21 @@ export class WebsocketService {
   }
 
   executeServerFind(value: ServerDefinition, findCompleteSubject: Subject<boolean>){
+    this.logger.debug('### executeServerFind - id: '+value.server_id);
     let request_time = Date.now();
-    const commands = new QueueingSubject<string>();
-    const websocket: Connection = websocketConnect(value.server_url, commands);
+    let commands = new QueueingSubject<string>();
+    let websocket: Connection = websocketConnect(value.server_url, commands);
     // the connectionStatus stream will provides the current number of websocket
     // connections immediately to each new observer and updates as it changes
-    const connectionStatusSubscription = websocket.connectionStatus.subscribe(numberConnected => {
-      this.logger.debug('### findBestServer - id: '+value.server_id + ' connected sockets:'+ numberConnected);
+    let connectionStatusSubscription = websocket.connectionStatus.subscribe(numberConnected => {
+      this.logger.debug('### executeServerFind - id: '+value.server_id + ' - connected sockets: '+ numberConnected);
       if(numberConnected > 0) {
         // we have an open socket now send a server_state
         commands.next(JSON.stringify({id: value.server_id, command: 'server_state'}));
       }
     });
     // the websocket connection is created lazily when the messages observable is subscribed to
-    const messagesSubscription = websocket.messages.subscribe((message: string) => {
+    let messagesSubscription = websocket.messages.subscribe((message: string) => {
       // this.logger.debug('### findBestServer - id: ' + value.server_id + ', received message:' + message);
       let msg = JSON.parse(message);
       let responseTime = Date.now() - request_time;
@@ -118,10 +119,11 @@ export class WebsocketService {
       // only connect to a server if its response time was below 10 seconds and its state is full, otherwise its of no use
       if(((this.currentServer.response_time == -1) && responseTime < 10000) && msg.result.state.server_state == 'full') {
         // we found our first server
-        this.logger.debug("### findBestServer - we found our first server: " + JSON.stringify(value));
         this.currentServer = value;
         this.currentServer.response_time = responseTime;
+        this.logger.debug("### findBestServer - we found our first server: " + JSON.stringify(this.currentServer));
         this.serverResponses =  this.serverResponses + 1;
+        this.localStorageService.set(AppConstants.KEY_LAST_WALLET_SERVER, value);
         this.connect();
         findCompleteSubject.next(true);
         // indicate server find complete
@@ -150,18 +152,18 @@ export class WebsocketService {
       }
       // check if all servers responded or timed-out
       if(!this.productionConnection){
-        this.logger.debug("### findBestServer TEST - serverResponses: "+ this.serverResponses+ " total servers: "+ this.TEST_SERVERS.length);
+        this.logger.debug("### findBestServer TEST - serverResponses: "+ this.serverResponses + " total servers: "+ this.TEST_SERVERS.length);
         if(this.serverResponses == this.TEST_SERVERS.length){
           // close find server subscriptions
-          // this.logger.debug("### findBestServer - Unsubscribe and Close");
+          this.logger.debug("### findBestServer TEST - All Responded -> Unsubscribe and Close");
           connectionStatusSubscription.unsubscribe();
           messagesSubscription.unsubscribe();
         }
       } else {
-        this.logger.debug("### findBestServer PROD - serverResponses: "+ this.serverResponses+ " total servers: "+ this.PROD_SERVERS.length);
-        if(this.serverResponses == this.PROD_SERVERS.length){
+        this.logger.debug("### findBestServer PROD - serverResponses: "+ this.serverResponses + " total servers: "+ this.PROD_SERVERS.length);
+        if(this.serverResponses === this.PROD_SERVERS.length){
           // close find server subscriptions
-          // this.logger.debug("### findBestServer - Unsubscribe and Close");
+          this.logger.debug("### findBestServer PROD - All Responded -> Unsubscribe and Close");
           connectionStatusSubscription.unsubscribe();
           messagesSubscription.unsubscribe();
         }
@@ -195,6 +197,11 @@ export class WebsocketService {
 
   findBestServer(production: boolean): Observable<boolean> {
     let findCompleteSubject = new Subject<boolean>();
+    // check if we have a last used server, then try and connect.
+    let lastKnowServer = this.localStorageService.get(AppConstants.KEY_LAST_WALLET_SERVER);
+    if(lastKnowServer != null){
+      this.logger.debug("### findBestServer - connect to Last Known: " + JSON.stringify(lastKnowServer));
+    }
     // init current server object
     // if(!this.currentServer){
     this.currentServer = { server_id: '', server_url: '', response_time: -1 };
@@ -212,6 +219,7 @@ export class WebsocketService {
       //Find PRODUCTION Server
       this.logger.debug("### executeServerFind for PRODUCTION");
       this.productionConnection = true;
+      this.logger.debug("### PROD_SERVERS: " + JSON.stringify(this.PROD_SERVERS));
       this.PROD_SERVERS.forEach( (value, index, arr) => {
         this.executeServerFind(value, findCompleteSubject);        
       });
@@ -231,6 +239,7 @@ export class WebsocketService {
         if(this.isConnected){
           // we were connected but now have 0 connections
           this.isConnected = false;
+          this.websocketConnection = null;
         }
       }
     });

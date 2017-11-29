@@ -64,6 +64,7 @@ export class TransactionsComponent implements OnInit {
         });
         // subscribe to transaction updates
         this.casinocoinService.transactionSubject.subscribe( tx => {
+          this.logger.debug("### TransactionsComponent TX Update: " + JSON.stringify(tx));
           let updateTxIndex = this.transactions.findIndex( item => item.txID == tx.txID);
           if( updateTxIndex >= 0 ){
             this.transactions[updateTxIndex] = tx;

@@ -106,6 +106,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   error_message: string = "";
 
   backupPath: string;
+  lastMenuEvent: string = "";
 
   constructor( private logger: LogService, 
                private router: Router,
@@ -120,6 +121,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.logger.debug("### INIT HOME ###");
     this.applicationVersion = this.electron.remote.app.getVersion();
     this.backupPath = this.electron.remote.getGlobal("backupPath");
+    this.logger.debug("### HOME Backup Path: " + this.backupPath);
     // this.electron.ipcRenderer.on("wallet-backup", (event, arg) => {
     //   this.backupWallet();
     //   event.returnValue = "finished";
@@ -186,15 +188,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     let connect_context_menu_template = [
      { label: 'Connect to Network', 
        click(menuItem, browserWindow, event) { 
-          browserWindow.webContents.send('context-menu-event', 'connect'); }, visible: true
+          browserWindow.webContents.send('connect-context-menu-event', 'connect'); }, visible: true
       },
       { label: 'Disconnect from Network', 
         click(menuItem, browserWindow, event) { 
-            browserWindow.webContents.send('context-menu-event', 'disconnect'); }, visible: false
+            browserWindow.webContents.send('connect-context-menu-event', 'disconnect'); }, visible: false
       },
       { label: 'Server Information', 
         click(menuItem, browserWindow, event) { 
-            browserWindow.webContents.send('context-menu-event', 'server-info'); }, visible: false
+            browserWindow.webContents.send('connect-context-menu-event', 'server-info'); }, visible: false
       }
     ];
     this.connection_context_menu = this.electron.remote.Menu.buildFromTemplate(connect_context_menu_template);
@@ -219,14 +221,26 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.closeWallet();
       else if(arg == 'quit')
         this.onQuit();
-      else if(arg == 'connect')
-        this.onConnect();
-      else if(arg == 'disconnect')
-        this.onDisconnect();
-      else if(arg == 'server-info')
-        this.onServerInfo();
       else
         this.logger.debug("### Context menu not implemented: " + arg);
+    });
+
+    // listen to connect context menu events
+    this.electron.ipcRenderer.on('connect-context-menu-event', (event, arg) => {
+      if(arg == 'connect'){
+        if(this.lastMenuEvent != "connect"){
+          this.lastMenuEvent = "connect";
+          this.onConnect();
+        }
+      }
+      else if(arg == 'disconnect'){
+        if(this.lastMenuEvent != "disconnect"){
+          this.lastMenuEvent = "disconnect";
+          this.onDisconnect();
+        }
+      }
+      else if(arg == 'server-info')
+        this.onServerInfo();
     });
 
     // navigate to the transactions
@@ -245,12 +259,18 @@ export class HomeComponent implements OnInit, OnDestroy {
         // get the DB Metadata
         this.dbMetadata = this.walletService.getDBMetadata();
         this.logger.debug("### HOME DB Metadata: " + JSON.stringify(this.dbMetadata));
+        // check transaction index
+        if(!this.walletService.isTransactionIndexValid()){
+          this.logger.debug("### HOME Rebuild TX List from Online ###");
+          this.walletService.clearTransactions();
+        }
         // update balance
         this.doBalanceUpdate();
         // update transaction count
         this.doTransacionUpdate();
       } else if(result == AppConstants.KEY_INIT && this.currentWallet){
         // wallet is not open but we seem to have a session, not good so redirect to login
+        this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
         this.router.navigate(['/login']);
       }
     });
@@ -296,11 +316,14 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(){
     this.logger.debug("### HOME ngOnDestroy() ###");
+    // remove listeners
+    this.electron.ipcRenderer.removeListener("connect-context-menu-event", (event, arg) => {});
+    this.electron.ipcRenderer.removeListener("context-menu-event", (event, arg) => {});
     if(this.isConnected && this.casinocoinService != undefined){
       this.casinocoinService.disconnect();
     }
     // backup the database
-    this.backupWallet();
+    // this.backupWallet();
   }
 
   doConnectToCasinocoinNetwork(){

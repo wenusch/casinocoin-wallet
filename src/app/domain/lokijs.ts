@@ -22,7 +22,7 @@ export enum LokiDBEnvironment {
 }
 
 export interface LokiDBMetadata {
-    $loki?: string;
+    $loki?: number;
     meta?: LokiMeta;
     dbVersion: string;
     appVersion: string;
@@ -37,7 +37,7 @@ export interface LokiDBMetadata {
 }
 
 export interface LokiAccount {
-    $loki?: string;
+    $loki?: number;
     meta?: LokiMeta;
     accountID: string;
     label: string;
@@ -50,7 +50,7 @@ export interface LokiAccount {
 }
 
 export interface LokiLog {
-    $loki?: string;
+    $loki?: number;
     meta?: LokiMeta;
     timestamp?: number;
     event?: string;
@@ -59,7 +59,7 @@ export interface LokiLog {
 }
 
 export interface LokiKey {
-    $loki?: string;
+    $loki?: number;
     meta?: LokiMeta;
     privateKey: string;
     publicKey: string;
@@ -69,7 +69,7 @@ export interface LokiKey {
 }
 
 export interface LokiSwap {
-    $loki?: string;
+    $loki?: number;
     meta?: LokiMeta;
     accountID: string;
     swapID: string;
@@ -83,7 +83,7 @@ export interface LokiSwap {
 }
 
 export interface LokiTransaction {
-    $loki?: string;
+    $loki?: number;
     meta?: LokiMeta;
     txID: string;
     accountID: string;
@@ -104,10 +104,12 @@ export interface LokiTransaction {
     validated: boolean;
     status: LokiTxStatus;
     inLedger?: number;
+    engineResult?: string;
+    engineResultMessage?: string;
 }
 
 export interface LokiAddress {
-    $loki?: string;
+    $loki?: number;
     meta?: LokiMeta;
     accountID: string;
     label: string;

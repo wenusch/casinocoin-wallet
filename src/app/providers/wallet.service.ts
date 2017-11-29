@@ -157,6 +157,8 @@ export class WalletService {
     openSubject.subscribe(result => {
       this.logger.debug("### WalletService openWallet: " + result);
       if(result == AppConstants.KEY_LOADED){
+        // Check all indexes
+        this.checkAllCollectionIndexID();
         // notify open complete
         this.currentDBMetadata = this.getDBMetadata();
         // check for DB upgrades
@@ -258,7 +260,8 @@ export class WalletService {
 
   checkForUpgrades(walletPassword: string){
     this.logger.debug("### WalletService - checkForUpgrades() ### ");
-    let dbVersion:int = CSCUtil.convertStringVersionToNumber( this.getDBMetadata().dbVersion );
+    let dbVersionString = this.getDBMetadata().dbVersion;
+    let dbVersion:int = CSCUtil.convertStringVersionToNumber( dbVersionString );
     let appDBVersion:int = CSCUtil.convertStringVersionToNumber( AppConstants.KEY_DB_VERSION);
     let walletUpgrade: WalletUpgrade = new WalletUpgrade(this.logger, this);
     let newVersion:string;
@@ -277,6 +280,8 @@ export class WalletService {
     if(walletUpgraded){
       // add new dbMetaData record
       this.updateDBMetadataVersion(newVersion);
+    } else {
+      this.logger.debug("### WalletService: no upgrades, " + dbVersionString + " is the latest version!");
     }
   }
 
@@ -296,6 +301,125 @@ export class WalletService {
     this.dbMetadata.insert(initDBVersion);
   }
 
+  checkAllCollectionIndexID(){
+    // DB Metadata
+    let checkIndex = 1;
+    let checkOk = true;
+    // get all dbMetadata
+    let allMetadata = this.getAllDBMetadata();
+    this.dbMetadata.data.forEach((element, index, arr) => {
+      if(element.$loki != checkIndex){
+        checkOk = false;
+      }
+      checkIndex = checkIndex + 1;
+    });
+    if(!checkOk){
+      this.dbMetadata.clear({removeIndices: true});
+      allMetadata.forEach(element => {
+        delete element.$loki;
+        delete element.meta;
+        this.addDBMetadata(element);
+      });
+    }
+    this.dbMetadata.ensureId();
+
+    // Accounts
+    checkIndex = 1;
+    checkOk = true;
+    // get all accounts
+    let allAccounts = this.getAllAccounts();
+    this.accounts.data.forEach((element, index, arr) => {
+      if(element.$loki != checkIndex){
+        checkOk = false;
+      }
+      checkIndex = checkIndex + 1;
+    });
+    if(!checkOk){
+      this.accounts.clear({removeIndices: true});
+      allAccounts.forEach(element => {
+        delete element.$loki;
+        delete element.meta;
+        this.addAccount(element);
+      });
+    }
+    this.accounts.ensureId();
+
+    // Keys
+    checkIndex = 1;
+    checkOk = true;
+    // get all keys
+    let allKeys = this.getAllKeys();
+    this.keys.data.forEach((element, index, arr) => {
+      if(element.$loki != checkIndex){
+        checkOk = false;
+      }
+      checkIndex = checkIndex + 1;
+    });
+    if(!checkOk){
+      this.keys.clear({removeIndices: true});
+      allKeys.forEach(element => {
+        delete element.$loki;
+        delete element.meta;
+        this.addKey(element);
+      });
+    }
+    this.keys.ensureId();
+
+    // Address book
+    checkIndex = 1;
+    checkOk = true;
+    // get all addressbook
+    let allAddress = this.getAllAddresses();
+    this.addressbook.data.forEach((element, index, arr) => {
+      if(element.$loki != checkIndex){
+        checkOk = false;
+      }
+      checkIndex = checkIndex + 1;
+    });
+    if(!checkOk){
+      this.addressbook.clear({removeIndices: true});
+      allAddress.forEach(element => {
+        delete element.$loki;
+        delete element.meta;
+        this.addAddress(element);
+      });
+    }
+    this.addressbook.ensureId();
+
+    // Swaps
+    checkIndex = 1;
+    checkOk = true;
+    // get all swaps
+    let allSwaps = this.getAllSwaps();
+    this.swaps.data.forEach((element, index, arr) => {
+      if(element.$loki != checkIndex){
+        checkOk = false;
+      }
+      checkIndex = checkIndex + 1;
+    });
+    if(!checkOk){
+      this.swaps.clear({removeIndices: true});
+      allSwaps.forEach(element => {
+        delete element.$loki;
+        delete element.meta;
+        this.addSwap(element);
+      });
+    }
+    this.swaps.ensureId();
+
+    // save the database
+    this.logger.debug("### checkAllCollectionIndexID - Save and Reload Collections");
+    this.walletDB.saveDatabase();
+    // and reopen
+    this.dbMetadata = this.walletDB.getCollection("dbMetadata");
+    this.accounts = this.walletDB.getCollection("accounts");
+    this.transactions = this.walletDB.getCollection("transactions");
+    this.addressbook = this.walletDB.getCollection("addressbook");
+    this.logs = this.walletDB.getCollection("log");
+    this.keys = this.walletDB.getCollection("keys");
+    this.swaps = this.walletDB.getCollection("swaps");
+  }
+
   // #########################################
   // DB Metadata Collection
   // #########################################
@@ -306,6 +430,10 @@ export class WalletService {
   addDBMetadata(newDBMetadata: LokiTypes.LokiDBMetadata): LokiTypes.LokiDBMetadata {
     let insertMetadata = this.dbMetadata.insert(newDBMetadata);
     return insertMetadata;
+  }
+
+  getAllDBMetadata(): Array<LokiTypes.LokiDBMetadata> {
+    return this.dbMetadata.find();
   }
 
   // #########################################
@@ -413,24 +541,25 @@ export class WalletService {
   // Transactions Collection
   // #########################################
   addTransaction(newTransaction: LokiTypes.LokiTransaction): LokiTypes.LokiTransaction {
-    let insertedTx = this.transactions.insert(newTransaction);
-    return insertedTx;
+    let tx = this.getTransaction(newTransaction.txID);
+    this.logger.debug("### WalletService - addTransaction: " + JSON.stringify(tx));
+    if(tx == null){
+      return this.transactions.insert(newTransaction);
+    } else {
+      return tx;
+    }
   }
 
   getTransaction(inputTxID: string): LokiTypes.LokiTransaction {
+    // return this.transactions.by("txID", inputTxID);
     if(this.isWalletOpen){
       if(this.transactions.count() > 0){
-        let findResult = this.transactions.find({ txID: inputTxID });
-        if(findResult.length == 1){
-          return findResult[0];
-        } else {
-          return undefined;
-        }
+        return this.transactions.findOne({'txID': {'$eq': inputTxID}});
       } else {
-        return undefined;
+        return null;
       }
     } else {
-      return undefined;
+      return null;
     }
   }
 
@@ -443,8 +572,15 @@ export class WalletService {
     return this.transactions.find({ validated: false });
   }
 
-  updateTransaction(transaction: LokiTypes.LokiTransaction){
-    this.transactions.update(transaction);
+  updateTransaction(transaction: LokiTypes.LokiTransaction): LokiTypes.LokiTransaction {
+    let tx = this.getTransaction(transaction.txID);
+    this.logger.debug("### WalletService - updateTransaction: " + JSON.stringify(tx));
+    if(tx == null){
+      return this.transactions.insert(transaction);
+    } else {
+      return this.transactions.update(transaction);
+    }
+    
   }
 
   getAccountTransactions(inputAccountID: string): Array<LokiTypes.LokiTransaction>{
@@ -473,6 +609,24 @@ export class WalletService {
       totalBalance = totalBalance.plus("4000000000000000000");
     }
     return totalBalance.toString();
+  }
+
+  isTransactionIndexValid(): boolean {
+    let result = true;
+    let idIndex = this.transactions.idIndex;
+    let lastIndex = 0;
+    idIndex.forEach(element => {
+      if(element == (lastIndex + 1)){
+        lastIndex = lastIndex + 1;
+      } else {
+        result = false;
+      }
+    });
+    return result;
+  }
+
+  clearTransactions(){
+    this.transactions.clear({removeIndices: true});
   }
 
   // #########################################
@@ -559,7 +713,6 @@ export class WalletService {
         // decrypt key
         this.logger.debug("Decrypt["+index+"]: " + JSON.stringify(element));
         let decodedSecret:string = cscCrypto.decrypt(element.secret);
-        this.logger.debug("decoded secret: " + decodedSecret);
         let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
         // check if public key is the same
         if(decodedKeypair.publicKey == element.publicKey){

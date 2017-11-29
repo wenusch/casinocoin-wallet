@@ -10,14 +10,14 @@
     </div>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
-        <p-dataTable [value]="transactions" scrollable="true" [immutable]="false" scrollHeight="50vh" [contextMenu]="cm"
+        <p-dataTable [value]="transactions" scrollable="true" [immutable]="false" scrollHeight="55vh" [contextMenu]="cm"
             responsive="true" styleClass="borderless" (onContextMenuSelect)="showTxContextMenu($event)">
-            <p-column [style]="{'width':'20px'}">
+            <p-column [style]="{'width':'17px'}">
                 <ng-template let-data="rowData" pTemplate="body">
                     <i [ngClass]="getDirectionIconClasses(data)"></i>
                 </ng-template>
             </p-column>
-            <p-column field="timestamp" [style]="{'width':'75px'}">
+            <p-column field="timestamp" [style]="{'width':'72px'}">
                 <ng-template let-data="rowData" pTemplate="body">
                     <span class="text-large">{{data.timestamp | cscDate : 'dd'}}</span>
                     <span class="text-small-bottom">{{data.timestamp | cscDate : 'MMM' | uppercase}}</span>
@@ -25,7 +25,7 @@
                     <span class="text-small-top" >{{data.timestamp | cscDate : ':mm:ss'}}</span>
                 </ng-template>
             </p-column>
-            <p-column [style]="{'width':'175px'}">
+            <p-column [style]="{'width':'172px'}">
                 <ng-template let-data="rowData" pTemplate="body">
                     <span class="text-small">
                         <p class="item-p"><span class="item-label">from: </span><span class="item-value"> {{ data.accountID }}</span></p>

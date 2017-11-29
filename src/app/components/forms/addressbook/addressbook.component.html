@@ -6,13 +6,13 @@
     </div>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
-        <p-dataTable [value]="addresses" [immutable]="false" scrollable="true" scrollHeight="100%"
+        <p-dataTable [value]="addresses" [immutable]="false" scrollable="true" scrollHeight="60vh"
                         [contextMenu]="cm" (onRowClick)="onAddressRowClick($event)" (onContextMenuSelect)="onAddressContextMenu($event)"
                         [(selection)]="selectedAddressRow" editable="true" (onEditComplete)="onAddressEditComplete($event)"
                         (onEditCancel)="onAddressEditCancel($event)">
-            <p-column field="accountID" header="Account" [style]="{'width':'160px'}"></p-column>
-            <p-column field="label" header="Label" [style]="{'width':'160px'}" editable="true"></p-column>
-            <p-column field="meta.created" header="Created" [style]="{'width':'80px'}">
+            <p-column field="accountID" header="Account" [style]="{'width':'175px'}"></p-column>
+            <p-column field="label" header="Label" [style]="{'width':'145px'}" editable="true"></p-column>
+            <p-column field="meta.created" header="Created" [style]="{'width':'90px'}">
                 <ng-template let-data="rowData" pTemplate="body">
                     <span>{{data.meta.created | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
                 </ng-template>
