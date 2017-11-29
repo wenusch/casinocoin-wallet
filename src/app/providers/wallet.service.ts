@@ -445,7 +445,15 @@ export class WalletService {
   }
 
   getAccount(accountID: string): LokiTypes.LokiAccount {
-    return this.accounts.by("accountID", accountID);
+    if(this.isWalletOpen){
+      if(this.accounts.count() > 0){
+        return this.accounts.findOne({'accountID': {'$eq': accountID}});
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
   }
 
   getAllAccounts(): Array<LokiTypes.LokiAccount> {
@@ -474,7 +482,15 @@ export class WalletService {
   }
 
   getKey(accountID: string): LokiTypes.LokiKey {
-    return this.keys.by("accountID", accountID);
+    if(this.isWalletOpen){
+      if(this.keys.count() > 0){
+        return this.keys.findOne({'accountID': {'$eq': accountID}});
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
   }
 
   getAllKeys(): Array<LokiTypes.LokiKey> {
@@ -494,7 +510,15 @@ export class WalletService {
   }
 
   getSwap(swapID: string): LokiTypes.LokiSwap {
-    return this.swaps.by("swapID", swapID);
+    if(this.isWalletOpen){
+      if(this.swaps.count() > 0){
+        return this.swaps.findOne({'swapID': {'$eq': swapID}});
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
   }
 
   getAllSwaps(): Array<LokiTypes.LokiSwap> {
@@ -638,7 +662,15 @@ export class WalletService {
   }
 
   getAddress(accountID: string): LokiTypes.LokiAddress {
-    return this.addressbook.by("accountID", accountID);
+    if(this.isWalletOpen){
+      if(this.addressbook.count() > 0){
+        return this.addressbook.findOne({'accountID': {'$eq': accountID}});
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
   }
 
   getAllAddresses(): Array<LokiTypes.LokiAddress> {
