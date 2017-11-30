@@ -445,7 +445,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
                   this.electron.remote.dialog.showErrorBox("Error saving private keys", "An error ocurred writing your private keys to a file: " + err.message);
                 }
                 this.electron.remote.dialog.showMessageBox(
-                  { message: "Your private keys have been saved to a file in the choosen directory. Make sure you put it in a save place as it contains your decrypted private keys!!", 
+                  { message: "Your private keys have been saved to a file in the choosen directory. Make sure you put it in a safe place as it contains your decrypted private keys!!", 
                     buttons: ["OK"] 
                   });
               });
