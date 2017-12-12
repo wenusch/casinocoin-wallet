@@ -4,17 +4,17 @@
     </p-header>
     <div class="ui-g" style="max-height: 275px; min-height: 275px;">
         <!-- [@slideInOut]="step1State" -->
-        <setup-step1 [hidden]="activeIndex != 1" 
+        <setup-step1 [hidden]="activeIndex != 1" name="step1"
                      (walletNetworkChange)="onNetworkUpdated($event)" [(walletTestNetwork)]="walletTestNetwork"></setup-step1>
-        <setup-step2 [hidden]="activeIndex != 2"
+        <setup-step2 [hidden]="activeIndex != 2" name="step2"
                      (disclaimerAcceptedChange)="onDisclaimerAcceptedUpdated($event)" [(disclaimerAccepted)]="disclaimerAccepted"></setup-step2>
-        <setup-step3 [hidden]="activeIndex != 3"
+        <setup-step3 [hidden]="activeIndex != 3" name="step3"
                      (passwordChange)="onPasswordUpdated($event)" [(newWalletPassword)]="walletPassword"></setup-step3>
-        <setup-step4 [hidden]="activeIndex != 4" [(newWalletMnemonic)]="recoveryMnemonicWords" 
+        <setup-step4 [hidden]="activeIndex != 4" [(newWalletMnemonic)]="recoveryMnemonicWords" name="step4"
                      (recoveryAcceptChanged)="onRecoveryAcceptChanged($event)" [(recoveryAccepted)]="recoveryAccepted"></setup-step4>
-        <setup-step5 [hidden]="activeIndex != 5"
+        <setup-step5 [hidden]="activeIndex != 5" name="step5"
                      (locationChange)="onLocationUpdated($event)" [(newWalletLocation)]="walletLocation"></setup-step5>
-        <setup-step6 [hidden]="activeIndex != 6"
+        <setup-step6 [hidden]="activeIndex != 6" name="step6"
                      [(walletCreated)]="walletCreated"
                      [(accountCreated)]="accountCreated"
                      [(keysEncrypted)]="keysEncrypted"

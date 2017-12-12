@@ -1,5 +1,6 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { InputText } from 'primeng/primeng';
+import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { InputText, DataTable, LazyLoadEvent } from 'primeng/primeng';
 import { LogService } from '../../../providers/log.service';
 import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
@@ -10,6 +11,8 @@ import { AppConstants } from '../../../domain/app-constants';
 import { LokiTransaction } from '../../../domain/lokijs';
 import { ElectronService } from '../../../providers/electron.service';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
+import { environment } from '../../../../environments';
+import { Observable, BehaviorSubject } from 'rxjs';
 import Big from 'big.js';
 
 @Component({
@@ -17,15 +20,16 @@ import Big from 'big.js';
   templateUrl: './transactions.component.html',
   styleUrls: ['./transactions.component.scss']
 })
-export class TransactionsComponent implements OnInit {
+export class TransactionsComponent implements OnInit, AfterViewInit {
 
+  @ViewChild('dtTX') dtTX: DataTable;
   @ViewChild('receipientInput') receipientInput;
   @ViewChild('descriptionInput') descriptionInput;
   @ViewChild('amountInput') amountInput;
   @ViewChild('accountDropdown') accountDropdown: Dropdown;
   @ViewChild('passwordInput') passwordInput;
 
-  transactions: Array<LokiTransaction>;
+  transactions: Array<LokiTransaction> = [];
   accounts: SelectItem[] = [];
   ledgers: LedgerStreamMessages[] = [];
   selectedAccount: string;
@@ -38,18 +42,66 @@ export class TransactionsComponent implements OnInit {
   showLedgerDialog:boolean = false;
   signAndSubmitIcon:string = "fa-check";
   tx_context_menu: ElectronMenu;
+  lazyTransactions: Array<LokiTransaction>;
+  loadingTX: boolean = true;
+  totalTXRecords: number;
+  viewInitComplete: boolean = false;
+  initialBatchLoaded: boolean = false;
+  uiChangeSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
   
   constructor(private logger:LogService, 
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
-              private electronService: ElectronService, ) { }
+              private electronService: ElectronService,
+              private router: Router ) { }
 
   ngOnInit() {
-    this.logger.debug("### Online: " + navigator.onLine);
+    this.logger.debug("### Transactions ngOnInit() ###");
+    // define Transaction Context menu
+    let tx_context_menu_template = [
+      { label: 'Copy From Address', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('tx-context-menu-event', 'copy-from'); }
+      },
+      { label: 'Copy To Address', 
+        click(menuItem, browserWindow, event) { 
+           browserWindow.webContents.send('tx-context-menu-event', 'copy-to'); }
+      },
+      { label: 'Copy Transaction ID', 
+         click(menuItem, browserWindow, event) { 
+             browserWindow.webContents.send('tx-context-menu-event', 'copy-txid'); }
+      },
+      { label: 'Show in Block Explorer', 
+          click(menuItem, browserWindow, event) { 
+              browserWindow.webContents.send('tx-context-menu-event', 'show-explorer'); }
+      }
+    ];
+    this.tx_context_menu = this.electronService.remote.Menu.buildFromTemplate(tx_context_menu_template);
+    // listen to connection context menu events
+    this.electronService.ipcRenderer.on('tx-context-menu-event', (event, arg) => {
+      if(arg == 'copy-to'){
+        if(this.selectedTxRow){
+          this.electronService.clipboard.writeText(this.selectedTxRow.destination);
+        }
+      } else if(arg == 'copy-from'){
+        if(this.selectedTxRow){
+          this.electronService.clipboard.writeText(this.selectedTxRow.accountID);
+        }
+      } else if(arg == 'copy-txid'){
+        if(this.selectedTxRow){
+          this.electronService.clipboard.writeText(this.selectedTxRow.txID);
+        }
+      } else if(arg == 'show-explorer'){
+        this.showTransactionDetails();
+      } else {
+        this.logger.debug("### Context menu not implemented: " + arg);
+      }        
+    });
     // get transactions from wallet
     this.walletService.openWalletSubject.subscribe( result => {
       if(result == AppConstants.KEY_LOADED){
         this.transactions = this.walletService.getAllTransactions();
+        this.uiChangeSubject.next(AppConstants.KEY_LOADED);
         // add empty item to accounts dropdown
         this.accounts.push({label:'Select Account ...', value:null});
         this.walletService.getAllAccounts().forEach( element => {
@@ -71,45 +123,36 @@ export class TransactionsComponent implements OnInit {
           } else {
             this.transactions.splice(0,0,tx);
           }
+          // update table
+          this.dtTX.paginate();
         });
       }
     });
     // get network ledgers
     this.ledgers = this.casinocoinService.ledgers;
-    // define Transaction Context menu
-    let tx_context_menu_template = [
-      { label: 'Copy From Address', 
-        click(menuItem, browserWindow, event) { 
-          browserWindow.webContents.send('tx-context-menu-event', 'copy-from'); }
-      },
-      { label: 'Copy To Address', 
-        click(menuItem, browserWindow, event) { 
-           browserWindow.webContents.send('tx-context-menu-event', 'copy-to'); }
-      },
-      { label: 'Copy Transaction ID', 
-         click(menuItem, browserWindow, event) { 
-             browserWindow.webContents.send('tx-context-menu-event', 'copy-txid'); }
+  }
+
+  ngAfterViewInit(){
+    this.logger.debug("### Transactions - ngAfterViewInit() ###");
+    // We use setTimeout to avoid the `ExpressionChangedAfterItHasBeenCheckedError`
+    // See: https://github.com/angular/angular/issues/6005
+    setTimeout(_ => {
+      this.viewInitComplete = true;
+      this.dtTX.paginate();
+    }, 0);
+  }
+
+  loadTXLazy(event: LazyLoadEvent) {
+    this.logger.debug("### Transactions - loadTXLazy");
+    if(this.viewInitComplete){
+      this.totalTXRecords = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
+      this.logger.debug("### Transactions - DB count: " + this.totalTXRecords);
+      if(this.transactions !== undefined && this.transactions.length > 0){
+        this.logger.debug("### Transactions - event: " + JSON.stringify(event));
+        this.lazyTransactions = this.transactions.slice(event.first, (event.first + event.rows));
+        this.logger.debug("### Transactions - Lazy TX count: " + this.lazyTransactions.length);
       }
-    ];
-    this.tx_context_menu = this.electronService.remote.Menu.buildFromTemplate(tx_context_menu_template);
-    // listen to connection context menu events
-    this.electronService.ipcRenderer.on('tx-context-menu-event', (event, arg) => {
-      if(arg == 'copy-to'){
-        if(this.selectedTxRow){
-          this.electronService.clipboard.writeText(this.selectedTxRow.destination);
-        }
-      } else if(arg == 'copy-from'){
-        if(this.selectedTxRow){
-          this.electronService.clipboard.writeText(this.selectedTxRow.accountID);
-        }
-      } else if(arg == 'copy-txid'){
-        if(this.selectedTxRow){
-          this.electronService.clipboard.writeText(this.selectedTxRow.txID);
-        }
-      } else {
-        this.logger.debug("### Context menu not implemented: " + arg);
-      }        
-    });
+    }
   }
 
   doBalanceUpdate(){
@@ -204,5 +247,18 @@ export class TransactionsComponent implements OnInit {
 
   onTxRowClick(event){
     this.logger.debug("### onTxRowClick: " + JSON.stringify(event));
+  }
+
+  showTransactionDetails(){
+    if(this.selectedTxRow){
+      this.logger.debug("showTransactionDetails: " + JSON.stringify(this.selectedTxRow));
+      let infoUrl = environment.explorer_endpoint_url + "/tx/" + this.selectedTxRow.txID;
+      this.electronService.remote.shell.openExternal(infoUrl);
+    }
+  }
+
+  doShowExchanges(){
+    this.logger.debug("### Transactions -> Show Exchanges");
+    this.router.navigate(['home', 'exchanges']);
   }
 }

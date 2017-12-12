@@ -12,12 +12,15 @@ serve = args.some(val => val === '--serve');
 const version = app.getVersion();
 const platform = os.platform() + '_' + os.arch();
 const globalTS:any = global;
+globalTS.vars = {};
 
 // set app id
 app.setAppUserModelId("CasinoCoin Wallet");
 
 // set property for exit dialog
 let showExitPrompt = true;
+globalTS.vars.exitFromRenderer = false;
+globalTS.vars.exitFromLogin = false;
 
 // define auto update url
 let updaterFeedURL = 'https://download.casinocoin.org/update/' + platform + '/' + version;
@@ -90,7 +93,11 @@ app.setPath('userData', defaultCSCPath);
 
 // configure loggging 
 const winston = require('winston');
-globalTS.loglevel = 'debug';
+if(serve){
+  globalTS.loglevel = 'debug';
+} else {
+  globalTS.loglevel = 'info';
+}
 var logFolder = path.join(app.getPath("userData"), "logs");
 if (!fs.existsSync(logFolder)){
   fs.mkdirSync(logFolder);
@@ -121,7 +128,7 @@ let backupFolder = path.join(app.getPath("userData"), "backup");
 if (!fs.existsSync(backupFolder)){
   fs.mkdirSync(backupFolder);
 }
-globalTS.backupPath = backupFolder;
+globalTS.vars.backupPath = backupFolder;
 
 
 // create window
@@ -165,21 +172,36 @@ function createWindow() {
 
   // Emitted when the window is closed.
   win.on('close', (e) => {
-    if (showExitPrompt) {
-        e.preventDefault() // Prevents the window from closing 
-        dialog.showMessageBox({
-            type: 'question',
-            buttons: ['Yes', 'No'],
-            title: 'Confirm',
-            message: 'Are you sure you want to close the wallet?'
-        }, function (response) {
-            if (response === 0) { // Runs the following if 'Yes' is clicked
-                showExitPrompt = false;
-                win.close();
-            }
-        })
+    if(globalTS.vars.exitFromLogin && showExitPrompt){
+      e.preventDefault() // Prevents the window from closing 
+      globalTS.vars.exitFromLogin = false;
+      showExitPrompt = false;
+      win.close();
+    } else if(!globalTS.vars.exitFromRenderer){
+      e.preventDefault() // Prevents the window from closing 
+      dialog.showMessageBox({
+          type: 'info',
+          buttons: ['Ok'],
+          title: 'Closing the wallet',
+          message: 'Please close the wallet from the Tools -> Quit menu.'
+      });
+    } else {
+      if (showExitPrompt) {
+          e.preventDefault() // Prevents the window from closing 
+          dialog.showMessageBox({
+              type: 'question',
+              buttons: ['Yes', 'No'],
+              title: 'Confirm',
+              message: 'Are you sure you want to close the wallet?'
+          }, function (response) {
+              if (response === 0) { // Runs the following if 'Yes' is clicked
+                  showExitPrompt = false;
+                  win.close();
+              }
+          });
+      }
     }
-  })
+  });
 
   win.on('closed', (e) => {
     win = null;
@@ -256,13 +278,13 @@ try {
     }
   });
 
-  app.on('before-quit', () => {
-    if(showExitPrompt == false){
-      console.log('Quiting Casinocoin Wallet, save the database!!!');
-      // let backupResult = win.webContents.sendSync('wallet-backup');
-      // console.log("Backup Result: " + backupResult);
-    }
-  });
+  // app.on('before-quit', () => {
+  //   if(showExitPrompt == false){
+  //     //console.log('Quiting Casinocoin Wallet, save the database!!!');
+  //     // let backupResult = win.webContents.sendSync('wallet-backup');
+  //     // console.log("Backup Result: " + backupResult);
+  //   }
+  // });
 
 } catch (e) {
   // Catch Error

@@ -12,3 +12,7 @@
     text-align: center;
     color: $casinocoinRed;
 }
+
+::ng-deep .bold-text {
+    font-weight: bolder;
+}

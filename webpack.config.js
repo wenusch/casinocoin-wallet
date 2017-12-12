@@ -10,7 +10,10 @@ const ConcatPlugin = require('webpack-concat-plugin');
 const { NoEmitOnErrorsPlugin, LoaderOptionsPlugin, DefinePlugin, HashedModuleIdsPlugin } = require('webpack');
 const { GlobCopyWebpackPlugin, BaseHrefWebpackPlugin, InsertConcatAssetsWebpackPlugin } = require('@angular/cli/plugins/webpack');
 const { CommonsChunkPlugin, UglifyJsPlugin } = require('webpack').optimize;
+
+// import {AngularCompilerPlugin} from '@ngtools/webpack';
 const { AotPlugin } = require('@ngtools/webpack');
+// const { AngularCompilerPlugin } = require('@ngtools/webpack');
 
 const nodeModules = path.join(process.cwd(), 'node_modules');
 const entryPoints = ["inline", "polyfills", "sw-register", "styles", "vendor", "main"];
@@ -165,6 +168,12 @@ if(scripts.length > 0){
       "hashDigestLength": 4
     }));
 
+    // plugins.push(new AngularCompilerPlugin({
+    //   "tsConfigPath": "tsconfig.json",
+    //   "entryModule": "src/app/app.module#AppModule",
+    //   "sourceMap": true
+    // }));
+
     plugins.push(new AotPlugin({
       "mainPath": "main.ts",
       "hostReplacementPaths": {
@@ -186,6 +195,11 @@ if(scripts.length > 0){
     // }));
 
   } else {
+    // plugins.push( new AngularCompilerPlugin({
+    //   tsConfigPath: 'src/tsconfig.app.json',
+    //   entryModule: 'src/app/app.module.ts#AppModule',
+    //   sourceMap: true
+    // }));
     plugins.push(new AotPlugin({
       "mainPath": "main.ts",
       "hostReplacementPaths": {
@@ -374,7 +388,7 @@ module.exports = {
         })
       },
       {
-        "test": /\.ts$/,
+        test: /\.ts$/,
         "loader": "@ngtools/webpack"
       }
     ]

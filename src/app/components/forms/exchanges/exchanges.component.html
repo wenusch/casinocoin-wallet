@@ -1,0 +1,30 @@
+<div class="ui-widget ui-g form-container">
+    <p class="form-text-header">Exchanges</p>
+    <div class="ui-g-12">
+        <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
+        <p-dataTable [value]="exchanges" [immutable]="false" scrollable="true" scrollHeight="60vh"
+                        [contextMenu]="cm" (onRowClick)="onExchangeRowClick($event)" (onContextMenuSelect)="onExchangeContextMenu($event)">
+            <p-column field="name" [style]="{'width':'200px'}">
+                <ng-template let-data="rowData" pTemplate="body">
+                    <a href="#" (click)="visitExchange()" matTooltip="Click Logo to visit Exchange">
+                        <img [src]="data.imageBase64" [style]="{'width':'200px'}"/>
+                    </a>
+                </ng-template>
+            </p-column>
+            <p-column field="name" header="Trading" [style]="{'width':'250px'}">
+                <ng-template let-data="rowData" pTemplate="body">
+                    <span>
+                        <p class="item-p"><span class="item-label">Buy: </span><span class="item-value"> {{ data.buy | number : '1.1-8'}}</span></p>
+                        <p class="item-p"><span class="item-label">Sell: </span><span class="item-value"> {{ data.sell | number : '1.1-8'}}</span></p>
+                        <p class="item-p"><span class="item-label">Last: </span><span class="item-value"> {{ data.last | number : '1.1-8'}}</span></p>
+                        <p class="item-p"><span class="item-label">Volume: </span><span class="item-value"> {{ data.volume24H | number : '1.1-8'}}</span></p>
+                        <p class="item-p"><span class="item-label">Last Update: </span><span class="item-value"> {{ data.lastUpdateDate| date : 'yyyy-MM-dd HH:mm:ss' }}</span></p>
+                    </span>
+                </ng-template>
+            </p-column>
+            <ng-template pTemplate="emptymessage">
+                <p>No Exchanges to show.</p>
+            </ng-template>
+        </p-dataTable>
+    </div>
+</div>

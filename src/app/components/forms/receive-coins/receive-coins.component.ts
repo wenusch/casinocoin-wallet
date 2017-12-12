@@ -28,6 +28,11 @@ export class ReceiveCoinsComponent implements OnInit {
   errorMessage: string = "";
   selectedReceiveRow: LokiAccount;
   receive_context_menu: ElectronMenu;
+  showReceiveQRCodeDialog: boolean = false;
+  cscReceiveURI: string = "";
+  sendAmount:string;
+  destinationTag: number;
+  label: string;
 
   constructor(private logger: LogService,
               private casinocoinService: CasinocoinService,
@@ -41,8 +46,15 @@ export class ReceiveCoinsComponent implements OnInit {
       if(result == AppConstants.KEY_LOADED){
         this.logger.debug("### ReceiveCoins Wallet Open ###");
         this.accounts = this.walletService.getAllAccounts();
-        this.logger.debug("Created [0]: " + this.accounts[0].meta.created);
+        if(this.accounts == null){
+          this.accounts = [];
+        }
       }
+    });
+
+    // subscribe to account updates
+    this.casinocoinService.accountSubject.subscribe( account => {
+      this.accounts = this.walletService.getAllAccounts();
     });
 
     // define receive context menu
@@ -51,6 +63,16 @@ export class ReceiveCoinsComponent implements OnInit {
         click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('receive-context-menu-event', 'copy-address');
         }
+      },
+      { label: 'Receive QRCode', 
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('receive-context-menu-event', 'receive-qrcode');
+        }
+      },
+      { label: 'Delete Account', 
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('receive-context-menu-event', 'delete-account');
+        }, visible: false
       }
     ];
     this.receive_context_menu = this.electronService.remote.Menu.buildFromTemplate(receive_context_menu_template);
@@ -60,6 +82,10 @@ export class ReceiveCoinsComponent implements OnInit {
       this.logger.debug("### Receive Menu Event: " + arg);
       if(arg == 'copy-address')
         this.copyReceiveAddress();
+      else if(arg == 'receive-qrcode')
+        this.showReceiveQRCode();
+      else if(arg == 'delete-account')
+        this.deleteAccount();
       else
         this.logger.debug("### Context menu not implemented: " + arg);
     });
@@ -73,6 +99,12 @@ export class ReceiveCoinsComponent implements OnInit {
   showReceiveContextMenu(event){
     this.selectedReceiveRow = event.data;
     this.logger.debug("### showReceiveContextMenu: " + JSON.stringify(this.selectedReceiveRow));
+    if(this.selectedReceiveRow.activated == false || this.selectedReceiveRow.balance == "0"){
+      this.logger.debug("### showReceiveContextMenu - visible = false for: " + this.receive_context_menu.items[2].label);
+      this.receive_context_menu.items[2].visible = true;
+    } else {
+      this.receive_context_menu.items[2].visible = false;
+    }
     this.receive_context_menu.popup(this.electronService.remote.getCurrentWindow());
   }
 
@@ -93,9 +125,32 @@ export class ReceiveCoinsComponent implements OnInit {
     }
   }
 
+  showReceiveQRCode(){
+    if(this.selectedReceiveRow){
+      this.logger.debug("showReceiveQRCode: " + JSON.stringify(this.selectedReceiveRow));
+      this.cscReceiveURI = CSCUtil.generateCSCQRCodeURI({ address: this.selectedReceiveRow.accountID });
+      this.showReceiveQRCodeDialog = true;
+    }
+  }
+
   showCreateAccount(){
     this.showDialogFooter = false;
+    this.accountLabel = "";
+    this.walletPassword = "";
     this.showCreateAccountDialog = true;
+  }
+
+  deleteAccount(){
+    if(this.selectedReceiveRow){
+      this.logger.debug("deleteAccount: " + JSON.stringify(this.selectedReceiveRow));
+      if(this.selectedReceiveRow.activated == false || this.selectedReceiveRow.balance == "0"){
+        // remove key and account
+        this.walletService.removeKey(this.selectedReceiveRow.accountID);
+        this.walletService.removeAccount(this.selectedReceiveRow.accountID);
+        // refresh account list
+        this.accounts = this.walletService.getAllAccounts();
+      }
+    }
   }
 
   doCreateNewAccount(){
@@ -148,5 +203,19 @@ export class ReceiveCoinsComponent implements OnInit {
     } else {
       return ["fa", "fa-times", "color_red"];
     }
+  }
+
+  updateQRCode(){
+    let uriObject = { address: this.selectedReceiveRow.accountID };
+    if(this.sendAmount && this.sendAmount.length > 0){
+      uriObject['amount'] = this.sendAmount;
+    }
+    if(this.destinationTag && (this.destinationTag > 0 && this.destinationTag < 2147483647)){
+      uriObject['destinationTag'] = this.destinationTag;
+    }
+    if(this.label && this.label.length > 0){
+      uriObject['label'] = this.label;
+    }
+    this.cscReceiveURI = CSCUtil.generateCSCQRCodeURI(uriObject);
   }
 }

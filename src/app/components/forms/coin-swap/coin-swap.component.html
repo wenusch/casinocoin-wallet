@@ -47,7 +47,7 @@
                     <span class="text-small">
                         <p class="item-p">
                             <span class="item-label">Deposit Address: </span>
-                            <span class="item-value">{{ data.depositAddress }}</span>
+                            <span class="item-value" *ngIf="data.swapStatus != 'cancelled'">{{ data.depositAddress }}</span>
                         </p>
                         <p class="item-p">
                             <span class="item-label">Updated: </span>
@@ -77,3 +77,11 @@
         </p-dataTable>
     </div>
 </div>
+
+<p-dialog [(visible)]="showDepositQRCodeDialog" [width]="350" [height]="400" [closable]="true" [modal]="true" appendTo="body">
+    <p-header>Swap Deposit Address</p-header>
+    <div style="text-align: center;">{{selectedSwap?.depositAddress}}</div>
+    <div class="qrcode">
+        <qr-code [value]="cxxDepositURI" size="250" level="L"></qr-code>
+    </div>
+</p-dialog>

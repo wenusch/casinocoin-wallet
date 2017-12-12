@@ -16,11 +16,16 @@ export class AuthGuard implements CanActivate {
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) : boolean {
         this.logger.debug("### AuthGuard route: " + route.toString());
-        this.logger.debug("### AuthGuard state: " + state.toString());
+        this.logger.debug("### AuthGuard route component: " + route.routeConfig.component.name);
         // Check if wallet creation is running
         if (this.sessionStorageService.get(AppConstants.KEY_CREATE_WALLET_RUNNING)){
             // its ok
             return false;
+        }
+        // Check if we want to recover our password
+        if(route.routeConfig.component.name == "RecoverPasswordComponent"){
+            // always allowed
+            return true;
         }
         // Check if we have an opened wallet
         if (this.sessionStorageService.get(AppConstants.KEY_CURRENT_WALLET)) {

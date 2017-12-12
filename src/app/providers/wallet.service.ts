@@ -47,6 +47,7 @@ export class WalletService {
  
   public isWalletOpen: boolean = false;
   public openWalletSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
+  public mnemonicSubject = new BehaviorSubject<string>("");
 
   public balance:string = this.getWalletBalance();
   public txCount:number = this.getWalletTxCount();
@@ -251,6 +252,63 @@ export class WalletService {
     this.walletDB = null;
     // publish result
     this.openWalletSubject.next(AppConstants.KEY_INIT);
+  }
+
+  getWalletMnemonic(walletUUID: string, walletLocation: string){
+    let dbPath = path.join(walletLocation, (walletUUID + '.db'));
+    this.logger.debug("### WalletService mnemonic Wallet location: " + dbPath);
+
+    let collectionSubject = new Subject<any>();
+    let openSubject = new Subject<string>();
+    openSubject.subscribe(result => {
+      this.logger.debug("### WalletService openWallet: " + result);
+      if(result == AppConstants.KEY_LOADED){
+        // get db info
+        let dbMetadata = this.getDBMetadata();
+        this.mnemonicSubject.next(dbMetadata.mnemonicRecovery);
+        // close the database
+        this.closeWallet();
+      }
+    });
+    let openError = false;
+
+    if (!fs.existsSync(dbPath)){
+      this.logger.debug("### WalletService, DB does not exist: " + dbPath);
+      openSubject.next(AppConstants.KEY_ERRORED);
+    } else {
+      collectionSubject.subscribe( collection => {
+        if(collection != null) {
+          this.logger.debug("### WalletService Open Collection: " + collection.name)
+          if(collection.name == "dbMetadata"){
+            this.dbMetadata = collection;
+          }
+          this.isWalletOpen = true;
+        } else {
+          openError = true;
+          openSubject.next(AppConstants.KEY_ERRORED);
+        }
+      });
+  
+      let lokiFsAdapter = new lfsa();
+      // let idbAdapter = new LokiIndexedAdapter('casinocoin');
+      let walletDB = new loki(dbPath, 
+        { adapter: lokiFsAdapter,
+          autoloadCallback: openCollections,
+          autoload: true, 
+          autosave: true, 
+          autosaveInterval: 5000
+      });
+  
+      function openCollections(result){
+        // check if dbMetadata exists as we added it later ....
+        collectionSubject.next(walletDB.getCollection("dbMetadata"));
+        if(!openError){
+          openSubject.next(AppConstants.KEY_LOADED);
+        }
+      }
+      this.walletDB = walletDB;
+    }
+    return this.mnemonicSubject.asObservable();
   }
 
   // allow for a hard save on app exit
@@ -470,7 +528,12 @@ export class WalletService {
   }
 
   isAccountMine(accountID: string): boolean {
-    return (this.accounts.by("accountID", accountID) != null);
+    return (this.accounts.findOne({'accountID': {'$eq': accountID}}) != null);
+  }
+
+  removeAccount(accountID: string) {
+    this.accounts.findAndRemove({accountID: accountID});
+    this.accounts.ensureId();
   }
 
   // #########################################
@@ -499,6 +562,10 @@ export class WalletService {
 
   updateKey(key: LokiTypes.LokiKey){
     this.keys.update(key);
+  }
+
+  removeKey(accountID: string) {
+    this.keys.findAndRemove({accountID: accountID});
   }
 
   // #########################################
@@ -550,7 +617,7 @@ export class WalletService {
   }
 
   getLog(timestamp: number): LokiTypes.LokiLog {
-    return this.logs.by("timestamp", timestamp);
+    return this.logs.findOne({'timestamp': {'$eq': timestamp}});
   }
 
   getAllLogs(): Array<LokiTypes.LokiLog> {
@@ -575,7 +642,6 @@ export class WalletService {
   }
 
   getTransaction(inputTxID: string): LokiTypes.LokiTransaction {
-    // return this.transactions.by("txID", inputTxID);
     if(this.isWalletOpen){
       if(this.transactions.count() > 0){
         return this.transactions.findOne({'txID': {'$eq': inputTxID}});
@@ -590,6 +656,15 @@ export class WalletService {
   getAllTransactions(): Array<LokiTypes.LokiTransaction> {
     // return all transactions sorted by descending timestamp
     return this.transactions.chain().find().simplesort("timestamp", true).data();
+  }
+
+  getTransactionsLazy(offset: number, limit: number):Array<LokiTypes.LokiTransaction> {
+    // return all transactions sorted by descending timestamp for offset and limit
+    return this.transactions.chain().find()
+                                    .simplesort("timestamp", true)
+                                    .offset(offset)
+                                    .limit(limit)
+                                    .data();
   }
 
   getUnvalidatedTransactions(): Array<LokiTypes.LokiTransaction> {

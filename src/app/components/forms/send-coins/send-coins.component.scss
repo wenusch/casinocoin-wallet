@@ -1,11 +1,11 @@
 @import "~assets/variables";
 
 :host input {
-    width: 450px; padding-left: 5px;
+    width: 500px; padding-left: 5px;
 }
 
 :host p-dropdown {
-    width: 450px; padding-left: 0px;
+    width: 500px; padding-left: 0px;
 }
 
 ::ng-deep .footer-error {

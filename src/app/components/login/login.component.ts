@@ -2,6 +2,7 @@ import { Component, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { WalletService } from '../../providers/wallet.service';
+import { ElectronService } from '../../providers/electron.service';
 import { LocalStorage, SessionStorage, LocalStorageService } from "ngx-store";
 import { SelectItem } from 'primeng/primeng';
 import { CSCUtil } from '../../domain/csc-util';
@@ -43,6 +44,7 @@ export class LoginComponent implements OnInit {
         private logger: LogService,
         private route: ActivatedRoute,
         private router: Router,
+        private electron: ElectronService,
         private walletService: WalletService,
         private messageService: MessageService,
         private datePipe: DatePipe,
@@ -137,5 +139,33 @@ export class LoginComponent implements OnInit {
                 }    
             }, 1000);            
         }
+    }
+
+    onHideLogin(){
+        this.logger.debug("### Login -> Quit")
+        // quit the wallet
+        this.dialog_visible = false;
+        this.electron.remote.getGlobal("vars").exitFromRenderer = true;
+        this.electron.remote.getGlobal("vars").exitFromLogin = true;
+        this.electron.remote.getCurrentWindow.call( close() );
+    }
+
+    onRecoverPassword(){
+        if (this.selectedWallet == null || this.selectedWallet.length == 0){
+            this.footer_visible = true;
+            this.error_message = "Please select a wallet to recover the password!"
+            this.inputWalletElementRef.nativeElement.focus();
+        } else {
+            this.footer_visible = false;
+            this.error_message = "";
+            let walletIndex = this.availableWallets.findIndex( item => item['walletUUID'] == this.selectedWallet);
+            this.logger.debug("### Go to Recover: " + this.selectedWallet);
+            this.router.navigate(['/recoverPassword'], { queryParams: 
+                { walletUUID: this.selectedWallet, 
+                  walletLocation: this.availableWallets[walletIndex]['location'] 
+                }
+            });
+        }
+        return false;
     }
 }

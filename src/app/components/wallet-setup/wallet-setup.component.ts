@@ -172,7 +172,24 @@ export class WalletSetupComponent implements OnInit {
   
   navigateToNextStep() {
     if(this.activeIndex == 1) {
-      this.finishStep1();
+      if(this.walletTestNetwork){
+        this.electron.remote.dialog.showMessageBox(
+          { type: "warning",
+            buttons: ['Cancel', 'Ok'],
+            message: "Your are creating a wallet for the Test Network, are you sure ?"
+          }, (result) => { 
+              this.logger.debug("### Result: " + result);
+              if(result == 0){
+                this.walletTestNetwork = false;
+              } else {
+                this.walletTestNetwork = true;
+                this.finishStep1();
+              }
+          }
+        )
+      } else {
+        this.finishStep1();
+      }
     } else if (this.activeIndex == 2) {
       this.finishStep2();
     } else if(this.activeIndex == 3) {
@@ -182,11 +199,6 @@ export class WalletSetupComponent implements OnInit {
     } else if(this.activeIndex == 5) {
       this.finishStep5();
     }
-    if(this.activeIndex < this.maxActiveIndex){
-      this.activeIndex += 1;
-    }
-    this.nextButton.nativeElement.blur();
-    this.logger.debug("Next, New Active Step: " + this.activeIndex);
   }
 
   navigateToPreviousStep() {
@@ -211,22 +223,42 @@ export class WalletSetupComponent implements OnInit {
   finishStep1() {
     // toggle to step 2
     this.logger.debug("### Wallet Testnetwork: " + this.walletTestNetwork);
+    if(this.activeIndex < this.maxActiveIndex){
+      this.activeIndex += 1;
+    }
+    this.nextButton.nativeElement.blur();
+    this.logger.debug("Next, New Active Step: " + this.activeIndex);
   }
 
   finishStep2() {
     // toggle to step 3
     this.logger.debug("### Disclaimer Accepted?: " + this.disclaimerAccepted);
+    if(this.activeIndex < this.maxActiveIndex){
+      this.activeIndex += 1;
+    }
+    this.nextButton.nativeElement.blur();
+    this.logger.debug("Next, New Active Step: " + this.activeIndex);
   }
 
   finishStep3() {
     // toggle to step 4
     this.logger.debug("Wallet Password: " + this.walletPassword);
+    if(this.activeIndex < this.maxActiveIndex){
+      this.activeIndex += 1;
+    }
+    this.nextButton.nativeElement.blur();
+    this.logger.debug("Next, New Active Step: " + this.activeIndex);
   }
 
   finishStep4() {
     // toggle to step 5
     this.recoveryHash = new CSCCrypto(this.recoveryMnemonicWords).encrypt(this.walletPassword);
     this.logger.debug("Mnemonic Recovery Hash Created: " + this.recoveryHash);
+    if(this.activeIndex < this.maxActiveIndex){
+      this.activeIndex += 1;
+    }
+    this.nextButton.nativeElement.blur();
+    this.logger.debug("Next, New Active Step: " + this.activeIndex);
   }
 
   finishStep5() {
@@ -304,6 +336,11 @@ export class WalletSetupComponent implements OnInit {
         }
       }
     });
+    if(this.activeIndex < this.maxActiveIndex){
+      this.activeIndex += 1;
+    }
+    this.nextButton.nativeElement.blur();
+    this.logger.debug("Next, New Active Step: " + this.activeIndex);
   }
 
   finishSetup() {

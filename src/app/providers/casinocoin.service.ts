@@ -52,8 +52,6 @@ export class CasinocoinService implements OnDestroy {
         logger.debug("### INIT  CasinocoinService ###");
         // Initialize server state
         this.initServerState();
-        // Start server state job
-        this.startServerStateJob();
     }
 
     ngOnDestroy() {
@@ -102,10 +100,10 @@ export class CasinocoinService implements OnDestroy {
                             this.casinocoinConnectedSubject.next(true);
                             // inform listeners we are connected
                             connectSubject.next(AppConstants.KEY_CONNECTED);
-                            // start KeepAlive messages
-                            // this.keepAlive();
                             // get the current server state
                             this.getServerState();
+                            // subsribe to server status stream
+                            this.subscribeToServerStream();
                             // subscribe to ledger stream
                             this.subscribeToLedgerStream();
                             // get accounts and subscribe to accountstream
@@ -231,6 +229,10 @@ export class CasinocoinService implements OnDestroy {
                 });
             } else if(incommingMessage['type'] == 'serverStatus'){
                 this.logger.debug("server state: " + incommingMessage['server_status']);
+                if(incommingMessage['server_status'] != 'full'){
+                    this.logger.debug("### CasinocoinService - server_status: " + incommingMessage['server_status'] + " -> Reconnect !!!");
+                    this.reconnect();
+                }
             } else if(incommingMessage['type'] == 'transaction'){
                 let msg_tx = incommingMessage['transaction'];
                 this.logger.debug("### CasinocoinService - Incomming TX: " + JSON.stringify(msg_tx));
@@ -618,13 +620,13 @@ export class CasinocoinService implements OnDestroy {
         return newKeyPair;
     }
 
-    startServerStateJob(){
-        // start job after 1 minute and then repeat every 2 minutes
-        let timer = Observable.timer(60000,120000);
-        timer.subscribe(t => {
-            this.getServerState();
-        });
-    }
+    // startServerStateJob(){
+    //     // start job after 1 minute and then repeat every 2 minutes
+    //     let timer = Observable.timer(60000,120000);
+    //     timer.subscribe(t => {
+    //         this.getServerState();
+    //     });
+    // }
 
     checkAllAccounts(){
         // loop over all accounts

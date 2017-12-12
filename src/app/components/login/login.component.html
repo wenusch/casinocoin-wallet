@@ -1,4 +1,4 @@
-<p-dialog [visible]="dialog_visible" [width]="500" [height]="350" [closable]="false" [modal]="true">
+<p-dialog [visible]="dialog_visible" [width]="500" [height]="325" [closable]="true" [modal]="true" (onHide)="onHideLogin()">
     <p-header>
         Open CasinoCoin Wallet
     </p-header>
@@ -29,6 +29,13 @@
             </div>
         </div>
         <div class="ui-g-1"></div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-2"></div>
+        <div class="ui-g-8" style="text-align:right;">
+            <a href="#" (click)="onRecoverPassword()">recover password</a>
+        </div>
+        <div class="ui-g-2"></div>
     </div>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>

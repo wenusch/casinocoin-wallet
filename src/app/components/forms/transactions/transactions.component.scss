@@ -75,3 +75,7 @@
 ::ng-deep .hide-context-menu {
     display: none;
 }
+
+::ng-deep .ui-datatable-scrollable-body {
+    overflow-anchor: none;
+}
