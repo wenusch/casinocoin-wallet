@@ -1,5 +1,7 @@
 @import "~assets/variables";
 
+$base-height: 60px;
+
 .container { 
 	display:table; 
 	width:100%; 
@@ -137,8 +139,18 @@
   z-index: 1000;
 }
 
+.mat-list .mat-list-item {
+  height: 65px !important;
+}
+
+.mat-list .mat-list-item.import-key {
+  height: 30px !important;
+}
+
 ::ng-deep .mat-list-item-content {
   display: block !important;
+  padding-top: 5px !important;
+  padding-bottom: 10px !important;
 }
 
 .footer-icon {
@@ -160,6 +172,18 @@
 }
 
 ::ng-deep .footer-error {
-  color: $casinocoinRed;
+  color: #901119;
   font-weight: bolder;
+}
+
+::ng-deep .mat-list-address-item {
+  color: #901119 !important;
+  font-size: smaller;
+}
+
+::ng-deep .mat-list-address {
+  flex-grow: 1;
+  border: 1px solid #901119;
+  overflow: auto;
+  height: 90px;
 }

@@ -29,3 +29,9 @@
 ::ng-deep .hide-context-menu {
     display: none;
 }
+
+::ng-deep .qrcode {
+    width: 100%; 
+    padding: 10px;
+    text-align: center;
+}

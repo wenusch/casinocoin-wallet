@@ -134,3 +134,10 @@ export type Instructions = {
      maxLedgerVersion?: number
     }
   }
+
+  export type CSCURI = {
+    address: string, 
+    amount?: string, 
+    destinationTag?: number, 
+    label?: string
+  }

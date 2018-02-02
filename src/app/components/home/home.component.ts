@@ -22,6 +22,7 @@ import * as LokiTypes from '../../domain/lokijs';
 import Big from 'big.js';
 import { setTimeout } from 'timers';
 import { Subject } from 'rxjs/Subject';
+import { LokiKey } from '../../domain/lokijs';
 
 const path = require('path');
 const fs = require('fs');
@@ -70,6 +71,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   currentWalletObject:Object;
 
   privateKeyExportLocation: string = "";
+  privateKeyImportfile: string = "";
+  importKeys: Array<LokiKey> = [];
 
   // Growl messages
   msgs: Message[] = [];
@@ -111,6 +114,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   backupPath: string;
   lastMenuEvent: string = "";
+  navigationSucceeded: boolean = false;
+  showProgress: boolean = false;
 
   constructor( private logger: LogService, 
                private router: Router,
@@ -124,7 +129,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
                private currenyPipe: CurrencyPipe ) {
     this.logger.debug("### INIT HOME ###");
     this.applicationVersion = this.electron.remote.app.getVersion();
-    this.backupPath = this.electron.remote.getGlobal("backupPath");
+    this.backupPath = this.electron.remote.getGlobal("vars").backupPath;
     this.logger.debug("### HOME Backup Path: " + this.backupPath);
     // this.electron.ipcRenderer.on("wallet-backup", (event, arg) => {
     //   this.backupWallet();
@@ -134,6 +139,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngAfterViewInit(){
     this.logger.debug("### HOME ngAfterViewInit() ###");
+    // We use setTimeout to avoid the `ExpressionChangedAfterItHasBeenCheckedError`
+    // See: https://github.com/angular/angular/issues/6005
+    setTimeout(_ => {}, 0);
     // subscribe to UI changes
     this.uiChangeSubject.subscribe(status =>{
       if(status == AppConstants.KEY_CONNECTED){
@@ -158,7 +166,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     });
     // define Tools context menu
     let tools_context_menu_template = [
-      { label: 'Import Private Key', 
+      { label: 'Import Private Keys', 
         click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('context-menu-event', 'import-priv-key');
         }
@@ -220,51 +228,58 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // listen to tools context menu events
     this.electron.ipcRenderer.on('context-menu-event', (event, arg) => {
-      this.logger.debug("### HOME Menu Event: " + arg);
-      if(arg == 'import-priv-key')
-        this.onPrivateKeyImport();
-      else if(arg == 'export-priv-keys')
-        this.onPrivateKeysExport();
-      else if(arg == 'backup-wallet')
-        this.onBackupWallet();
-      else if(arg == 'restore-backup')
-        this.onRestoreBackup();
-      else if(arg == 'add-wallet')
-        this.onAddWallet();
-      else if(arg == 'create-wallet')
-        this.createWallet();
-      else if(arg == 'close-wallet')
-        this.closeWallet();
-      else if(arg == 'quit')
-        this.onQuit();
-      else
-        this.logger.debug("### Context menu not implemented: " + arg);
+      if(this.navigationSucceeded){
+        this.logger.debug("### HOME Menu Event: " + arg);
+        if(arg == 'import-priv-key')
+          this.onPrivateKeyImport();
+        else if(arg == 'export-priv-keys')
+          this.onPrivateKeysExport();
+        else if(arg == 'backup-wallet')
+          this.onBackupWallet();
+        else if(arg == 'restore-backup')
+          this.onRestoreBackup();
+        else if(arg == 'add-wallet')
+          this.onAddWallet();
+        else if(arg == 'create-wallet')
+          this.createWallet();
+        else if(arg == 'close-wallet')
+          this.closeWallet();
+        else if(arg == 'quit')
+          this.onQuit();
+        else
+          this.logger.debug("### Context menu not implemented: " + arg);
+      }
     });
 
     // listen to connect context menu events
     this.electron.ipcRenderer.on('connect-context-menu-event', (event, arg) => {
-      if(arg == 'connect'){
-        if(this.lastMenuEvent != "connect"){
-          this.lastMenuEvent = "connect";
-          this.onConnect();
+      if(this.navigationSucceeded){
+        if(arg == 'connect'){
+          if(this.lastMenuEvent != "connect"){
+            this.lastMenuEvent = "connect";
+            this.onConnect();
+          }
         }
-      }
-      else if(arg == 'disconnect'){
-        if(this.lastMenuEvent != "disconnect"){
-          this.lastMenuEvent = "disconnect";
-          this.onDisconnect();
+        else if(arg == 'disconnect'){
+          if(this.lastMenuEvent != "disconnect"){
+            this.lastMenuEvent = "disconnect";
+            this.onDisconnect();
+          }
         }
+        else if(arg == 'server-info')
+          this.onServerInfo();
       }
-      else if(arg == 'server-info')
-        this.onServerInfo();
     });
 
     // navigate to the transactions
     this.router.navigate(['transactions']).then(navResult => {
-      this.logger.debug("### HOME navResult: " + navResult);
+      this.logger.debug("### HOME transactions navResult: " + navResult);
       if(navResult){
+        this.navigationSucceeded = true;
         // connect to casinocoin network
         this.doConnectToCasinocoinNetwork();
+      } else {
+        this.navigationSucceeded = false;
       }
     });
     // subscribe to the openWallet subject
@@ -295,14 +310,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnDestroy(){
     this.logger.debug("### HOME ngOnDestroy() ###");
-    // remove listeners
-    this.electron.ipcRenderer.removeListener("connect-context-menu-event", (event, arg) => {});
-    this.electron.ipcRenderer.removeListener("context-menu-event", (event, arg) => {});
     if(this.isConnected && this.casinocoinService != undefined){
       this.casinocoinService.disconnect();
     }
-    // backup the database
-    // this.backupWallet();
   }
 
   doConnectToCasinocoinNetwork(){
@@ -389,7 +399,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onQuit() {
     this.logger.debug("Quit Clicked !!");
+    // backup database
+    this.backupWallet();
+    // save the Database!
+    this.walletService.saveWallet();
     // Close the windows to cause an application exit
+    this.electron.remote.getGlobal("vars").exitFromRenderer = true;
     this.electron.remote.getCurrentWindow.call( close() );
   }
 
@@ -404,7 +419,37 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onPrivateKeyImport() {
-    this.showPrivateKeyImportDialog = true;
+    // this.showPrivateKeyImportDialog = true;
+    this.logger.debug("### Open File Dialog: " + this.electron.remote.app.getPath("documents"));
+    this.importKeys = [];
+    let fileFilters = [{name: 'Private Keys', extensions: ['keys']} ];
+    this.electron.remote.dialog.showOpenDialog(
+        { title: 'Private Key Import',
+          defaultPath: this.electron.remote.app.getPath("documents"),
+          filters: fileFilters,
+          properties: ['openFile']
+        }, (files) => {
+          this.logger.debug("### Files: " + JSON.stringify(files));
+          if(files && files.length > 0){
+            this.walletPassword = "";
+            let keys:Array<LokiKey> = JSON.parse(fs.readFileSync(files[0]));
+            this.logger.debug("### Keys: " + JSON.stringify(keys));
+            keys.forEach( key => {
+              // check if not yet exits
+              let dbKey = this.walletService.getKey(key.accountID);
+              if(dbKey == null){
+                this.importKeys.push(key);
+              }
+            });
+            if(this.importKeys.length > 0){
+              this.logger.debug("### Show Import Key Dialog ###");
+              this.showPrivateKeyImportDialog = true;
+            } else {
+              this.electron.remote.dialog.showMessageBox({ message: "There are no new keys to be imported from the selected file.", buttons: ["OK"] });
+            }
+          }
+        }
+    );
   }
 
   onPrivateKeysExport() {
@@ -414,6 +459,27 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showPasswordDialog = true;
   }
 
+  onImportPrivateKey(){
+    this.logger.debug("### Import Private Keys: " + this.importKeys);
+    if(this.walletPassword.length == 0 ){
+      this.error_message = "Please enter your password.";
+      this.footer_visible = true;
+    } else if(!this.walletService.checkWalletPasswordHash(this.walletPassword)){
+      this.error_message = "You entered an invalid password.";
+      this.footer_visible = true;
+    } else {
+      this.importKeys.forEach(importKey => {
+        this.walletService.importPrivateKey(importKey.secret, this.walletPassword);
+      });
+      // refresh accounts
+      this.casinocoinService.checkAllAccounts();
+      this.showPrivateKeyImportDialog = false;
+      this.importKeys = [];
+      this.walletPassword = "";
+      this.error_message = "";
+      this.footer_visible = false;
+    }
+  }
 
   selectPrivateKeysExportLocation() {
     this.logger.debug("### selectPrivateKeysExportLocation()");
@@ -465,7 +531,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           if(result && result.length>0) {
             let dbDump = this.walletService.getWalletDump();
             // create a filename
-            let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss") + "-csc-wallet.backup";
+            let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss") + "-"+ this.currentWallet + ".backup";
             let backupFilePath = path.join(result[0], filename);
             // Write the JSON array to the file 
             fs.writeFile(backupFilePath, dbDump, (err) => {
@@ -533,11 +599,16 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
     // until there is valid market info on new CSC we calculate market value against 1:1000 ratio
     let balanceOldCSC = new Big(CSCUtil.dropsToCsc(this.balance)).div(1000);
-    let cscFiat = "0.00";
-    if(this.marketService.coinMarketInfo){
-      cscFiat = balanceOldCSC.times(this.marketService.coinMarketInfo.price_usd).toString();
-    }
-    this.fiat_balance = this.currenyPipe.transform(cscFiat, "USD", true, "1.2-2");
+
+    let balanceCSC = new Big(CSCUtil.dropsToCsc(this.balance));
+    let newCSCFiat = balanceCSC.times(this.marketService.cscPrice).times(this.marketService.btcPrice).toString();
+    this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice);
+    // this.logger.debug("### New Fiat: " + this.currenyPipe.transform(newCSCFiat, "USD", true, "1.2-2")); 
+    // let cscFiat = "0.00";
+    // if(this.marketService.coinMarketInfo){
+    //   cscFiat = balanceOldCSC.times(this.marketService.coinMarketInfo.price_usd).toString();
+    // }
+    this.fiat_balance = this.currenyPipe.transform(newCSCFiat, "USD", true, "1.2-2");
   }
 
   doTransacionUpdate(){
@@ -653,16 +724,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.router.navigate(['home','support']);
   }
 
-  onImportPrivateKey(){
-    this.logger.debug("Import Private Key: " + this.privateKeySeed);
-    this.walletService.importPrivateKey(this.privateKeySeed, this.walletPassword);
-    // refresh accounts
-    this.casinocoinService.checkAllAccounts();
-    this.showPrivateKeyImportDialog = false;
-    this.privateKeySeed = "";
-    this.walletPassword = "";
-  }
-
   onSettingsSave(){
     
   }
@@ -671,7 +732,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.logger.debug("### HOME Backup DB ###");
     let dbDump = this.walletService.getWalletDump();
     // create a filename
-    let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss") + ".backup";
+    let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss") + "-csc-wallet.backup";
     let backupFilePath = path.join(this.backupPath, filename);
     // Write the JSON array to the file 
     fs.writeFileSync(backupFilePath, dbDump);

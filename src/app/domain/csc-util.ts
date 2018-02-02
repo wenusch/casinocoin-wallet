@@ -1,7 +1,7 @@
 import Big from 'big.js';
 import int from 'int';
 
-import { Amount, Memo, CasinocoindAmount, CasinocoinMemo }  from './csc-types';
+import { Amount, Memo, CasinocoindAmount, CasinocoinMemo, CSCURI }  from './csc-types';
 
 export class CSCUtil {
 
@@ -198,5 +198,23 @@ export class CSCUtil {
         // remove points
         let dotlessVersion = version.split(".").join("");
         return int(dotlessVersion);
+    }
+
+    static generateCXXQRCodeURI(address: string){
+        return "casinocoin:" + address + "?label=" + encodeURI("Swap Deposit");
+    }
+
+    static generateCSCQRCodeURI(input: CSCURI){
+        let uri = "https://casinocoin.org/send?to=" + input.address;
+        if(input.amount){
+            uri = uri + "&amount=" + input.amount;
+        }
+        if(input.destinationTag){
+            uri = uri + "&dt=" + input.destinationTag;
+        }
+        if(input.label){
+            uri = uri + "&label=" + input.label;
+        }
+        return uri;
     }
 }

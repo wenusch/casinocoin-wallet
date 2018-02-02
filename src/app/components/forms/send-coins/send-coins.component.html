@@ -45,9 +45,9 @@
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Amount</span>
-            <input type="number" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()"
+            <input type="text" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()"
                     [disabled]="!selectedAccount || invalidReceipient" (ngModelChange)="onAmountChange($event)" 
-                    autocomplete="off" min="0" #amountInput>
+                    autocomplete="off" #amountInput>
             <button pButton type="button" class="ui-button-secondary" (click)="sendAllCoins()" label="all" 
                     [disabled]="!selectedAccount || invalidReceipient"></button>
         </div>
@@ -71,7 +71,7 @@
     <div class="ui-g-12">
         <div class="ui-inputgroup" [matTooltip]="total_tooltip">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Total</span>
-            <input type="text" pInputText [(ngModel)]="totalSend" #totalSendInput disabled>         
+            <input type="text" pInputText [ngModel]="totalSendFormatted" #totalSendInput disabled>         
         </div>
     </div>
     <!-- We need to have the option to include the reserve as well in the future !!!

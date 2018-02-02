@@ -10,6 +10,8 @@ const shouldUseAsar = argv.asar || false;
 const shouldBuildAll = argv.all || false;
 const arch = argv.arch || 'all';
 const platform = argv.platform || 'darwin';
+const path = require('path');
+const fs = require('fs');
 
 const DEFAULT_OPTS = {
     dir: './dist',
@@ -44,6 +46,12 @@ function pack(plat, arch, cb) {
             }
             return extension;
         })();
+    }
+
+    const rootPath = path.join('./');
+    const outPath = path.join(rootPath, 'release-builds');
+    if (!fs.existsSync(outPath)){
+        fs.mkdirSync(outPath);
     }
 
     const opts = Object.assign({}, DEFAULT_OPTS, {

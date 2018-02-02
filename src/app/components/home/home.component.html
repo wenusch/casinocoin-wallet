@@ -89,11 +89,11 @@
             <p-toolbar class="toolbar-height">
                 <div class="ui-toolbar-group-left">
                     <div class="ui-g">
-                        <div class="ui-g-6">
+                        <div class="ui-g-7">
                             <img src="../../../assets/icons/balance.png" class="footer-icon">
                             Balance: {{balance | cscAmount : false : true}}
                         </div>
-                        <div class="ui-g-6">
+                        <div class="ui-g-5">
                             <img src="../../../assets/icons/fiat.png" class="footer-icon">
                             Fiat Value: {{fiat_balance}}
                         </div>
@@ -125,25 +125,15 @@
         </mat-sidenav-container>
     </div>
 </div>
-<p-dialog class="dialog-header" [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="300" [closable]="true" 
+<p-dialog class="dialog-header" [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="350" [closable]="true" 
         [modal]="true" appendTo="body">
-    <p-header>Import private key</p-header>
+    <p-header>Import private keys</p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
-        <div class="ui-g-10">
-            <p>Enter the Seed for the Private Key you wish to import and the password for your wallet.</p>
-        </div>
+        <div class="ui-g-10">Enter the password for your wallet.</div>
         <div class="ui-g-1"></div>
     </div>
     <div class="ui-g ui-fluid">
-        <div class="ui-g-1"></div>
-        <div class="ui-g-10">
-            <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon"><i class="fa fa-key"></i></span>
-                <input type="text" pInputText placeholder="Private Key Seed" [(ngModel)]="privateKeySeed" style="width: 100%; padding-left: 5px;">
-            </div>
-        </div>
-        <div class="ui-g-1"></div>
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
@@ -154,11 +144,29 @@
         </div>
         <div class="ui-g-1"></div>
     </div>
-    <div style="text-align: right;">
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">The following Account ID's will be imported into your current wallet:</div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <mat-list class="mat-list-address">
+                <mat-list-item *ngFor="let key of importKeys" class="import-key"><span class="mat-list-address-item">{{key.accountID}}</span></mat-list-item>
+            </mat-list>
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+    <div style="text-align: right; margin-top: 10px;">
         <button pButton type="button" (click)="onImportPrivateKey()" icon="fa-arrow-right" iconPos="right" label="Import" 
                 style="width: 115px;"></button>
     </div>
+    <p-footer *ngIf="footer_visible" class="footer-error">
+        Error: {{error_message}}
+    </p-footer>
 </p-dialog>
+
 <p-dialog class="dialog-header" [(visible)]="showSettingsDialog" [width]="640" [height]="400" [closable]="true" 
         [modal]="true" appendTo="body">
     <p-header>Settings</p-header>
@@ -200,7 +208,7 @@
     </div>
 </p-dialog>
 
-<p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="250" [closable]="true" [modal]="true" appendTo="body">
+<p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="225" [closable]="true" [modal]="true" appendTo="body">
 <p-header>
     CasinoCoin Wallet Password
 </p-header>
@@ -237,4 +245,9 @@
 <p-footer *ngIf="footer_visible" class="footer-error">
     Error: {{error_message}}
 </p-footer>
+</p-dialog>
+
+<p-dialog [(visible)]="showProgress" [width]="250" [height]="150" [closable]="true" [modal]="true" appendTo="body">
+    <p-progressSpinner [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
+    <div>Processing ...</div>
 </p-dialog>

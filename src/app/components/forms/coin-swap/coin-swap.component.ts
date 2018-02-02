@@ -28,6 +28,8 @@ export class CoinSwapComponent implements OnInit {
   private refreshInterval: any;
   swap_context_menu: ElectronMenu;
   swapDisabled: boolean = true;
+  cxxDepositURI:string = "";
+  showDepositQRCodeDialog:boolean = false;
 
   refresh_icon: string = "fa-refresh";
 
@@ -61,6 +63,11 @@ export class CoinSwapComponent implements OnInit {
           browserWindow.webContents.send('swap-context-menu-event', 'show-transaction');
         }
       },
+      { label: 'Show Deposit QRCode', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('swap-context-menu-event', 'show-deposit-qrcode');
+        }
+      },
       { label: 'Refresh', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('swap-context-menu-event', 'refresh');
@@ -78,6 +85,8 @@ export class CoinSwapComponent implements OnInit {
         this.copySwapID();
       else if(arg == 'show-transaction')
         this.showTransactionDetails();
+      else if (arg == 'show-deposit-qrcode')
+        this.showDepositQRCode();
       else if(arg == 'refresh')
         this.doRefreshSwaps();
       else
@@ -150,6 +159,8 @@ export class CoinSwapComponent implements OnInit {
       return "New Coins Transfered";
     } else if(status == 'swap_completed') {
       return "Swap Complete";
+    } else if(status == 'cancelled'){
+      return "Swap Cancelled";
     } else {
       return status;
     }
@@ -158,6 +169,15 @@ export class CoinSwapComponent implements OnInit {
   showSwapContextMenu(event){
     this.selectedSwap = event.data;
     this.logger.debug("### showSwapContextMenu: " + JSON.stringify(this.selectedSwap));
+    if(this.selectedSwap.swapStatus == "cancelled"){
+      this.swap_context_menu.items[0].visible = false;
+      this.swap_context_menu.items[2].visible = false;
+      this.swap_context_menu.items[3].visible = false;
+    } else {
+      this.swap_context_menu.items[0].visible = true;
+      this.swap_context_menu.items[2].visible = true;
+      this.swap_context_menu.items[3].visible = true;
+    }
     this.swap_context_menu.popup(this.electronService.remote.getCurrentWindow());
   }
 
@@ -184,6 +204,14 @@ export class CoinSwapComponent implements OnInit {
         let infoUrl = environment.insight_endpoint_url + "/tx/" + this.selectedSwap.deposit['txid'];
         this.electronService.remote.shell.openExternal(infoUrl);
       }
+    }
+  }
+
+  showDepositQRCode(){
+    if(this.selectedSwap){
+      this.logger.debug("showDepositQRCode: " + JSON.stringify(this.selectedSwap));
+      this.cxxDepositURI = CSCUtil.generateCXXQRCodeURI(this.selectedSwap.depositAddress);
+      this.showDepositQRCodeDialog = true;
     }
   }
 

@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { Validators,FormControl,FormGroup,FormBuilder } from '@angular/forms';
 import { InputText } from 'primeng/primeng';
 import { LogService } from '../../../providers/log.service';
 import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
@@ -6,6 +7,7 @@ import { MessageService } from 'primeng/components/common/messageservice';
 import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
 import { ElectronService } from '../../../providers/electron.service';
+import { ValidatorService } from '../../../providers/validator.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { AppConstants } from '../../../domain/app-constants';
 import Big from 'big.js';
@@ -39,9 +41,11 @@ export class SendCoinsComponent implements OnInit {
   minimalFee: string = "";
   accountReserve: string = "";
   totalSend: string = "";
+  totalSendFormatted: string = "";
   walletPassword: string;
   showPasswordDialog:boolean = false;
   signAndSubmitIcon:string = "fa-check";
+  amount_tooltip:string = "Enter the amount to send only using numbers and a . (dot) indicating a decimal.";
   reserve_tooltip:string = "The reserve is necessary to keep your account activated.";
   total_tooltip:string = "Total amount necessary to sent " + this.amount;
   includeReserve:boolean = false;
@@ -49,6 +53,8 @@ export class SendCoinsComponent implements OnInit {
   isSendValid:boolean = true;
   isConnected: boolean =false;
   connected_tooltip: string = "";
+
+  sendCoinsform: FormGroup;
 
   allowSendFromCurrentConnection: boolean = false;
 
@@ -60,7 +66,9 @@ export class SendCoinsComponent implements OnInit {
               private walletService: WalletService,
               private messageService: MessageService,
               private electronService: ElectronService,
-              private cscAmountPipe: CSCAmountPipe ) { }
+              private validators: ValidatorService,
+              private cscAmountPipe: CSCAmountPipe,
+              private fb: FormBuilder ) { }
 
   ngOnInit() {
     this.logger.debug("### SendCoin onInit ###")
@@ -69,7 +77,8 @@ export class SendCoinsComponent implements OnInit {
       if(result == AppConstants.KEY_LOADED){
         this.walletService.getAllAccounts().forEach( element => {
           if(new Big(element.balance) > 0){
-            let accountLabel = element.label + " - " + element.accountID.substring(0,10) + '...' + " [Balance: " + CSCUtil.dropsToCsc(element.balance) + "]";
+            let accountLabel = element.label + " - " + element.accountID.substring(0,10) + '...' + " [Balance: " + 
+                                this.cscAmountPipe.transform(element.balance, false, true) + "]";
             this.accounts.push({label: accountLabel, value: element.accountID});
           }
         });
@@ -107,12 +116,19 @@ export class SendCoinsComponent implements OnInit {
       this.doBalanceUpdate();
     });
     
+    this.sendCoinsform = this.fb.group({
+        'recipient': new FormControl('', Validators.required),
+        'description': new FormControl(''),
+        'destinationTag': new FormControl('', this.validators.isValidDestinationTag),
+        'amount': new FormControl('', Validators.required)
+    });
     // this.casinocoinService.ledgerSubject.subscribe( ledger => {
     //   this.logger.debug("### SendCoins - ledger: " + JSON.stringify(ledger));
     //   this.fees = CSCUtil.dropsToCsc(ledger.fee_base.toString());
     //   this.minimalFee = this.fees;
     //   this.logger.debug("### SendCoins - minimalFee: " + this.minimalFee);
     // });
+    this.checkSendValid();
   }
 
   doBalanceUpdate(){
@@ -128,6 +144,15 @@ export class SendCoinsComponent implements OnInit {
   }
 
   onAmountChange(event){
+    this.logger.debug("### onAmountChange: " + JSON.stringify(event));
+    // remove any other chars than numbers or a single dot (.)
+    let amount = event.replace(new RegExp(",", 'g'), "");
+    // check if a number
+    if(!isNaN(amount)){
+      this.amount = amount;
+    } else {
+      this.amount = "0.00";
+    }
     this.calculateTotal(this.includeReserve);
     this.checkSendValid();
   }
@@ -223,6 +248,8 @@ export class SendCoinsComponent implements OnInit {
           this.invoiceID = "";
           this.destinationTag = undefined;
           this.totalSend = "";
+          this.totalSendFormatted = "";
+          this.checkSendValid();
         }
         this.showPasswordDialog = false;
         this.signAndSubmitIcon = "fa-check";
@@ -231,6 +258,7 @@ export class SendCoinsComponent implements OnInit {
 
   cancelSend(){
     this.showPasswordDialog = false;
+    this.checkSendValid();
     this.signAndSubmitIcon = "fa-check";
   }
 
@@ -251,9 +279,8 @@ export class SendCoinsComponent implements OnInit {
   calculateTotal(includeReserve: boolean){
     this.logger.debug("### SendCoins - calculateTotal: " + this.amount + " fees: " + this.fees);
     if(this.amount != null){
+
       if(new Big(this.amount) > 0 && new Big(this.fees) > 0){
-        // let totalSendSatoshi = new Big(CSCUtil.cscToDrops(this.amount)).plus(new Big(CSCUtil.cscToDrops(this.fees)));
-        // this.totalSend = CSCUtil.dropsToCsc(totalSendSatoshi.toString());
         let amountToSend = new Big(CSCUtil.cscToDrops(this.amount));
         let maxToSend = new Big(this.walletService.getAccountBalance(this.selectedAccount))
                           .minus(new Big(CSCUtil.cscToDrops(this.fees)));
@@ -263,7 +290,11 @@ export class SendCoinsComponent implements OnInit {
         this.logger.debug("amountToSend: " + amountToSend + " maxToSend: " + maxToSend + " this.accountReserve: " + this.accountReserve);
         if(amountToSend.gt(maxToSend)){
           // we need to reduce the amount so we do not pass maxToSend
-          amountToSend = maxToSend;
+          if(maxToSend < 0){
+            amountToSend = 0;
+          } else {
+            amountToSend = maxToSend;
+          }
           this.amount = CSCUtil.dropsToCsc(amountToSend.toString());
           this.logger.debug("### Set amount to limited: " + this.amount);
         }
@@ -284,6 +315,8 @@ export class SendCoinsComponent implements OnInit {
     } else {
       this.totalSend = "0.00"
     }
+    // format total to send
+    this.totalSendFormatted = this.cscAmountPipe.transform(CSCUtil.cscToDrops(this.totalSend), false, true);
   }
 
   checkSendValid(){
@@ -315,6 +348,7 @@ export class SendCoinsComponent implements OnInit {
       );
     }
     this.calculateTotal(this.includeReserve);
+    this.checkSendValid();
   }
 
 }

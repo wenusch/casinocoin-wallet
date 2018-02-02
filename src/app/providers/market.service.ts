@@ -2,16 +2,22 @@ import { Injectable, OnInit, OnDestroy } from '@angular/core';
 import { LogService } from './log.service';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { CoinMarketCapType } from '../domain/service-types';
+import { CoinMarketCapType, ExchangesType } from '../domain/service-types';
 import { LocalStorageService } from "ngx-store";
 import { AppConstants } from '../domain/app-constants';
 
 @Injectable()
 export class MarketService {
   
-    private coinmarketCapURL: string = "https://api.coinmarketcap.com/v1/ticker/casinocoin/";
+    private coinmarketCapURLCSC: string = "https://api.coinmarketcap.com/v1/ticker/casinocoin/";
+    private coinmarketCapURLBTC: string = "https://api.coinmarketcap.com/v1/ticker/bitcoin/";
+    private exchangesURL: string = "http://api.casinocoin.org/exchanges";
     public coinMarketInfo: CoinMarketCapType;
+    public exchanges: Array<ExchangesType>;
     private checkInterval: any;
+    public exchangeUpdates = new Subject<Array<ExchangesType>>();
+    public btcPrice: number = 1;
+    public cscPrice: number = 0.00000001;
 
     constructor(private logger: LogService, 
                 private http: HttpClient,
@@ -19,16 +25,22 @@ export class MarketService {
         logger.debug("### INIT  MarketService ###");
         // get the stored coin info from localstorage
         this.coinMarketInfo = this.localStorageService.get(AppConstants.KEY_COININFO);
-        this.initMarketService();
+        this.initAutoUpdateServices();
     }
 
-    initMarketService(){
+    initAutoUpdateServices(){
         // run the getCoinInfo method
         this.getCoinInfo();
         // run a timer to get the coininfo every set interval of 120 seconds
         this.checkInterval = setInterval(() => {
             this.getCoinInfo();
         }, 120000);
+        // get exchanges
+        this.getExchanges();
+        // run a timer to get the exchange info every set interval of 60 seconds
+        this.checkInterval = setInterval(() => {
+            this.getExchanges();
+        }, 60000);
     }
 
     getCoinInfo(): Observable<CoinMarketCapType> {
@@ -36,7 +48,7 @@ export class MarketService {
             headers: new HttpHeaders().set('Content-Type', 'application/json')
         };
         let serviceResponse = new Subject<CoinMarketCapType>();
-        this.http.get(this.coinmarketCapURL, options).subscribe(result => {
+        this.http.get(this.coinmarketCapURLCSC, options).subscribe(result => {
             this.logger.debug("### MarketService: " + JSON.stringify(result));
             let coinInfo = result[0];
             if(coinInfo){
@@ -59,7 +71,30 @@ export class MarketService {
                 serviceResponse.next(this.coinMarketInfo);
             }
         });
+        this.http.get(this.coinmarketCapURLBTC, options).subscribe(result => {
+            let coinInfo = result[0];
+            if(coinInfo){
+                this.btcPrice = Number(coinInfo.price_usd);
+            }
+        });
         return serviceResponse.asObservable();
+    }
+
+    getExchanges() {
+        let options = {
+            headers: new HttpHeaders().set('Content-Type', 'application/json')
+        };
+        this.http.get<Array<ExchangesType>>(this.exchangesURL, options).subscribe(result => {
+            this.exchanges = result;
+            // get max last price
+            this.cscPrice = 0.00000001;
+            this.exchanges.forEach(exchange => {
+                if(exchange.last > this.cscPrice){
+                    this.cscPrice = exchange.last;
+                }
+            });
+            this.exchangeUpdates.next(this.exchanges);
+        });
     }
 }
 // http://api.casinocoin.org/CSCPublicAPI/CoinInfo
