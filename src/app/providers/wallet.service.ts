@@ -749,6 +749,9 @@ export class WalletService {
   }
 
   getAllAddresses(): Array<LokiTypes.LokiAddress> {
+      if (this.addressbook == null) {
+          return [];
+      }
       return this.addressbook.find();
   }
 
