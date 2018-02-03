@@ -9,9 +9,9 @@ import { AppConstants } from '../domain/app-constants';
 @Injectable()
 export class MarketService {
   
-    private coinmarketCapURLCSC: string = "https://api.coinmarketcap.com/v1/ticker/casinocoin/";
-    private coinmarketCapURLBTC: string = "https://api.coinmarketcap.com/v1/ticker/bitcoin/";
-    private exchangesURL: string = "http://api.casinocoin.org/exchanges";
+    private coinmarketCapURLCSC = 'https://api.coinmarketcap.com/v1/ticker/casinocoin/?convert=EUR';
+    private coinmarketCapURLBTC = 'https://api.coinmarketcap.com/v1/ticker/bitcoin/?convert=EUR';
+    private exchangesURL = 'http://api.casinocoin.org/exchanges';
     public coinMarketInfo: CoinMarketCapType;
     public exchanges: Array<ExchangesType>;
     private checkInterval: any;
@@ -58,6 +58,7 @@ export class MarketService {
                     symbol: coinInfo.symbol,
                     rank: coinInfo.rank,
                     price_usd: coinInfo.price_usd,
+                    price_eur: coinInfo.price_eur,
                     price_btc: coinInfo.price_btc,
                     market_24h_volume_usd: coinInfo['24h_volume_usd'],
                     market_cap_usd: coinInfo.market_cap_usd,
