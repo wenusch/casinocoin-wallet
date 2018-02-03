@@ -177,7 +177,17 @@
                 <div class="ui-g-4">Wallet Language</div><div class="ui-g-8 bold-value">English</div>
                 <div class="ui-g-4">Wallet UUID</div><div class="ui-g-8 bold-value">{{currentWalletObject['walletUUID']}}</div>
                 <div class="ui-g-4">Wallet Creationdate</div><div class="ui-g-8 bold-value">{{currentWalletObject['creationDate'] | cscDate : 'yyyy-MM-dd HH:mm:ss'}}</div>
-                <div class="ui-g-4">Fiat value currency</div><div class="ui-g-8 bold-value">USD</div>
+                <div class="ui-g-4">Fiat value currency</div>
+                <div class="ui-g-8 bold-value">
+                    <p-dropdown
+                            [style]="{'width':'100%'}"
+                            [options]="fiatCurrencies"
+                            [(ngModel)]="selectedFiatCurrency"
+                            placeholder="Select fiat currency"
+                            (ngModelChange)="doBalanceUpdate(event)"
+                            autofocus #fiatCurrenciesDrowdown></p-dropdown>
+                </div>
+
                 <div class="ui-g-4">Show desktop notifications</div><div class="ui-g-8 bold-value">Yes</div>
             </div>
         </div>
