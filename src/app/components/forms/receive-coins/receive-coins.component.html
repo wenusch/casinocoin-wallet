@@ -6,10 +6,21 @@
     </div>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
-        <p-dataTable [value]="accounts" [immutable]="false" scrollable="true" scrollHeight="70vh"
-                        [contextMenu]="cm" [(selection)]="selectedReceiveRow" editable="true" (onEditComplete)="onLabelEditComplete($event)"
-                        (onEditCancel)="onLabelEditCancel($event)" (onContextMenuSelect)="showReceiveContextMenu($event)">
-            <p-column field="accountID" header="Account" [style]="{'width':'200px'}">
+        <p-dataTable
+                [value]="accounts"
+                [immutable]="false"
+                scrollable="true"
+                scrollHeight="70vh"
+                [contextMenu]="cm"
+                [(selection)]="selectedReceiveRow"
+                editable="true"
+                (onEditComplete)="onLabelEditComplete($event)"
+                (onEditCancel)="onLabelEditCancel($event)"
+                (onContextMenuSelect)="showReceiveContextMenu($event)"
+                [rows]="10"
+                [paginator]="true"
+                #dt>
+            <p-column field="accountID" header="Account" [style]="{'width':'200px'}" [filter]="true" filterMatchMode="contains">
                 <ng-template let-data="rowData" pTemplate="body">
                     <span class="text-small">
                         <p class="item-p"><span class="item-label">account: </span><span class="item-value"> {{ data.accountID }}</span></p>
@@ -17,25 +28,15 @@
                     </span>
                 </ng-template>
             </p-column>
-            <p-column field="label" header="Label" [style]="{'width':'160px'}" editable="true" class="item-value"></p-column>
-            <!--
-            <p-column field="balance" header="Balance" [style]="{'width':'90px'}">
-                <ng-template let-data="rowData" pTemplate="body">
-                    <span>{{data.balance | cscAmount}}</span>
+            <p-column field="label" header="Label" [style]="{'width':'160px'}" editable="true" class="item-value" [filter]="true" filterMatchMode="contains"></p-column>
+            <p-column field="activated" header="Activated" [style]="{'width':'50px','text-align':'center'}" [filter]="true" filterMatchMode="equals">
+                <ng-template pTemplate="filter" let-col>
+                    <p-checkbox class="form-control ui-column-filter" [(ngModel)]="activeFilter" (onChange)="onActiveFilterChange($event, dt, col)" binary="true" filter="filter"></p-checkbox>
                 </ng-template>
-            </p-column>
-            -->
-            <!--
-            <p-column field="meta.created" header="Created" [style]="{'width':'80px'}">
-                <ng-template let-data="rowData" pTemplate="body">
-                    <span>{{data.meta.created | date : 'yyyy-MM-dd HH:mm:ss'}}</span>
-                </ng-template>
-            </p-column>
-        -->
-            <p-column field="activated" header="Activated" [style]="{'width':'50px','text-align':'center'}">
                 <ng-template let-data="rowData" pTemplate="body">
                     <i [ngClass]="getActivatedIconClasses(data.activated)"></i>
                 </ng-template>
+
             </p-column>
         </p-dataTable>
     </div>

@@ -23,6 +23,7 @@ export class ReceiveCoinsComponent implements OnInit {
   accounts: Array<LokiAccount> = [];
   showCreateAccountDialog: boolean = false;
   walletPassword: string = "";
+  activeFilter: boolean = false;
   accountLabel: string = "";
   showDialogFooter: boolean = false;
   errorMessage: string = "";
@@ -218,4 +219,13 @@ export class ReceiveCoinsComponent implements OnInit {
     }
     this.cscReceiveURI = CSCUtil.generateCSCQRCodeURI(uriObject);
   }
+
+    onActiveFilterChange(event, dt, col) {
+        if (event === true){
+            dt.filter(true, col.field, col.filterMatchMode);
+        }else{
+            dt.filter(null, col.field, col.filterMatchMode);
+        }
+    }
+
 }
