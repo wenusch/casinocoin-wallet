@@ -15,7 +15,7 @@ import { MenuItem, MessagesModule, Message, CheckboxModule } from 'primeng/prime
     @Input() walletTestNetwork: boolean;
     @Output() walletNetworkChange:EventEmitter<boolean> = new EventEmitter();
 
-    networkChoiceDisabled:boolean = false;
+    networkChoiceDisabled:boolean = true;
     keys_pressed: string = "";
 
     // @HostListener('document:keypress', ['$event'])
