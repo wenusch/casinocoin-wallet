@@ -242,7 +242,12 @@ export class WalletSetupComponent implements OnInit {
 
   finishStep3() {
     // toggle to step 4
-    this.logger.debug("Wallet Password: " + this.walletPassword);
+    if(this.walletPassword.length > 0){
+        this.logger.debug("### Password provided: set");
+    }else{
+        this.logger.debug("### Password provided: empty");
+    }
+
     if(this.activeIndex < this.maxActiveIndex){
       this.activeIndex += 1;
     }
@@ -421,11 +426,12 @@ export class WalletSetupComponent implements OnInit {
   }
 
   onPasswordUpdated(newPassword: string) {
-    this.logger.debug("onPasswordUpdated: " + newPassword);
     if(newPassword.length > 0){
+      this.logger.debug("onPasswordUpdated: new password is set");
       this.walletPassword = newPassword;
       this.enableFinishPassword = true;
     } else {
+      this.logger.debug("onPasswordUpdated: new password is empty");
       this.enableFinishPassword = false;
     }
   }
