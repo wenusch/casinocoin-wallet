@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Validators,FormControl,FormGroup,FormBuilder } from '@angular/forms';
+import { Validators, FormControl, FormGroup, FormBuilder } from '@angular/forms';
 import { InputText } from 'primeng/primeng';
 import { LogService } from '../../../providers/log.service';
 import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
@@ -15,6 +15,7 @@ import { CasinocoinTxObject, PrepareTxPayment } from 'app/domain/csc-types';
 import { AppComponent } from 'app/app.component';
 import { CSCAmountPipe } from '../../../app-pipes.module';
 import { DecimalPipe } from '@angular/common';
+import {Menu as ElectronMenu} from 'electron';
 
 @Component({
   selector: 'app-send-coins',
@@ -43,6 +44,7 @@ export class SendCoinsComponent implements OnInit {
   totalSend: string = "";
   totalSendFormatted: string = "";
   walletPassword: string;
+  paste_context_menu: ElectronMenu;
   showPasswordDialog:boolean = false;
   signAndSubmitIcon:string = "fa-check";
   amount_tooltip:string = "Enter the amount to send only using numbers and a . (dot) indicating a decimal.";
@@ -111,11 +113,32 @@ export class SendCoinsComponent implements OnInit {
       }
     });
 
-    // subscribe to account updates
+
+      // define receive context menu
+      let paste_context_menu_template = [
+          { label: 'Paste address',
+              click(menuItem, browserWindow, event) {
+                  browserWindow.webContents.send('paste-context-menu-event', 'paste-address');
+              }
+          }
+      ];
+      this.paste_context_menu = this.electronService.remote.Menu.buildFromTemplate(paste_context_menu_template);
+
+      // listen to receive context menu events
+      this.electronService.ipcRenderer.on('paste-context-menu-event', (event, arg) => {
+          if(arg === 'paste-address') {
+              this.pasteSendAddress();
+
+          }
+      });
+
+
+
+      // subscribe to account updates
     this.casinocoinService.accountSubject.subscribe( account => {
       this.doBalanceUpdate();
     });
-    
+
     this.sendCoinsform = this.fb.group({
         'recipient': new FormControl('', Validators.required),
         'description': new FormControl(''),
@@ -129,6 +152,15 @@ export class SendCoinsComponent implements OnInit {
     //   this.logger.debug("### SendCoins - minimalFee: " + this.minimalFee);
     // });
     this.checkSendValid();
+  }
+
+  pasteSendAddress(){
+      this.recipient = this.electronService.clipboard.readText();
+      this.onRecipientChange( this.recipient);
+  }
+
+  showPasteContextMenu(event) {
+    this.paste_context_menu.popup(this.electronService.remote.getCurrentWindow());
   }
 
   doBalanceUpdate(){

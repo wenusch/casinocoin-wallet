@@ -11,8 +11,15 @@
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-address-book"></i></span>
-            <input type="text" pInputText placeholder="Recipient" [(ngModel)]="recipient" (keyup.enter)="focusDescription()"
-                     [disabled]="!selectedAccount" (ngModelChange)="onRecipientChange($event)">
+            <input
+                    type="text"
+                    pInputText
+                    placeholder="Recipient"
+                    [(ngModel)]="recipient"
+                    (contextmenu)="showPasteContextMenu($event)"
+                    (keyup.enter)="focusDescription()"
+                    [disabled]="!selectedAccount"
+                    (ngModelChange)="onRecipientChange($event)">
             <!--       
             <button pButton type="button" icon="fa-search" class="ui-button-secondary"></button>
             -->
