@@ -323,7 +323,14 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   loadFiatCurrencies() {
     this.fiatCurrencies.push({label: 'USD', value: 'USD'});
     this.fiatCurrencies.push({label: 'EUR', value: 'EUR'});
-    this.selectedFiatCurrency = 'USD';
+    this.fiatCurrencies.push({label: 'GBP', value: 'GBP'});
+    this.fiatCurrencies.push({label: 'JPY', value: 'JPY'});
+    this.fiatCurrencies.push({label: 'CAD', value: 'CAD'});
+    this.fiatCurrencies.push({label: 'AUD', value: 'AUD'});
+    this.fiatCurrencies.push({label: 'BRL', value: 'BRL'});
+    this.fiatCurrencies.push({label: 'CHF', value: 'CHF'});
+    this.fiatCurrencies.push({label: 'NZD', value: 'NZD'});
+    this.fiatCurrencies.push({label: 'RUB', value: 'RUB'});
   }
 
   ngOnDestroy(){
@@ -613,22 +620,23 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
-  doBalanceUpdate(){
+
+  updateMarketService(event){
+    console.log(event)
+      if (this.selectedFiatCurrency !== undefined) {
+          this.marketService.changeCurrency(this.selectedFiatCurrency);
+      }
+  }
+
+
+  doBalanceUpdate() {
+
     this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
 
     let balanceCSC = new Big(CSCUtil.dropsToCsc(this.balance));
     this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice);
-    let cscFiat = "0.00";
-
-    if(this.marketService.coinMarketInfo && this.selectedFiatCurrency === 'USD'){
-        cscFiat = balanceCSC.times(this.marketService.coinMarketInfo.price_usd).toString();
-    }
-
-    if(this.marketService.coinMarketInfo && this.selectedFiatCurrency === 'EUR'){
-        cscFiat = balanceCSC.times(this.marketService.coinMarketInfo.price_eur).toString();
-    }
-
-    this.fiat_balance = this.currenyPipe.transform(cscFiat, this.selectedFiatCurrency, true, "1.2-2");
+    let fiatValue = balanceCSC.times(this.marketService.coinMarketInfo.price_fiat).toString();
+    this.fiat_balance = this.currenyPipe.transform(fiatValue, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-2");
   }
 
   doTransacionUpdate(){
@@ -745,7 +753,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onSettingsSave(){
-    
+    this.doBalanceUpdate();
   }
 
   backupWallet() {
