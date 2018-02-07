@@ -45,7 +45,6 @@ export class MarketService {
     }
 
     changeCurrency(currency) {
-        console.log("changing currency");
         this.fiatCurrency = currency;
         this.getCoinInfo();
     }

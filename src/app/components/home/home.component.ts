@@ -622,7 +622,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
   updateMarketService(event){
-    console.log(event)
       if (this.selectedFiatCurrency !== undefined) {
           this.marketService.changeCurrency(this.selectedFiatCurrency);
       }
