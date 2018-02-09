@@ -12,6 +12,7 @@ import { ServerDefinition } from '../../domain/websocket-types';
 import { WalletService } from '../../providers/wallet.service';
 import { MarketService } from '../../providers/market.service';
 import { MenuItem as PrimeMenuItem, Message, ContextMenu } from 'primeng/primeng';
+import { SelectItem, Dropdown } from 'primeng/primeng';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { AppConstants } from '../../domain/app-constants';
 import { CSCUtil } from '../../domain/csc-util';
@@ -48,8 +49,10 @@ const crypto = require('crypto');
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @SessionStorage() public currentWallet: string;
-    
+
   @ViewChild('contextMenu') contextMenu: ContextMenu;
+  @ViewChild('fiatCurrenciesDrowdown') fiatCurrenciesDrowdown: Dropdown;
+
 
   //show_menu: string = 'shown';
   show_menu: string = 'small';
@@ -65,6 +68,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showServerInfoDialog:boolean = false;
   showPasswordDialog:boolean = false;
   showPasswordCallback;
+  fiatCurrencies: SelectItem[] = [];
+  selectedFiatCurrency: string;
   privateKeySeed:string;
   walletPassword:string;
   importFileObject:Object;
@@ -153,6 +158,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit() {
+
+
     this.logger.debug("### HOME ngOnInit() - currentWallet: " + this.currentWallet);
     // get the complete wallet object
     let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
@@ -249,7 +256,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         else
           this.logger.debug("### Context menu not implemented: " + arg);
       }
+
+
     });
+
+
 
     // listen to connect context menu events
     this.electron.ipcRenderer.on('connect-context-menu-event', (event, arg) => {
@@ -305,7 +316,21 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         this.router.navigate(['login']);
       }
     });
+    this.loadFiatCurrencies();
     this.setConnectedMenuItem(true);
+  }
+
+  loadFiatCurrencies() {
+    this.fiatCurrencies.push({label: 'USD', value: 'USD'});
+    this.fiatCurrencies.push({label: 'EUR', value: 'EUR'});
+    this.fiatCurrencies.push({label: 'GBP', value: 'GBP'});
+    this.fiatCurrencies.push({label: 'JPY', value: 'JPY'});
+    this.fiatCurrencies.push({label: 'CAD', value: 'CAD'});
+    this.fiatCurrencies.push({label: 'AUD', value: 'AUD'});
+    this.fiatCurrencies.push({label: 'BRL', value: 'BRL'});
+    this.fiatCurrencies.push({label: 'CHF', value: 'CHF'});
+    this.fiatCurrencies.push({label: 'NZD', value: 'NZD'});
+    this.fiatCurrencies.push({label: 'RUB', value: 'RUB'});
   }
 
   ngOnDestroy(){
@@ -595,20 +620,22 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
-  doBalanceUpdate(){
+
+  updateMarketService(event){
+      if (this.selectedFiatCurrency !== undefined) {
+          this.marketService.changeCurrency(this.selectedFiatCurrency);
+      }
+  }
+
+
+  doBalanceUpdate() {
+
     this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
-    // until there is valid market info on new CSC we calculate market value against 1:1000 ratio
-    let balanceOldCSC = new Big(CSCUtil.dropsToCsc(this.balance)).div(1000);
 
     let balanceCSC = new Big(CSCUtil.dropsToCsc(this.balance));
-    let newCSCFiat = balanceCSC.times(this.marketService.cscPrice).times(this.marketService.btcPrice).toString();
     this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice);
-    // this.logger.debug("### New Fiat: " + this.currenyPipe.transform(newCSCFiat, "USD", true, "1.2-2")); 
-    // let cscFiat = "0.00";
-    // if(this.marketService.coinMarketInfo){
-    //   cscFiat = balanceOldCSC.times(this.marketService.coinMarketInfo.price_usd).toString();
-    // }
-    this.fiat_balance = this.currenyPipe.transform(newCSCFiat, "USD", true, "1.2-2");
+    let fiatValue = balanceCSC.times(this.marketService.coinMarketInfo.price_fiat).toString();
+    this.fiat_balance = this.currenyPipe.transform(fiatValue, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-2");
   }
 
   doTransacionUpdate(){
@@ -725,7 +752,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onSettingsSave(){
-    
+    this.doBalanceUpdate();
   }
 
   backupWallet() {

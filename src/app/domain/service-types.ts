@@ -7,6 +7,8 @@ export interface CoinMarketCapType {
     rank?: string;
     price_usd?: string;
     price_btc?: string;
+    price_fiat?: string;
+    selected_fiat?: string;
     market_24h_volume_usd?: string;
     market_cap_usd?: string;
     available_supply?: string;
