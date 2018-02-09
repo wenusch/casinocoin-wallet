@@ -31,7 +31,9 @@ export class SendCoinsComponent implements OnInit {
   @ViewChild('feesInput') feesInput;
 
   accounts: SelectItem[] = [];
+  addresses: SelectItem[] = [];
   selectedAccount: string;
+  selectedAddress: string;
   recipient: string = "";
   description: string = "";
   invoiceID: string;
@@ -44,6 +46,7 @@ export class SendCoinsComponent implements OnInit {
   totalSendFormatted: string = "";
   walletPassword: string;
   showPasswordDialog:boolean = false;
+  showAddressSearchDialog:boolean = false;
   signAndSubmitIcon:string = "fa-check";
   amount_tooltip:string = "Enter the amount to send only using numbers and a . (dot) indicating a decimal.";
   reserve_tooltip:string = "The reserve is necessary to keep your account activated.";
@@ -115,7 +118,7 @@ export class SendCoinsComponent implements OnInit {
     this.casinocoinService.accountSubject.subscribe( account => {
       this.doBalanceUpdate();
     });
-    
+
     this.sendCoinsform = this.fb.group({
         'recipient': new FormControl('', Validators.required),
         'description': new FormControl(''),
@@ -129,6 +132,14 @@ export class SendCoinsComponent implements OnInit {
     //   this.logger.debug("### SendCoins - minimalFee: " + this.minimalFee);
     // });
     this.checkSendValid();
+    this.populateAddresses();
+  }
+
+  populateAddresses(){
+      this.walletService.getAllAddresses().forEach(element => {
+          let addressLabel = element.label;
+          this.addresses.push({label: addressLabel, value: element.accountID});
+      });
   }
 
   doBalanceUpdate(){
@@ -240,6 +251,7 @@ export class SendCoinsComponent implements OnInit {
           this.casinocoinService.submitTx(txBlob);
           // reset form and dialog fields
           this.selectedAccount = "";
+          this.selectedAddress = "";
           this.recipient = "";
           this.description = "";
           this.walletPassword = "";
@@ -274,6 +286,25 @@ export class SendCoinsComponent implements OnInit {
       this.showPasswordDialog = true;
       this.passwordInput.nativeElement.focus();
     }
+  }
+
+  startAddressSearch(){
+      this.showAddressSearchDialog = true;
+  }
+
+  closeAddressSearchDialog(){
+      this.showAddressSearchDialog = false;
+  }
+
+  cancelAddressSearch(){
+      this.closeAddressSearchDialog();
+  }
+
+  useAddressForSend(){
+      this.recipient = this.selectedAddress;
+      this.closeAddressSearchDialog();
+      this.onRecipientChange(this.recipient);
+      this.focusDescription();
   }
 
   calculateTotal(includeReserve: boolean){
