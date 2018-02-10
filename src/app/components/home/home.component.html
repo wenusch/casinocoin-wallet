@@ -182,11 +182,11 @@
                     <p-dropdown
                             [style]="{'width':'100%'}"
                             [options]="fiatCurrencies"
-                            [(ngModel)]="selectedFiatCurrency"
+                            [(ngModel)]="walletSettings.fiatCurrency"
                             (ngModelChange)="updateMarketService(event)"
                             autofocus #fiatCurrenciesDrowdown></p-dropdown>
                 </div>
-                <div class="ui-g-4">Show desktop notifications</div><div class="ui-g-8 bold-value">Yes</div>
+                <div class="ui-g-4">Show desktop notifications</div><div class="ui-g-8 bold-value">{{this.walletSettings.showNotifications}}</div>
             </div>
         </div>
         <div class="ui-g-1"></div>

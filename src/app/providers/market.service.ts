@@ -5,6 +5,7 @@ import {Observable, Subject} from 'rxjs';
 import {CoinMarketCapType, ExchangesType} from '../domain/service-types';
 import {LocalStorageService} from "ngx-store";
 import {AppConstants} from '../domain/app-constants';
+import { SelectItem } from 'primeng/components/common/selectitem';
 
 @Injectable()
 export class MarketService {
@@ -47,6 +48,21 @@ export class MarketService {
     changeCurrency(currency) {
         this.fiatCurrency = currency;
         this.getCoinInfo();
+    }
+
+    getFiatCurrencies(): SelectItem[] {
+        let currencies: SelectItem[] = [];
+        currencies.push({label: 'USD', value: 'USD'});
+        currencies.push({label: 'EUR', value: 'EUR'});
+        currencies.push({label: 'GBP', value: 'GBP'});
+        currencies.push({label: 'JPY', value: 'JPY'});
+        currencies.push({label: 'CAD', value: 'CAD'});
+        currencies.push({label: 'AUD', value: 'AUD'});
+        currencies.push({label: 'BRL', value: 'BRL'});
+        currencies.push({label: 'CHF', value: 'CHF'});
+        currencies.push({label: 'NZD', value: 'NZD'});
+        currencies.push({label: 'RUB', value: 'RUB'});
+        return currencies;
     }
 
     getCoinInfo(): Observable<CoinMarketCapType> {

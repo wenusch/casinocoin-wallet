@@ -24,6 +24,7 @@ import Big from 'big.js';
 import { setTimeout } from 'timers';
 import { Subject } from 'rxjs/Subject';
 import { LokiKey } from '../../domain/lokijs';
+import { WalletSettings } from 'app/domain/csc-types';
 
 const path = require('path');
 const fs = require('fs');
@@ -68,6 +69,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showServerInfoDialog:boolean = false;
   showPasswordDialog:boolean = false;
   showPasswordCallback;
+
+  walletSettings: WalletSettings;
   fiatCurrencies: SelectItem[] = [];
   selectedFiatCurrency: string;
   privateKeySeed:string;
@@ -158,8 +161,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit() {
-
-
     this.logger.debug("### HOME ngOnInit() - currentWallet: " + this.currentWallet);
     // get the complete wallet object
     let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
@@ -256,11 +257,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         else
           this.logger.debug("### Context menu not implemented: " + arg);
       }
-
-
     });
-
-
 
     // listen to connect context menu events
     this.electron.ipcRenderer.on('connect-context-menu-event', (event, arg) => {
@@ -316,21 +313,17 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         this.router.navigate(['login']);
       }
     });
-    this.loadFiatCurrencies();
     this.setConnectedMenuItem(true);
-  }
-
-  loadFiatCurrencies() {
-    this.fiatCurrencies.push({label: 'USD', value: 'USD'});
-    this.fiatCurrencies.push({label: 'EUR', value: 'EUR'});
-    this.fiatCurrencies.push({label: 'GBP', value: 'GBP'});
-    this.fiatCurrencies.push({label: 'JPY', value: 'JPY'});
-    this.fiatCurrencies.push({label: 'CAD', value: 'CAD'});
-    this.fiatCurrencies.push({label: 'AUD', value: 'AUD'});
-    this.fiatCurrencies.push({label: 'BRL', value: 'BRL'});
-    this.fiatCurrencies.push({label: 'CHF', value: 'CHF'});
-    this.fiatCurrencies.push({label: 'NZD', value: 'NZD'});
-    this.fiatCurrencies.push({label: 'RUB', value: 'RUB'});
+    // load wallet settings
+    this.walletSettings = this.localStorageService.get(AppConstants.KEY_WALLET_SETTINGS);
+    if(this.walletSettings == null){
+      // settings do not exist yet so create
+      this.walletSettings = {fiatCurrency: "USD", showNotifications: true};
+      this.localStorageService.set(AppConstants.KEY_WALLET_SETTINGS, this.walletSettings);
+    }
+    // load fiat currencies and update market value
+    this.fiatCurrencies = this.marketService.getFiatCurrencies();
+    this.updateMarketService(this.walletSettings.fiatCurrency);
   }
 
   ngOnDestroy(){
@@ -620,18 +613,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
-
   updateMarketService(event){
-      if (this.selectedFiatCurrency !== undefined) {
-          this.marketService.changeCurrency(this.selectedFiatCurrency);
-      }
+    if (this.walletSettings.fiatCurrency !== undefined) {
+        this.marketService.changeCurrency(this.walletSettings.fiatCurrency);
+    }
   }
 
 
   doBalanceUpdate() {
-
     this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
-
     let balanceCSC = new Big(CSCUtil.dropsToCsc(this.balance));
     this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice + " Fiat: " + this.marketService.coinMarketInfo.price_fiat);
     let fiatValue = balanceCSC.times(new Big(this.marketService.coinMarketInfo.price_fiat)).toString();
@@ -752,7 +742,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onSettingsSave(){
+    // save the settings to localstorage
+    this.localStorageService.set(AppConstants.KEY_WALLET_SETTINGS, this.walletSettings);
+    // update the balance to reflect the last changes
     this.doBalanceUpdate();
+    this.showSettingsDialog = false;
   }
 
   backupWallet() {
