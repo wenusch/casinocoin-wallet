@@ -184,6 +184,7 @@
                             [options]="fiatCurrencies"
                             [(ngModel)]="walletSettings.fiatCurrency"
                             (ngModelChange)="updateMarketService(event)"
+                            appendTo="body"
                             autofocus #fiatCurrenciesDrowdown></p-dropdown>
                 </div>
                 <div class="ui-g-4">Show desktop notifications</div><div class="ui-g-8 bold-value">{{this.walletSettings.showNotifications}}</div>
