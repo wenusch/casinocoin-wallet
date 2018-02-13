@@ -69,7 +69,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showServerInfoDialog:boolean = false;
   showPasswordDialog:boolean = false;
   showChangePasswordDialog:boolean = false;
-  showRecovereyDialog:boolean = false;
+  showRecoveryDialog:boolean = false;
   showPasswordCallback;
   privateKeySeed:string;
   walletPassword:string;
@@ -489,7 +489,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         this.walletPassword = newPassword;
         this.showPasswordDialog = false;
         this.recoveryMnemonicWords = CSCCrypto.getRandomMnemonic();
-        this.showRecovereyDialog = true;
+        this.showRecoveryDialog = true;
     }
   }
 
