@@ -183,7 +183,7 @@
                             [style]="{'width':'100%'}"
                             [options]="fiatCurrencies"
                             [(ngModel)]="walletSettings.fiatCurrency"
-                            (ngModelChange)="updateMarketService(event)"
+                            (ngModelChange)="updateMarketService($event)"
                             appendTo="body"
                             autofocus #fiatCurrenciesDrowdown></p-dropdown>
                 </div>
