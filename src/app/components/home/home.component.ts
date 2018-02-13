@@ -17,6 +17,8 @@ import { AppConstants } from '../../domain/app-constants';
 import { CSCUtil } from '../../domain/csc-util';
 import { CSCCrypto } from '../../domain/csc-crypto';
 import { LedgerStreamMessages, ServerStateMessage } from '../../domain/websocket-types';
+import { SetupStep3Component} from '../wallet-setup/step3-component';
+import { SetupStep4Component} from '../wallet-setup/step4-component';
 
 import * as LokiTypes from '../../domain/lokijs';
 import Big from 'big.js';
@@ -56,6 +58,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   menu_items: PrimeMenuItem[];
   tools_context_menu: ElectronMenu;
   connection_context_menu: ElectronMenu;
+  passwordComponent: SetupStep3Component = new SetupStep3Component();
+  recoveryComponent: SetupStep4Component = new SetupStep4Component();
 
   applicationVersion: string;
   dbMetadata: LokiTypes.LokiDBMetadata;
@@ -64,11 +68,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showSettingsDialog:boolean = false;
   showServerInfoDialog:boolean = false;
   showPasswordDialog:boolean = false;
+  showChangePasswordDialog:boolean = false;
+  showRecovereyDialog:boolean = false;
   showPasswordCallback;
   privateKeySeed:string;
   walletPassword:string;
   importFileObject:Object;
   currentWalletObject:Object;
+  recoveryHash: string;
+  recoveryMnemonicWords: Array<string>;
 
   privateKeyExportLocation: string = "";
   privateKeyImportfile: string = "";
@@ -175,8 +183,13 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'export-priv-keys');
         }
+      },
+      { label: 'Change Password',
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('context-menu-event', 'change-password');
+        }
       }
-      // { label: 'Import Existing Wallet', 
+      // { label: 'Import Existing Wallet',
       //   click(menuItem, browserWindow, event) { 
       //     browserWindow.webContents.send('context-menu-event', 'add-wallet');
       //   }
@@ -234,6 +247,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.onPrivateKeyImport();
         else if(arg == 'export-priv-keys')
           this.onPrivateKeysExport();
+        else if(arg == 'change-password')
+          this.onChangePassword();
         else if(arg == 'backup-wallet')
           this.onBackupWallet();
         else if(arg == 'restore-backup')
@@ -458,6 +473,73 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showPasswordCallback = this.selectPrivateKeysExportLocation;
     this.showPasswordDialog = true;
   }
+
+
+  onChangePassword() {
+    // show password dialog
+    this.initPasswordCheck();
+    this.showPasswordCallback = this.startPasswordChange;
+    this.showPasswordDialog = true;
+  }
+
+
+  onPasswordUpdated(newPassword: string) {
+    this.logger.debug("onPasswordUpdated: new passwordSet ");
+    if(newPassword.length > 0){
+        this.walletPassword = newPassword;
+        this.showPasswordDialog = false;
+        this.recoveryMnemonicWords = CSCCrypto.getRandomMnemonic();
+        this.showRecovereyDialog = true;
+    }
+  }
+
+    onRecoveryAcceptChanged(newValue){
+    console.log(newValue);
+    console.log(this.recoveryMnemonicWords);
+        this.recoveryHash = new CSCCrypto(this.recoveryMnemonicWords).encrypt(this.walletPassword);
+    }
+
+    startPasswordChange(){
+      this.logger.debug("### startPasswordChange()");
+      // first check the password
+      if(this.walletPassword.length == 0 ){
+          this.error_message = "Please enter your password.";
+          this.footer_visible = true;
+      } else if(!this.walletService.checkWalletPasswordHash(this.walletPassword)){
+          this.error_message = "You entered an invalid password.";
+          this.footer_visible = true;
+      } else {
+          this.showPasswordDialog = false;
+          this.logger.debug('Open Change Password Dialog:');
+          this.showChangePasswordDialog = true;
+
+          // this.electron.remote.dialog.showOpenDialog(
+          //     { title: 'Private Key Export Location',
+          //         defaultPath: this.electron.remote.app.getPath("documents"),
+          //         properties: ['openDirectory']}, (result) => {
+          //         this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
+          //         if(result && result.length>0) {
+          //             this.privateKeyExportLocation = result[0];
+          //             // get all decrypted private keys
+          //             let allPrivateKeys = this.walletService.decryptAllKeys(this.walletPassword);
+          //             // create a filename
+          //             let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss-") + this.currentWallet + '.keys';
+          //             let keyFilePath = path.join(result[0], filename);
+          //             // Write the JSON array to the file
+          //             fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
+          //                 if(err){
+          //                     this.electron.remote.dialog.showErrorBox("Error saving private keys", "An error ocurred writing your private keys to a file: " + err.message);
+          //                 }
+          //                 this.electron.remote.dialog.showMessageBox(
+          //                     { message: "Your private keys have been saved to a file in the choosen directory. Make sure you put it in a save place as it contains your decrypted private keys!!",
+          //                         buttons: ["OK"]
+          //                     });
+          //             });
+          //         }
+          //     }
+          // );
+      }
+    }
 
   onImportPrivateKey(){
     this.logger.debug("### Import Private Keys: " + this.importKeys);

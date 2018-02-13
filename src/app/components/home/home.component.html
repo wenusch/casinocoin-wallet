@@ -251,3 +251,73 @@
     <p-progressSpinner [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
     <div>Processing ...</div>
 </p-dialog>
+
+
+
+<p-dialog [(visible)]="showChangePasswordDialog" [width]="500" [height]="500" [closable]="true" [modal]="true" appendTo="body">
+    <div class="ui-g-12">
+        <h3 style="text-align: center;">Set New Password</h3>
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-1"></div>
+            <div class="ui-g-10">
+                Please enter a new wallet password. Keep your password in a safe place,
+                without it your wallet can not be opened or used anymore!
+                <p>Your password needs to contain letters and numbers and be a minimum of 8 characters long.</p>
+            </div>
+            <div class="ui-g-1"></div>
+        </div>
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-1"></div>
+            <div class="ui-g-10">
+                <input type="password" pPassword [(ngModel)]="passwordComponent.newWalletPassword" (ngModelChange)="passwordComponent.checkPasswordUpdate($event)"
+                       style="width: 100%;" title="Password must be minmal 8 characters long including letter and numeric characters"
+                       required [(pattern)]="passwordPattern" placeholder="Wallet Password" #passwordInput/>
+            </div>
+            <div class="ui-g-1"></div>
+            <div class="ui-g-1"></div>
+            <div class="ui-g-10">
+                <input type="password" pPassword [(ngModel)]="passwordComponent.newWalletPasswordConfirmed" (ngModelChange)="passwordComponent.checkPasswordConfirmedUpdate($event)"
+                       style="width: 100%;" required [(pattern)]="passwordComponent.passwordPattern" placeholder="Password Confirmation"
+                       [disabled]="!passwordComponent.paswordConfirmationEnabled" #passwordInputConfirmed/>
+            </div>
+            <div class="ui-g-1"></div>
+        </div>
+        <div style="text-align: right;">
+            <button pButton type="button" (click)="onPasswordUpdated(passwordComponent.newWalletPassword)" icon="fa-save" iconPos="right" label="Save" *ngIf="true"
+                    style="width: 115px;"></button>
+        </div>
+    </div>
+</p-dialog>
+
+
+
+<p-dialog [(visible)]="showRecovereyDialog" [width]="500" [height]="500" [closable]="true" [modal]="true" appendTo="body">
+    <div class="ui-g-12">
+        <h3 style="text-align: center;">Recovery Passphrase</h3>
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-1"></div>
+            <div class="ui-g-10">
+                In case you lose your wallet password, it can be recovered using the Recovery Passphrase. Please write down
+                the shown words in the exact order as they appear on a piece of paper or otherwise and keep it safe.
+            </div>
+            <div class="ui-g-1"></div>
+            <div class="ui-g-1"></div>
+            <div class="ui-g-10">
+                <div class="ui-g ui-fluid">
+                    <div class="ui-g-3" *ngFor="let word of recoveryMnemonicWords; let i = index">{{i+1}}. {{word}}</div>
+                </div>
+            </div>
+            <div class="ui-g-1"></div>
+        </div>
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-1"></div>
+            <div class="ui-g-10">
+                <small style="font-weight: bolder;">
+                    <p-checkbox [(ngModel)]="recoveryComponent.recoveryAccepted" binary="false" (onChange)="onRecoveryAcceptChanged($event)"
+                                label="I have saved the recovery passphrase or understand the consequences of not doing so."></p-checkbox>
+                </small>
+            </div>
+            <div class="ui-g-1"></div>
+        </div>
+    </div>
+</p-dialog>

@@ -316,6 +316,10 @@ export class WalletService {
     this.walletDB.saveDatabase();
   }
 
+  changePassword(newWalltpassword: string, recoveryHash: string){
+
+  }
+
   checkForUpgrades(walletPassword: string){
     this.logger.debug("### WalletService - checkForUpgrades() ### ");
     let dbVersionString = this.getDBMetadata().dbVersion;
