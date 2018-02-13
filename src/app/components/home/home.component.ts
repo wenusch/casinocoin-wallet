@@ -513,31 +513,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.logger.debug('Open Change Password Dialog:');
           this.showChangePasswordDialog = true;
 
-          // this.electron.remote.dialog.showOpenDialog(
-          //     { title: 'Private Key Export Location',
-          //         defaultPath: this.electron.remote.app.getPath("documents"),
-          //         properties: ['openDirectory']}, (result) => {
-          //         this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
-          //         if(result && result.length>0) {
-          //             this.privateKeyExportLocation = result[0];
-          //             // get all decrypted private keys
-          //             let allPrivateKeys = this.walletService.decryptAllKeys(this.walletPassword);
-          //             // create a filename
-          //             let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss-") + this.currentWallet + '.keys';
-          //             let keyFilePath = path.join(result[0], filename);
-          //             // Write the JSON array to the file
-          //             fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
-          //                 if(err){
-          //                     this.electron.remote.dialog.showErrorBox("Error saving private keys", "An error ocurred writing your private keys to a file: " + err.message);
-          //                 }
-          //                 this.electron.remote.dialog.showMessageBox(
-          //                     { message: "Your private keys have been saved to a file in the choosen directory. Make sure you put it in a save place as it contains your decrypted private keys!!",
-          //                         buttons: ["OK"]
-          //                     });
-          //             });
-          //         }
-          //     }
-          // );
       }
     }
 
