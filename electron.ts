@@ -1,4 +1,6 @@
-import { app, BrowserWindow, screen, autoUpdater, ipcMain, dialog, Menu, MenuItem } from 'electron';
+import { app, BrowserWindow, screen, 
+         autoUpdater, ipcMain, dialog, 
+         Menu, MenuItem, powerMonitor } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -169,6 +171,19 @@ function createWindow() {
   if (serve) {
     win.webContents.openDevTools();
   }
+
+  powerMonitor.on('suspend', () => {
+    winston.log("debug", "### Electron -> The system is going to sleep ###");
+    // send message to save and close wallet
+    win.webContents.send('action', 'save-wallet');
+    
+  });
+
+  powerMonitor.on('resume', () => {
+    winston.log("debug", "### Electron -> The system is resuming after sleep ###");
+    win.reload();
+    win.show();
+  });
 
   // Emitted when the window is closed.
   win.on('close', (e) => {

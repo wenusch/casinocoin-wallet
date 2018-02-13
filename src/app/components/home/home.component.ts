@@ -139,10 +139,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.applicationVersion = this.electron.remote.app.getVersion();
     this.backupPath = this.electron.remote.getGlobal("vars").backupPath;
     this.logger.debug("### HOME Backup Path: " + this.backupPath);
-    // this.electron.ipcRenderer.on("wallet-backup", (event, arg) => {
-    //   this.backupWallet();
-    //   event.returnValue = "finished";
-    // });
+    this.electron.ipcRenderer.on("action", (event, arg) => {
+      if(arg === "save-wallet"){
+        this.closeWallet();
+      }
+    });
   }
 
   ngAfterViewInit(){
@@ -656,18 +657,18 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   createWallet(){
+    this.walletService.closeWallet();
     this.casinocoinService.disconnect();
     this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
-    this.walletService.closeWallet();
     this.walletService.openWalletSubject.next(AppConstants.KEY_INIT);
     this.sessionStorageService.set(AppConstants.KEY_CREATE_WALLET_RUNNING, true);
     this.router.navigate(['wallet-setup']);
   }
 
   closeWallet(){
+    this.walletService.closeWallet();
     this.casinocoinService.disconnect();
     this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
-    this.walletService.closeWallet();
     this.electron.remote.getCurrentWindow().reload();
   }
 
