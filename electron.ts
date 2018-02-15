@@ -288,7 +288,6 @@ try {
     if (win === null) {
       createWindow();
     } else {
-      win.reload();
       win.show();
     }
   });
