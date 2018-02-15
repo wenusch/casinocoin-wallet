@@ -175,8 +175,9 @@ function createWindow() {
   powerMonitor.on('suspend', () => {
     winston.log("debug", "### Electron -> The system is going to sleep ###");
     // send message to save and close wallet
-    win.webContents.send('action', 'save-wallet');
-    
+    if(win != null){
+      win.webContents.send('action', 'save-wallet');
+    }
   });
 
   powerMonitor.on('resume', () => {
@@ -214,6 +215,14 @@ function createWindow() {
                   win.close();
               }
           });
+      } else {
+        if(win != null){
+          // save and close wallet
+          console.log("Save and close wallet");
+          win.webContents.send('action', 'save-wallet');
+          // wait 1 seconds to give wallet time to save db
+          setTimeout(()=>{}, 1000);
+        }
       }
     }
   });

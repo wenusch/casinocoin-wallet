@@ -420,8 +420,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.logger.debug("Quit Clicked !!");
     // backup database
     this.backupWallet();
-    // save the Database!
-    this.walletService.saveWallet();
+    // close the Database!
+    this.walletService.closeWallet();
     // Close the windows to cause an application exit
     this.electron.remote.getGlobal("vars").exitFromRenderer = true;
     this.electron.remote.getCurrentWindow.call( close() );
