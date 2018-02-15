@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, trigger, state, animate, 
          transition, style, ViewChild, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { DatePipe, CurrencyPipe } from '@angular/common'
+import { DatePipe, CurrencyPipe } from '@angular/common';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { LocalStorage, SessionStorage, LocalStorageService, SessionStorageService } from 'ngx-store';
 import { ElectronService } from '../../providers/electron.service';
@@ -18,13 +18,12 @@ import { AppConstants } from '../../domain/app-constants';
 import { CSCUtil } from '../../domain/csc-util';
 import { CSCCrypto } from '../../domain/csc-crypto';
 import { LedgerStreamMessages, ServerStateMessage } from '../../domain/websocket-types';
-
-import * as LokiTypes from '../../domain/lokijs';
-import Big from 'big.js';
 import { setTimeout } from 'timers';
 import { Subject } from 'rxjs/Subject';
 import { LokiKey } from '../../domain/lokijs';
 import { WalletSettings } from 'app/domain/csc-types';
+import * as LokiTypes from '../../domain/lokijs';
+import Big from 'big.js';
 
 const path = require('path');
 const fs = require('fs');
@@ -134,13 +133,14 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
                private sessionStorageService: SessionStorageService,
                private marketService: MarketService,
                private datePipe: DatePipe,
-               private currenyPipe: CurrencyPipe ) {
+               private currencyPipe: CurrencyPipe ) {
     this.logger.debug("### INIT HOME ###");
     this.applicationVersion = this.electron.remote.app.getVersion();
     this.backupPath = this.electron.remote.getGlobal("vars").backupPath;
     this.logger.debug("### HOME Backup Path: " + this.backupPath);
     this.electron.ipcRenderer.on("action", (event, arg) => {
       if(arg === "save-wallet"){
+        this.logger.debug("### HOME Save Wallet on Suspend ###");
         this.closeWallet();
       }
     });
@@ -627,7 +627,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice + " Fiat: " + this.marketService.coinMarketInfo.price_fiat);
     if(this.marketService.coinMarketInfo != null && this.marketService.coinMarketInfo.price_fiat !== undefined){
       let fiatValue = balanceCSC.times(new Big(this.marketService.coinMarketInfo.price_fiat)).toString();
-      this.fiat_balance = this.currenyPipe.transform(fiatValue, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-2");
+      this.fiat_balance = this.currencyPipe.transform(fiatValue, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-2");
     }
   }
 

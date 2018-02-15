@@ -17,6 +17,7 @@ export class MarketService {
     public exchanges: Array<ExchangesType>;
     private checkInterval: any;
     public exchangeUpdates = new Subject<Array<ExchangesType>>();
+    public coininfoUpdates = new Subject<CoinMarketCapType>();
     public btcPrice: number = 1;
     public cscPrice: number = 0.00000001;
     public fiatCurrency = 'USD';
@@ -65,11 +66,10 @@ export class MarketService {
         return currencies;
     }
 
-    getCoinInfo(): Observable<CoinMarketCapType> {
+    getCoinInfo() {
         let options = {
             headers: new HttpHeaders().set('Content-Type', 'application/json')
         };
-        let serviceResponse = new Subject<CoinMarketCapType>();
         this.http.get(this.coinmarketCapURLCSC + this.fiatCurrency, options).subscribe(result => {
             this.logger.debug("### MarketService: " + JSON.stringify(result));
             let coinInfo = result[0];
@@ -91,7 +91,7 @@ export class MarketService {
                 // store in localstorage
                 this.localStorageService.set(AppConstants.KEY_COININFO, this.coinMarketInfo);
                 // put onto subject
-                serviceResponse.next(this.coinMarketInfo);
+                this.coininfoUpdates.next(this.coinMarketInfo);
             }
         });
         this.http.get(this.coinmarketCapURLBTC + this.fiatCurrency, options).subscribe(result => {
@@ -100,7 +100,6 @@ export class MarketService {
                 this.btcPrice = Number(coinInfo['price_' + this.fiatCurrency.toLowerCase()]);
             }
         });
-        return serviceResponse.asObservable();
     }
 
     getExchanges() {

@@ -56,15 +56,6 @@
                             </mat-list-item>
                         </mat-list>
                         <mat-list style="padding-top: 25px;">
-                            <mat-list-item (click)="onCoinSwap()" class="menu-item"
-                                            [ngClass]="{active_menu_item: active_menu_item === 'coinswap'}"> 
-                                <div class="ui-g">
-                                    <div class="ui-g-3">
-                                        <img src="../../../assets/icons/swap.png" class="menu-icon" />
-                                    </div>
-                                    <div class="ui-g-9 menu-text">Coin Swap</div>
-                                </div>
-                            </mat-list-item>
                             <mat-list-item (click)="onSupport()" class="menu-item"
                                             [ngClass]="{active_menu_item: active_menu_item === 'support'}"> 
                                 <div class="ui-g">
@@ -89,11 +80,11 @@
             <p-toolbar class="toolbar-height">
                 <div class="ui-toolbar-group-left">
                     <div class="ui-g">
-                        <div class="ui-g-7">
+                        <div class="ui-g-6">
                             <img src="../../../assets/icons/balance.png" class="footer-icon">
                             Balance: {{balance | cscAmount : false : true}}
                         </div>
-                        <div class="ui-g-5">
+                        <div class="ui-g-6">
                             <img src="../../../assets/icons/fiat.png" class="footer-icon">
                             Fiat Value: {{fiat_balance}}
                         </div>

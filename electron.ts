@@ -139,7 +139,7 @@ function createWindow() {
   const electronScreen = screen;
   const size = electronScreen.getPrimaryDisplay().workAreaSize;
 
-  const minimalWidth = Math.min(size.width, 1000);
+  const minimalWidth = Math.min(size.width, 1024);
   const minimalHeight = Math.min(size.height, 720);
 
   // Create the browser window.
