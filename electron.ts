@@ -21,6 +21,7 @@ app.setAppUserModelId("CasinoCoin Wallet");
 
 // set property for exit dialog
 let showExitPrompt = true;
+let savedBeforeQuit = false;
 globalTS.vars.exitFromRenderer = false;
 globalTS.vars.exitFromLogin = false;
 
@@ -174,7 +175,7 @@ function createWindow() {
 
   powerMonitor.on('suspend', () => {
     winston.log("debug", "### Electron -> The system is going to sleep ###");
-    // send message to save and close wallet
+    // send message to save and logout wallet
     if(win != null){
       win.webContents.send('action', 'save-wallet');
     }
@@ -188,13 +189,17 @@ function createWindow() {
 
   // Emitted when the window is closed.
   win.on('close', (e) => {
+    console.log("close - showExitPrompt: " + showExitPrompt + " exitFromLogin: " + globalTS.vars.exitFromLogin + " savedBeforeQuit: " + savedBeforeQuit);
     if(globalTS.vars.exitFromLogin && showExitPrompt){
-      e.preventDefault() // Prevents the window from closing 
+      // Prevent the window from closing 
+      e.preventDefault() 
       globalTS.vars.exitFromLogin = false;
       showExitPrompt = false;
+      savedBeforeQuit = true;
       win.close();
     } else if(!globalTS.vars.exitFromRenderer){
-      e.preventDefault() // Prevents the window from closing 
+      // Prevent the window from closing 
+      e.preventDefault();
       dialog.showMessageBox({
           type: 'info',
           buttons: ['Ok'],
@@ -211,17 +216,26 @@ function createWindow() {
               message: 'Are you sure you want to close the wallet?'
           }, function (response) {
               if (response === 0) { // Runs the following if 'Yes' is clicked
-                  showExitPrompt = false;
-                  win.close();
+                // on next win.on('close') the app will be finally closed
+                showExitPrompt = false;
+                win.close();
               }
           });
-      } else {
+      } else if(!savedBeforeQuit) {
+        // Prevent the window from closing 
+        e.preventDefault();
+        console.log("saveBeforeQuit - win: " + win);
         if(win != null){
+          ipcMain.on('wallet-closed', (event, arg) => {
+            console.log("wallet saved and closed");
+            savedBeforeQuit = true;
+            win.close();
+          });
           // save and close wallet
-          console.log("Save and close wallet");
-          win.webContents.send('action', 'save-wallet');
-          // wait 1 seconds to give wallet time to save db
-          setTimeout(()=>{}, 1000);
+          console.log("save and close wallet");
+          win.webContents.send('action', 'quit-wallet');
+        } else {
+          win.close();
         }
       }
     }
@@ -301,13 +315,9 @@ try {
     }
   });
 
-  // app.on('before-quit', () => {
-  //   if(showExitPrompt == false){
-  //     //console.log('Quiting Casinocoin Wallet, save the database!!!');
-  //     // let backupResult = win.webContents.sendSync('wallet-backup');
-  //     // console.log("Backup Result: " + backupResult);
-  //   }
-  // });
+  app.on('before-quit', () => {
+    console.log("before-quit");
+  });
 
 } catch (e) {
   // Catch Error
