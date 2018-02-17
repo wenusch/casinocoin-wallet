@@ -189,7 +189,7 @@ function createWindow() {
 
   // Emitted when the window is closed.
   win.on('close', (e) => {
-    console.log("close - showExitPrompt: " + showExitPrompt + " exitFromLogin: " + globalTS.vars.exitFromLogin + " savedBeforeQuit: " + savedBeforeQuit);
+    // console.log("close - showExitPrompt: " + showExitPrompt + " exitFromLogin: " + globalTS.vars.exitFromLogin + " savedBeforeQuit: " + savedBeforeQuit);
     if(globalTS.vars.exitFromLogin && showExitPrompt){
       // Prevent the window from closing 
       e.preventDefault() 
@@ -224,15 +224,12 @@ function createWindow() {
       } else if(!savedBeforeQuit) {
         // Prevent the window from closing 
         e.preventDefault();
-        console.log("saveBeforeQuit - win: " + win);
         if(win != null){
           ipcMain.on('wallet-closed', (event, arg) => {
-            console.log("wallet saved and closed");
             savedBeforeQuit = true;
             win.close();
           });
           // save and close wallet
-          console.log("save and close wallet");
           win.webContents.send('action', 'quit-wallet');
         } else {
           win.close();
@@ -250,7 +247,11 @@ function createWindow() {
 
   // show the windows
   win.once('ready-to-show', () => {
-      win.show();
+    showExitPrompt = true;
+    savedBeforeQuit = false;
+    globalTS.vars.exitFromRenderer = false;
+    globalTS.vars.exitFromLogin = false;
+    win.show();
   });
 
   // Create the Application's main menu
