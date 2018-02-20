@@ -61,6 +61,6 @@ export class SupportComponent implements OnInit {
 
   openTwitter(){
     event.preventDefault();
-    this.electronService.remote.shell.openExternal("https://twitter.com/CasinoCoin_org");
+    this.electronService.remote.shell.openExternal("https://twitter.com/CasinoCoin");
   }
 }

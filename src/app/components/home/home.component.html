@@ -56,15 +56,6 @@
                             </mat-list-item>
                         </mat-list>
                         <mat-list style="padding-top: 25px;">
-                            <mat-list-item (click)="onCoinSwap()" class="menu-item"
-                                            [ngClass]="{active_menu_item: active_menu_item === 'coinswap'}"> 
-                                <div class="ui-g">
-                                    <div class="ui-g-3">
-                                        <img src="../../../assets/icons/swap.png" class="menu-icon" />
-                                    </div>
-                                    <div class="ui-g-9 menu-text">Coin Swap</div>
-                                </div>
-                            </mat-list-item>
                             <mat-list-item (click)="onSupport()" class="menu-item"
                                             [ngClass]="{active_menu_item: active_menu_item === 'support'}"> 
                                 <div class="ui-g">
@@ -89,11 +80,11 @@
             <p-toolbar class="toolbar-height">
                 <div class="ui-toolbar-group-left">
                     <div class="ui-g">
-                        <div class="ui-g-7">
+                        <div class="ui-g-6">
                             <img src="../../../assets/icons/balance.png" class="footer-icon">
                             Balance: {{balance | cscAmount : false : true}}
                         </div>
-                        <div class="ui-g-5">
+                        <div class="ui-g-6">
                             <img src="../../../assets/icons/fiat.png" class="footer-icon">
                             Fiat Value: {{fiat_balance}}
                         </div>
@@ -146,7 +137,7 @@
     </div>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
-        <div class="ui-g-10">The following Account ID's will be imported into your current wallet:</div>
+        <div class="ui-g-10">The following Account IDs will be imported into your current wallet:</div>
         <div class="ui-g-1"></div>
     </div>
     <div class="ui-g ui-fluid">
@@ -177,14 +168,23 @@
                 <div class="ui-g-4">Wallet Language</div><div class="ui-g-8 bold-value">English</div>
                 <div class="ui-g-4">Wallet UUID</div><div class="ui-g-8 bold-value">{{currentWalletObject['walletUUID']}}</div>
                 <div class="ui-g-4">Wallet Creationdate</div><div class="ui-g-8 bold-value">{{currentWalletObject['creationDate'] | cscDate : 'yyyy-MM-dd HH:mm:ss'}}</div>
-                <div class="ui-g-4">Fiat value currency</div><div class="ui-g-8 bold-value">USD</div>
-                <div class="ui-g-4">Show desktop notifications</div><div class="ui-g-8 bold-value">Yes</div>
+                <div class="ui-g-4">Fiat value currency</div>
+                <div class="ui-g-8 bold-value">
+                    <p-dropdown
+                            [style]="{'width':'100%'}"
+                            [options]="fiatCurrencies"
+                            [(ngModel)]="walletSettings.fiatCurrency"
+                            (ngModelChange)="updateMarketService($event)"
+                            appendTo="body"
+                            autofocus #fiatCurrenciesDrowdown></p-dropdown>
+                </div>
+                <div class="ui-g-4">Show desktop notifications</div><div class="ui-g-8 bold-value">{{this.walletSettings.showNotifications}}</div>
             </div>
         </div>
         <div class="ui-g-1"></div>
     </div>
     <div style="text-align: right;">
-        <button pButton type="button" (click)="onSettingsSave()" icon="fa-save" iconPos="right" label="Save" *ngIf="false"
+        <button pButton type="button" (click)="onSettingsSave()" icon="fa-save" iconPos="right" label="Save" *ngIf="true"
                 style="width: 115px;"></button>
     </div>
 </p-dialog>

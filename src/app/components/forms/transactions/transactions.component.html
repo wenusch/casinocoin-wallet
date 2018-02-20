@@ -10,7 +10,7 @@
     </div>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
-        <p-dataTable [value]="lazyTransactions" scrollable="true" [immutable]="false" scrollHeight="55vh" [contextMenu]="cm"
+        <p-dataTable [value]="lazyTransactions" scrollable="true" [immutable]="false" scrollHeight="55vh" [contextMenu]="cm" selectionMode="single"
             responsive="true" styleClass="borderless" (onContextMenuSelect)="showTxContextMenu($event)" loadingIcon="fa-spinner color_red"
             [rows]="10" [virtualScroll]="true" [lazy]="true" [totalRecords]="totalTXRecords" (onLazyLoad)="loadTXLazy($event)" #dtTX>
             <p-column [style]="{'width':'17px'}">

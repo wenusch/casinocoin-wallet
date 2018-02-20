@@ -124,20 +124,25 @@ export type Instructions = {
     maxLedgerVersion?: number,
     maxLedgerVersionOffset?: number,
     signersCount?: number
-  }
+}
   
-  export type Prepare = {
+export type Prepare = {
     txJSON: string,
     instructions: {
-     fee: string,
-     sequence: number,
-     maxLedgerVersion?: number
+        fee: string,
+        sequence: number,
+        maxLedgerVersion?: number
     }
-  }
+}
 
-  export type CSCURI = {
+export type CSCURI = {
     address: string, 
     amount?: string, 
     destinationTag?: number, 
     label?: string
-  }
+}
+
+export type WalletSettings = {
+    showNotifications: boolean;
+    fiatCurrency: string;
+}

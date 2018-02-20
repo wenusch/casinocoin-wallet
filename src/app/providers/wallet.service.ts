@@ -234,6 +234,7 @@ export class WalletService {
   
   // close the wallet
   closeWallet(){
+    this.logger.debug("### WalletService - Save and Close Wallet ###");
     // first save any open changes
     if(this.walletDB != null){
       this.walletDB.saveDatabase();
@@ -749,6 +750,9 @@ export class WalletService {
   }
 
   getAllAddresses(): Array<LokiTypes.LokiAddress> {
+      if (this.addressbook == null) {
+          return [];
+      }
       return this.addressbook.find();
   }
 

@@ -6,6 +6,8 @@ import { ElectronService } from '../../../providers/electron.service';
 import { MarketService } from '../../../providers/market.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { ExchangesType } from '../../../domain/service-types';
+import { DatePipe, CurrencyPipe } from '@angular/common';
+import Big from 'big.js';
 
 @Component({
   selector: 'app-exchanges',
@@ -17,10 +19,14 @@ export class ExchangesComponent implements OnInit {
   exchange_context_menu: ElectronMenu;
   selectedExchangeRow: ExchangesType;
   exchanges: Array<ExchangesType> = [];
+  fiatValue: string = "0.00";
+  coinSupply: string = "40000000000";
+  marketCapital: string = "0.00";
 
   constructor(private logger: LogService,
               private electronService: ElectronService,
-              private marketService: MarketService ) { 
+              private marketService: MarketService,
+              private currencyPipe: CurrencyPipe ) { 
     this.logger.debug("### INIT Exchanges ###");
     this.exchanges = this.marketService.exchanges;
   }
@@ -49,6 +55,23 @@ export class ExchangesComponent implements OnInit {
     this.marketService.exchangeUpdates.subscribe( result =>{
       this.exchanges = result;
     });
+
+    // update coininfo
+    this.updateCoininfo();
+    // listen to coininfo updates
+    this.marketService.coininfoUpdates.subscribe( result => {
+      this.updateCoininfo();
+    });
+  }
+
+  updateCoininfo(){
+    if(this.marketService.coinMarketInfo != null){
+      let coinFiat = this.marketService.coinMarketInfo.price_fiat ? this.marketService.coinMarketInfo.price_fiat : "0.00";
+      this.logger.debug("### updateCoininfo - coinFiat: " + coinFiat);
+      let marketFiat = new Big(this.coinSupply).times(new Big(coinFiat)).toString();
+      this.fiatValue = this.currencyPipe.transform(coinFiat, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-6");
+      this.marketCapital = this.currencyPipe.transform(marketFiat, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-2");
+    }
   }
 
   onExchangeContextMenu(event){

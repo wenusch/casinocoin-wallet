@@ -33,7 +33,7 @@ var redhatOptions = {
   arch: 'x86_64'
 }
 
-console.log('Creating package (this may take a while)');
+console.log('Creating RPM Package (this may take a while)');
 
 redhatInstaller(redhatOptions, function (err) {
   if (err) {
