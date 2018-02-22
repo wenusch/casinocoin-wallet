@@ -680,7 +680,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.walletService.closeWallet();
     this.casinocoinService.disconnect();
     this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
-    this.electron.remote.getCurrentWindow().reload();
+    this.router.navigate(['login']);
+    // this.electron.remote.getCurrentWindow().reload();
   }
 
   setConnectedMenuItem(connected: boolean){

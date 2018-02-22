@@ -176,15 +176,19 @@ function createWindow() {
   powerMonitor.on('suspend', () => {
     winston.log("debug", "### Electron -> The system is going to sleep ###");
     // send message to save and logout wallet
-    if(win != null){
+    if(win !== null){
       win.webContents.send('action', 'save-wallet');
     }
   });
 
   powerMonitor.on('resume', () => {
     winston.log("debug", "### Electron -> The system is resuming after sleep ###");
-    win.reload();
-    win.show();
+    if (win === null) {
+      createWindow();
+    } else {
+      win.reload();
+      win.show();
+    }
   });
 
   // Emitted when the window is closed.
