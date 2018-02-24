@@ -8,7 +8,7 @@ const appVersion = require('./package.json').version;
 var debianOptions = {
   src: 'app-builds/casinocoin-wallet-linux-x64/',
   dest: 'release-builds/',
-  icon: 'src/assets/icons/casinocoin.png',
+  icon: 'src/assets/brand/casinocoin-icon-256x256.png',
   homepage: 'http://www.casinocoin.org', 
   arch: 'amd64'
 }
@@ -28,7 +28,7 @@ debianInstaller(debianOptions, function (err) {
 var redhatOptions = {
   src: 'app-builds/casinocoin-wallet-linux-x64/',
   dest: 'release-builds/',
-  icon: 'src/assets/icons/casinocoin.png',
+  icon: 'src/assets/brand/casinocoin-icon-256x256.png',
   homepage: 'http://www.casinocoin.org',
   arch: 'x86_64'
 }

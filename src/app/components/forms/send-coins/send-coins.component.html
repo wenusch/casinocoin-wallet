@@ -13,9 +13,7 @@
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-address-book"></i></span>
             <input type="text" pInputText placeholder="Recipient" [(ngModel)]="recipient" (keyup.enter)="focusDescription()"
                    [disabled]="!selectedAccount" (ngModelChange)="onRecipientChange($event)">
-
-            <button pButton type="button" icon="fa-search" class="ui-button-secondary"
-                    (click)="startAddressSearch()"
+            <button pButton type="button" icon="fa-search" (click)="startAddressSearch()"
                     [disabled]="!selectedAccount || addresses.length == 0" ></button>
 
 
@@ -51,8 +49,7 @@
             <input type="text" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()"
                     [disabled]="!selectedAccount || invalidReceipient" (ngModelChange)="onAmountChange($event)" 
                     autocomplete="off" #amountInput>
-            <button pButton type="button" class="ui-button-secondary" (click)="sendAllCoins()" label="all" 
-                    [disabled]="!selectedAccount || invalidReceipient"></button>
+            <button pButton type="button" (click)="sendAllCoins()" label="all" [disabled]="!selectedAccount || invalidReceipient"></button>
         </div>
     </div>
     <div class="ui-g-12">
@@ -85,12 +82,13 @@
     -->
     <div class="ui-g-6">
         <button pButton type="button" (click)="doSendCoins()" icon="fa-sign-out" iconPos="left" label="Send Coins"
-                class="ui-button-secondary" [disabled]="!isSendValid || !isConnected"></button>
+                [disabled]="!isSendValid || !isConnected"></button>
     </div>
 </div>
 <p-dialog [(visible)]="showPasswordDialog" [width]="480" [height]="325" [closable]="true" 
     [modal]="true" appendTo="body">
     <p-header>
+        <i class="icon csc-dialog-icon icon-csc"></i>
         Send CasinoCoins
     </p-header>
     <div class="ui-g ui-fluid">
@@ -134,6 +132,7 @@
 <p-dialog [(visible)]="showAddressSearchDialog" [width]="480" [height]="220" [closable]="true"
           [modal]="true" appendTo="body">
     <p-header>
+        <i class="icon csc-dialog-icon icon-csc"></i>
         Address book
     </p-header>
 

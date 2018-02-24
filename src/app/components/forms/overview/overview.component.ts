@@ -83,7 +83,7 @@ export class OverviewComponent implements OnInit {
 
   getTXCellColor(cell, rowData){
     if(rowData.direction == AppConstants.KEY_WALLET_TX_OUT){
-      cell.parentNode.parentNode.style.background = "#901119";
+      cell.parentNode.parentNode.style.background = "#bf0a0a";
     } else if(rowData.direction == AppConstants.KEY_WALLET_TX_IN){
       cell.parentNode.parentNode.style.background = "#119022";
     } else {
@@ -94,7 +94,7 @@ export class OverviewComponent implements OnInit {
   getTXTextColor(cell, rowData){
     if(rowData.direction == AppConstants.KEY_WALLET_TX_OUT){
       // outgoing tx
-      cell.parentNode.parentNode.style.color = "#901119";
+      cell.parentNode.parentNode.style.color = "#bf0a0a";
     } else if(rowData.direction == AppConstants.KEY_WALLET_TX_IN){
       // incomming tx
       cell.parentNode.parentNode.style.color = "#119022";

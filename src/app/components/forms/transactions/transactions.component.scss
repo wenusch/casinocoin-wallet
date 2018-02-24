@@ -53,16 +53,16 @@
 
 /** Odd row color **/
 ::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-odd {
-    background-color: #f3f3f3;
+    background-color: #ffffff;
 }
 
 /** Odd and Even Selected Row Color ***/
 ::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-odd.ui-state-highlight {
-    background-color: #d6d6d6;
+    background-color: $casinocoinGray;
     color: #000000;
 }
 ::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-even.ui-state-highlight {
-    background-color: #d6d6d6;
+    background-color: $casinocoinGray;
     color: #000000;
 }
 

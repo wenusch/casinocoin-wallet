@@ -3,27 +3,21 @@
         <mat-sidenav-container class="home-sidenav-container">
             <mat-sidenav mode="side" opened="true">
                 <div class="app-nav">
-                    <img src="../../../assets/casinocoin-logo.png" alt="CasinoCoin" class="csc-logo" />
-                    <mat-list>
-                        <mat-list-item class="menu-item">
-                            <div class="ui-g">
-                                
-                                <div class="ui-g-12 menu-text">
-                                    <span class="amount-text-color">Balance:</span><span class="amount-color"> {{balance | cscAmount : false : true}}</span>
-                                </div>
-                            </div>
-                        </mat-list-item>
-                    </mat-list>
+                    <img src="../../../assets/brand/casinocoin-logo.png" alt="CasinoCoin" class="csc-logo" />
+                    <div class="ui-g menu-balance">
+                        <div class="ui-g-12 menu-text amount-label">Balance:</div>
+                        <div class="ui-g-12 amount-value"> {{balance | cscAmount : true : true}}</div>
+                    </div>
                     <div class="menu-nav">
                         <mat-list style="padding-top: 20px;">
                             <mat-list-item (click)="onTransactions()" class="menu-item" 
                                             [ngClass]="{active_menu_item: active_menu_item === 'transactions'}">
                                 <div class="ui-g">
                                     <div class="ui-g-3">
-                                        <img src="../../../assets/icons/transactions.png" class="menu-icon"/>
+                                        <i class="icon icon-transactions menu-icon"></i>
                                     </div>
                                     <div class="ui-g-9 menu-text">
-                                        <span class="amount-text-color">Transactions:</span><span class="amount-color"> {{transaction_count}}</span>
+                                        <span>Transactions:</span><span class="tx-value"> {{transaction_count}}</span>
                                     </div>
                                 </div>
                             </mat-list-item>
@@ -31,7 +25,7 @@
                                             [ngClass]="{active_menu_item: active_menu_item === 'send'}"> 
                                 <div class="ui-g">
                                     <div class="ui-g-3">
-                                        <img src="../../../assets/icons/send.png" class="menu-icon"/>
+                                        <i class="icon icon-send menu-icon"></i>
                                     </div>
                                     <div class="ui-g-9 menu-text">Send coins</div>
                                 </div>
@@ -40,7 +34,7 @@
                                             [ngClass]="{active_menu_item: active_menu_item === 'receive'}"> 
                                 <div class="ui-g">
                                     <div class="ui-g-3">
-                                        <img src="../../../assets/icons/receive.png" class="menu-icon" />
+                                        <i class="icon icon-receive menu-icon"></i>
                                     </div>
                                     <div class="ui-g-9 menu-text">Receive coins</div>
                                 </div>
@@ -48,21 +42,19 @@
                             <mat-list-item (click)="onAddressbook()" class="menu-item"
                                             [ngClass]="{active_menu_item: active_menu_item === 'addressbook'}"> 
                                 <div class="ui-g">
-                                    <div class="ui-g-3" style="padding-top: 20px;">
-                                        <img src="../../../assets/icons/address.png" class="menu-icon" />
+                                    <div class="ui-g-3">
+                                        <i class="icon icon-contacts menu-icon"></i>
                                     </div>
                                     <div class="ui-g-9 menu-text">Address book</div>
                                 </div>
                             </mat-list-item>
-                        </mat-list>
-                        <mat-list style="padding-top: 25px;">
                             <mat-list-item (click)="onSupport()" class="menu-item"
                                             [ngClass]="{active_menu_item: active_menu_item === 'support'}"> 
                                 <div class="ui-g">
                                     <div class="ui-g-3">
-                                        <img src="../../../assets/icons/support.png" class="menu-icon" />
+                                        <i class="fa fa-question-circle menu-icon"></i>
                                     </div>
-                                    <div class="ui-g-9">Support</div>
+                                    <div class="ui-g-9 menu-text">Support</div>
                                 </div>
                             </mat-list-item>
                         </mat-list>
@@ -81,12 +73,10 @@
                 <div class="ui-toolbar-group-left">
                     <div class="ui-g">
                         <div class="ui-g-6">
-                            <img src="../../../assets/icons/balance.png" class="footer-icon">
-                            Balance: {{balance | cscAmount : false : true}}
+                            <span><i class="icon icon-csc footer-icon"></i>Balance: {{balance | cscAmount : false : true}}</span>
                         </div>
                         <div class="ui-g-6">
-                            <img src="../../../assets/icons/fiat.png" class="footer-icon">
-                            Fiat Value: {{fiat_balance}}
+                            <span><i class="fa fa-money footer-icon" aria-hidden="true"></i>Fiat Value: {{fiat_balance}}</span>
                         </div>
                     </div>
                 </div>
@@ -94,20 +84,17 @@
                     <div class="ui-g">
                         <div class="ui-g-4">
                             <div (click)="onSettingsMenuClick($event)">
-                                <img src="../../../assets/icons/settings.png" alt="Settings" class="footer-icon">
-                                Settings
+                                <span><i class="fa fa-cog footer-icon" aria-hidden="true"></i>Settings</span>
                             </div>
                         </div>
                         <div class="ui-g-3">
                             <div (click)="onToolsMenuClick($event)">
-                                <img src="../../../assets/icons/tools.png" alt="Tools" class="footer-icon">
-                                Tools
+                                <span><i class="fa fa-wrench footer-icon" aria-hidden="true"></i>Tools</span>
                             </div>
                         </div>
                         <div class="ui-g-5" style="text-align: right">
                             <div (click)="onConnectionClick($event)" [matTooltip]="connected_tooltip">
-                                <img [src]="connectionImage" alt="Connection" class="footer-icon" />
-                                <span [ngClass]="connectionColorClass">{{connected_tooltip}}</span>
+                                <span [ngClass]="connectionColorClass"><i class="icon icon-network footer-icon"></i>{{connected_tooltip}}</span>
                             </div>
                         </div>
                     </div>
@@ -118,7 +105,7 @@
 </div>
 <p-dialog class="dialog-header" [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="350" [closable]="true" 
         [modal]="true" appendTo="body">
-    <p-header>Import private keys</p-header>
+    <p-header><span><i class="icon csc-dialog-icon icon-csc"></i>Import private keys</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">Enter the password for your wallet.</div>
@@ -160,7 +147,7 @@
 
 <p-dialog class="dialog-header" [(visible)]="showSettingsDialog" [width]="640" [height]="400" [closable]="true" 
         [modal]="true" appendTo="body">
-    <p-header>Settings</p-header>
+    <p-header><span><i class="icon csc-dialog-icon icon-csc"></i>Settings</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
@@ -190,7 +177,7 @@
 </p-dialog>
 <p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="640" [height]="500" [closable]="true" 
         [modal]="true" appendTo="body">
-    <p-header>Server Information</p-header>
+    <p-header><span><i class="icon csc-dialog-icon icon-csc"></i>Server Information</span></p-header>
     <div class="ui-g">
         <div class="ui-g-6">Server</div><div class="ui-g-6 bold-value">{{currentServer?.server_id}}</div>
         <div class="ui-g-6">Server Version</div><div class="ui-g-6 bold-value">{{serverState?.build_version}}</div>
@@ -209,9 +196,7 @@
 </p-dialog>
 
 <p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="225" [closable]="true" [modal]="true" appendTo="body">
-<p-header>
-    CasinoCoin Wallet Password
-</p-header>
+<p-header><span><i class="icon csc-dialog-icon icon-csc"></i>CasinoCoin Wallet Password</span></p-header>
 <div class="ui-g ui-fluid">
     <div class="ui-g-1"></div>
     <div class="ui-g-10">

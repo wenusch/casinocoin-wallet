@@ -1,12 +1,11 @@
 <div class="ui-widget ui-g form-container">
     <p class="form-text-header">Receive Coins</p>
     <div class="ui-g-12">
-        <button pButton type="button" (click)="showCreateAccount()" icon="fa-file-text-o" iconPos="left" label="Create New Account"
-                class="ui-button-secondary"></button>
+        <button pButton type="button" (click)="showCreateAccount()" icon="fa-file-text-o" iconPos="left" label="Create New Account"></button>
     </div>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
-        <p-dataTable [value]="accounts" [immutable]="false" scrollable="true" scrollHeight="70vh"
+        <p-dataTable [value]="accounts" [immutable]="false" scrollable="true" scrollHeight="65vh"
                         [contextMenu]="cm" [(selection)]="selectedReceiveRow" editable="true" (onEditComplete)="onLabelEditComplete($event)"
                         (onEditCancel)="onLabelEditCancel($event)" (onContextMenuSelect)="showReceiveContextMenu($event)">
             <p-column field="accountID" header="Account" [style]="{'width':'200px'}">
@@ -79,7 +78,10 @@
 </p-dialog>
 
 <p-dialog [(visible)]="showReceiveQRCodeDialog" [width]="350" [height]="500" [closable]="true" [modal]="true" appendTo="body">
-    <p-header>Receive CasinoCoin</p-header>
+    <p-header>
+        <i class="icon csc-dialog-icon icon-csc"></i>
+        Receive CasinoCoin
+    </p-header>
     <div style="text-align: center;">{{selectedReceiveRow?.accountID}}</div>
     <div class="qrcode">
         <qr-code [value]="cscReceiveURI" size="250" level="L"></qr-code>
