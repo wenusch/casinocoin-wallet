@@ -141,7 +141,6 @@ $base-height: 60px;
 */
 
 .active_menu_item {
-  background-color: $casinocoinRedDarker;
   background-image: url('../../../assets/menu-rectangle.png');
   background-repeat: no-repeat;
   background-position: right;
@@ -165,6 +164,7 @@ $base-height: 60px;
 
 .footer-icon {
   padding-right: 8px;
+  margin-top: 3px;
   font-size: 1.25em;
 }
 

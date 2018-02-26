@@ -41,7 +41,7 @@
 </div>
 <p-dialog [(visible)]="showCreateAccountDialog" [width]="450" [height]="300" [closable]="true" 
     [modal]="true" appendTo="body">
-    <p-header>Create new account</p-header>
+    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Create new account</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
@@ -78,10 +78,7 @@
 </p-dialog>
 
 <p-dialog [(visible)]="showReceiveQRCodeDialog" [width]="350" [height]="500" [closable]="true" [modal]="true" appendTo="body">
-    <p-header>
-        <i class="icon csc-dialog-icon icon-csc"></i>
-        Receive CasinoCoin
-    </p-header>
+    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Receive CasinoCoin</span></p-header>
     <div style="text-align: center;">{{selectedReceiveRow?.accountID}}</div>
     <div class="qrcode">
         <qr-code [value]="cscReceiveURI" size="250" level="L"></qr-code>

@@ -12,7 +12,7 @@
 @import "~font-awesome/css/font-awesome.min.css";
 
 // CSC Icon Font
-@import "./assets/csc-icon-font/styles.css";
+@import "./assets/csc-icon-font/style.css";
 
 // Components
 // @import "./app/app.component";
@@ -67,6 +67,7 @@ html, body {
 i.csc-dialog-icon {
   padding-right: 10px;
   color: $casinocoinRed;
+  font-size: 1.25em;
 }
 
 .form-container { 

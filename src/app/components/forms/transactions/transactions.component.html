@@ -56,14 +56,14 @@
         </p-dataTable>
     </div>
     <div class="ui-g-12">
-        <button pButton type="button" (click)="doShowLedgers()" icon="fa-list" iconPos="left" label="Show Ledgers"></button>
-        <button pButton type="button" (click)="doShowExchanges()" icon="fa-list" iconPos="left" label="Show Exchanges"></button>
+        <button pButton type="button" (click)="doShowLedgers()" icon="icon icon-list-numbered" iconPos="left" label="Show Ledgers"></button>
+        <button pButton type="button" (click)="doShowExchanges()" icon="icon icon-exchange" iconPos="left" label="Show Exchanges"></button>
     </div>
 </div>
 <p-dialog class="dialog-header" [(visible)]="showLedgerDialog" [width]="500" [height]="425" 
     [closable]="true" [modal]="true" appendTo="body">
     <p-header>
-        <i class="icon csc-dialog-icon icon-csc"></i>
+        <i class="icon csc-dialog-icon icon-chip"></i>
         Ledger Information
     </p-header>
     <p-dataTable [value]="ledgers" [immutable]="false" scrollable="true" scrollHeight="325px">
