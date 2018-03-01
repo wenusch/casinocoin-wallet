@@ -1,7 +1,7 @@
 <div class="ui-widget ui-g form-container">
     <p class="form-text-header">Receive Coins</p>
     <div class="ui-g-12">
-        <button pButton type="button" (click)="showCreateAccount()" icon="fa-file-text-o" iconPos="left" label="Create New Account"></button>
+        <button pButton type="button" (click)="showCreateAccount()" icon="icon icon-text" iconPos="left" label="Create New Account"></button>
     </div>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
@@ -53,7 +53,7 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-address-book"></i></span>
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-book"></i></span>
                 <input type="text" pInputText placeholder="Account Label" [(ngModel)]="accountLabel" style="width: 100%; padding-left: 5px;">         
             </div>
         </div>
@@ -61,7 +61,7 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-key"></i></span>
                 <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" 
                        (keyup.enter)="doCreateNewAccount()" style="width: 100%; padding-left: 5px;">
             </div>
@@ -69,7 +69,7 @@
         <div class="ui-g-1"></div>
     </div>
     <div style="text-align: right;">
-        <button pButton type="button" (click)="doCreateNewAccount()" icon="fa-save" iconPos="right" label="Create" 
+        <button pButton type="button" (click)="doCreateNewAccount()" icon="icon icon-save" iconPos="right" label="Create" 
                 style="width: 115px;"></button>
     </div>
     <p-footer *ngIf="showDialogFooter" class="footer-error">
@@ -85,13 +85,13 @@
     </div>
     <div class="qrcode">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 60px;"><i class="fa fa-comments"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 60px;"><i class="icon icon-text"></i></span>
             <input type="text" pInputText placeholder="Label" [(ngModel)]="label" (ngModelChange)="updateQRCode()">         
         </div>
     </div>
     <div class="qrcode">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 60px;"><i class="fa fa-tag"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 60px;"><i class="icon icon-tag"></i></span>
             <input type="number" placeholder="Destination Tag" [(ngModel)]="destinationTag" min="1" step="1" (ngModelChange)="updateQRCode()">         
         </div>
     </div>

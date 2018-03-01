@@ -19,14 +19,14 @@
     -->
     <div class="ui-g-6">
         <div class="ui-inputgroup" #inputAccountID>
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-id"></i></span>
             <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" [(disabled)]="swapDisabled"
                         placeholder="Select Account" autofocus #accountDropdown></p-dropdown>
         </div>
     </div>
     <div class="ui-g-6">
         <span>
-            <button pButton type="button" (click)="doCreateSwap()" icon="fa-exchange" iconPos="left" 
+            <button pButton type="button" (click)="doCreateSwap()" icon="icon icon-exchange" iconPos="left" 
                     label="New Swap" [(disabled)]="swapDisabled"></button>
             <button pButton type="button" (click)="doRefreshSwaps()" [(icon)]="refresh_icon" iconPos="left" 
                     label="Refresh Swaps"></button>

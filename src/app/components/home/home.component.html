@@ -115,7 +115,7 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon"><i class="fa fa-key"></i></span>
+                <span class="ui-inputgroup-addon"><i class="icon icon-key"></i></span>
                 <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" 
                         (keyup.enter)="onImportPrivateKey()" style="width: 100%; padding-left: 5px;">
             </div>
@@ -137,7 +137,7 @@
         <div class="ui-g-1"></div>
     </div>
     <div style="text-align: right; margin-top: 10px;">
-        <button pButton type="button" (click)="onImportPrivateKey()" icon="fa-arrow-right" iconPos="right" label="Import" 
+        <button pButton type="button" (click)="onImportPrivateKey()" icon="icon icon-arrow-right" iconPos="right" label="Import" 
                 style="width: 115px;"></button>
     </div>
     <p-footer *ngIf="footer_visible" class="footer-error">
@@ -208,7 +208,7 @@
     <div class="ui-g-1"></div>
     <div class="ui-g-10">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-key"></i></span>
             <input type="password" pInputText placeholder="Wallet Password" style="width: 100%; padding-left: 5px;"
                    [(ngModel)]="walletPassword" (keyup.enter)="executePasswordCallback()" #passwordInput>         
         </div>
