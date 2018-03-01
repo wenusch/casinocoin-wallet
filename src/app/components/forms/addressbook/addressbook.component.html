@@ -1,8 +1,8 @@
 <div class="ui-widget ui-g form-container">
     <p class="form-text-header">Address book</p>
     <div class="ui-g-12">
-        <button pButton type="button" (click)="showCreateAddress()" icon="fa-file-text-o" iconPos="left" 
-                class="ui-button-secondary" label="Create New Address"></button>
+        <button pButton type="button" (click)="showCreateAddress()" icon="icon icon-text" iconPos="left" 
+                label="Create New Address"></button>
     </div>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
@@ -25,7 +25,7 @@
 </div>
 <p-dialog [(visible)]="showCreateAddressDialog" [width]="475" [height]="300" [closable]="true" 
     [modal]="true" appendTo="body">
-    <p-header>Create new address book entry</p-header>
+    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Create new address book entry</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
@@ -37,7 +37,7 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 40px;"><i class="fa fa-tag"></i></span>
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 40px;"><i class="icon icon-tag"></i></span>
                 <input type="text" pInputText placeholder="Label" [(ngModel)]="addressLabel" style="width: 100%; padding-left: 5px;">         
             </div>
         </div>
@@ -45,7 +45,7 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 40px;"><i class="fa fa-credit-card"></i></span>
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 40px;"><i class="icon icon-id"></i></span>
                 <input type="text" pInputText placeholder="Address" [(ngModel)]="accountID" (ngModelChange)="onAccountIDChange($event)" 
                         style="width: 100%; padding-left: 5px;">         
             </div>
@@ -53,7 +53,7 @@
         <div class="ui-g-1"></div>
     </div>
     <div style="text-align: right;">
-    <button pButton type="button" (click)="doCreateNewAddressbookEntry()" icon="fa-arrow-right" iconPos="right" label="Create" 
+    <button pButton type="button" (click)="doCreateNewAddressbookEntry()" icon="icon icon-arrow-right" iconPos="right" label="Create" 
             style="width: 115px;" [disabled]="invalidAccountID"></button>
     </div>
     <p-footer *ngIf="showDialogFooter" class="footer-error">

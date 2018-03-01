@@ -2,7 +2,7 @@
     <p class="form-text-header">Send Coins</p>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-credit-card"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="icon icon-id"></i></span>
             <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount"  [disabled]="!isConnected"
                         [matTooltip]="connected_tooltip" placeholder="Select Account to send from ..." 
                         autofocus #accountDropdown></p-dropdown>
@@ -10,12 +10,10 @@
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-address-book"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="icon icon-book"></i></span>
             <input type="text" pInputText placeholder="Recipient" [(ngModel)]="recipient" (keyup.enter)="focusDescription()"
                    [disabled]="!selectedAccount" (ngModelChange)="onRecipientChange($event)">
-
-            <button pButton type="button" icon="fa-search" class="ui-button-secondary"
-                    (click)="startAddressSearch()"
+            <button pButton type="button" icon="icon icon-search" (click)="startAddressSearch()"
                     [disabled]="!selectedAccount || addresses.length == 0" ></button>
 
 
@@ -23,14 +21,14 @@
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-comments"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="icon icon-text"></i></span>
             <input type="text" pInputText placeholder="Description" [(ngModel)]="description" (keyup.enter)="focusAmount()"
                     [disabled]="!selectedAccount || invalidReceipient" #descriptionInput>         
         </div>
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-tag"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="icon icon-tag"></i></span>
             <input type="number" placeholder="Destination Tag" [(ngModel)]="destinationTag" (keyup.enter)="focusAmount()"
                     [disabled]="!selectedAccount || invalidReceipient" min="1" step="1" (ngModelChange)="onDestinationTagChange($event)"
                     #destinationTagInput>         
@@ -39,7 +37,7 @@
     <!-- DISABLED InvoiceID for now, need to add checks to validate its contents
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="fa fa-file-text-o"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">ID</span>
             <input type="text" pInputText placeholder="Invoice ID" [(ngModel)]="invoiceID" (keyup.enter)="focusAmount()"
                     [disabled]="!selectedAccount || invalidReceipient" #invoiceIDInput>         
         </div>
@@ -51,8 +49,7 @@
             <input type="text" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()"
                     [disabled]="!selectedAccount || invalidReceipient" (ngModelChange)="onAmountChange($event)" 
                     autocomplete="off" #amountInput>
-            <button pButton type="button" class="ui-button-secondary" (click)="sendAllCoins()" label="all" 
-                    [disabled]="!selectedAccount || invalidReceipient"></button>
+            <button pButton type="button" (click)="sendAllCoins()" label="all" [disabled]="!selectedAccount || invalidReceipient"></button>
         </div>
     </div>
     <div class="ui-g-12">
@@ -84,13 +81,14 @@
     </div>
     -->
     <div class="ui-g-6">
-        <button pButton type="button" (click)="doSendCoins()" icon="fa-sign-out" iconPos="left" label="Send Coins"
-                class="ui-button-secondary" [disabled]="!isSendValid || !isConnected"></button>
+        <button pButton type="button" (click)="doSendCoins()" icon="icon icon-arrow-right" iconPos="left" label="Send Coins"
+                [disabled]="!isSendValid || !isConnected"></button>
     </div>
 </div>
 <p-dialog [(visible)]="showPasswordDialog" [width]="480" [height]="325" [closable]="true" 
     [modal]="true" appendTo="body">
     <p-header>
+        <i class="icon csc-dialog-icon icon-chip"></i>
         Send CasinoCoins
     </p-header>
     <div class="ui-g ui-fluid">
@@ -107,7 +105,7 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-key"></i></span>
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-key"></i></span>
                 <input type="password" pInputText placeholder="Wallet Password" style="width: 100%; padding-left: 5px;"
                        [(ngModel)]="walletPassword" (keyup.enter)="doSignAndSubmitTx()" #passwordInput>         
             </div>
@@ -134,6 +132,7 @@
 <p-dialog [(visible)]="showAddressSearchDialog" [width]="480" [height]="220" [closable]="true"
           [modal]="true" appendTo="body">
     <p-header>
+        <i class="icon csc-dialog-icon icon-chip"></i>
         Address book
     </p-header>
 
@@ -141,7 +140,7 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
-                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-address-card"></i></span>
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-book"></i></span>
 
                 <p-dropdown
                         [style]="{'min-width':'300px', 'max-width': '300px'}"

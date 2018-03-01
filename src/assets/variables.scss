@@ -1,13 +1,14 @@
-$fontFamily:  "Roboto", "Trebuchet MS", Arial, Helvetica, sans-serif;
-$fontSize: 0.94em;
+$fontFamily:  "Roboto";
+$fontSize: 0.97em;
 $borderRadius: 2px;
 $disabledOpacity: 0.35;
 $statusBarHeight: 40px;
 
-$casinocoinRed: #901119;
+$casinocoinRed: #bf0a0a;
 $casinocoinRedLighter: lighten($casinocoinRed, 10%);
-$casinocoinRedDarker: darken($casinocoinRed, 20%);
+$casinocoinRedDarker: darken($casinocoinRed, 10%);
 $casinocoinGreen: #4caf50;
 $casinocoinBlue: #114490;
-$casinocoinGray: #333333;
+$casinocoinGray: #f2f2f2;
 $casinocoinOrange: #da860a;
+$casinocoinBlack: #0f0f0f;

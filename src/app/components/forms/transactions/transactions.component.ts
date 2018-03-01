@@ -170,7 +170,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   getTXTextColor(cell, rowData){
     if(rowData.direction == AppConstants.KEY_WALLET_TX_OUT){
       // outgoing tx
-      cell.parentNode.parentNode.style.color = "#901119";
+      cell.parentNode.parentNode.style.color = "#bf0a0a";
     } else if(rowData.direction == AppConstants.KEY_WALLET_TX_IN){
       // incomming tx
       cell.parentNode.parentNode.style.color = "#119022";
