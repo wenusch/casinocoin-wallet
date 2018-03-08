@@ -1,0 +1,99 @@
+@import "~assets/variables";
+
+::ng-deep .hide-context-menu {
+    display: none;
+}
+
+::ng-deep .footer-error {
+    color: $casinocoinRed;
+    font-weight: bolder;
+}
+
+.hidden { 
+	visibility: hidden; 
+}
+.displaynone { 
+	display: none !important; 
+}
+
+#mysecret[disabled] { 
+	border: none; 
+}
+
+#myaddress:empty:before { 
+	content: ""; 
+}
+
+table:empty { 
+	display: none; 
+}
+
+td.centered { 
+	text-align: center; 
+}
+
+input[type="text"] { 
+	width: 240px; 
+}
+
+input[type="text"].wide { 
+	width: 280px; 
+}
+
+input[type="text"].narrow { 
+	width: 120px; 
+}
+
+button:not(.offline) {
+	cursor: pointer;
+	font-weight: bold;
+}
+
+.editflagbutton { 
+	width: 60px; 
+}
+
+#sendbutton, .complexsendbutton, .cancelbutton { 
+	width: 72px; 
+}
+
+#trustbutton { 
+	width: 84px; 
+}
+
+#startpathfindingbutton, #rekeybutton { 
+	width: 100px; 
+}
+
+.tilde { 
+	width: 30px; 
+}
+
+.halfoffset {
+	position: relative;
+	top: 9px;
+}
+
+.pathsJSON div { 
+	display: none; 
+}
+
+.pathsJSON:hover div {
+	display: block;
+	position: absolute;
+	word-break: break-all;
+	width: 200px;
+	border: 1px solid black;
+	padding: 8px;
+	background-color: white;
+}
+.pathsJSON:after {
+	content: "hover to view";
+	font-style: italic;
+}
+.pathsJSON:after:hover { content: ""; }
+
+
+.jumbotron {
+    min-height: 300px;
+}

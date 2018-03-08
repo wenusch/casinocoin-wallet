@@ -776,4 +776,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     // this.electron.ipcRenderer.sendSync("backup-finished");
   }
 
+  onPaperWallet() {
+    this.logger.debug("Paper Wallet Clicked !!");
+    this.active_menu_item = "addressbook";
+    // navigate to addressbook
+    this.router.navigate(['home','paperwallet']);
+  }
+
 }

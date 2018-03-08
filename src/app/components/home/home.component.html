@@ -57,6 +57,15 @@
                                     <div class="ui-g-9 menu-text">Support</div>
                                 </div>
                             </mat-list-item>
+                            <mat-list-item (click)="onPaperWallet()" class="menu-item"
+                                            [ngClass]="{active_menu_item: active_menu_item === 'paperwallet'}"> 
+                                <div class="ui-g">
+                                    <div class="ui-g-3">
+                                        <i class="icon icon-question menu-icon"></i>
+                                    </div>
+                                    <div class="ui-g-9 menu-text">Paperwallet</div>
+                                </div>
+                            </mat-list-item>
                         </mat-list>
                     </div>
                 </div>

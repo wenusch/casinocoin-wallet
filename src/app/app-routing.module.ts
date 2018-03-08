@@ -11,6 +11,7 @@ import { ReceiveCoinsComponent }    from './components/forms/receive-coins/recei
 import { AddressbookComponent }     from './components/forms/addressbook/addressbook.component';
 import { CoinSwapComponent }        from './components/forms/coin-swap/coin-swap.component';
 import { TransactionsComponent }    from './components/forms/transactions/transactions.component';
+import { PaperwalletComponent }     from './components/forms/paperwallet/paperwallet.component';
 import { SupportComponent }         from './components/forms/support/support.component';
 import { ExchangesComponent }       from './components/forms/exchanges/exchanges.component';
 
@@ -20,6 +21,7 @@ const routes: Routes = [
             { path: 'send', component: SendCoinsComponent },
             { path: 'receive', component: ReceiveCoinsComponent },
             { path: 'addressbook', component: AddressbookComponent },
+            { path: 'paperwallet', component: PaperwalletComponent },
             { path: 'swap', component: CoinSwapComponent },
             { path: 'transactions', component: TransactionsComponent },
             { path: 'support', component: SupportComponent },

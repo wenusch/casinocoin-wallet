@@ -1,0 +1,27 @@
+<div class="ui-widget ui-g form-container">
+    <p class="form-text-header">Paper Wallet</p>
+    <div class="ui-g-12">
+        <button pButton type="button" (click)="showCreateAddress()" icon="icon icon-text" iconPos="left" 
+                label="Create New Address"></button>
+    </div>
+
+    <div class="row" align="center">
+        <div class="col-sm-4 key_box" [style]="{'background-color': '#cccccc'}">
+            <h4>Public Key</h4>
+            <div id="qrcodeAddress" [style]="{'width':'100px', 'height':'100px', 'margin-top':'5px'}">
+            </div> 
+            <br/><br/><br/>
+            <span>{{newAddress}}</span> 
+            &nbsp;<br><br>
+        </div>
+        <div class="col-sm-2 key_box" [style]="{'background-color': '#ffffff'}"></div>
+        <div class="col-sm-4 key_box1" [style]="{'background-color': '#eeeeee'}">
+            <h4>Private Key</h4>
+            <div id="qrcodeSecret" [style]="{'width':'100px', 'height':'100px', 'margin-top':'5px'}">
+            </div> 
+            <br/><br/><br/>
+            <span>{{newSecretKey}}</span>
+            &nbsp;<br><br>
+        </div>
+    </div>
+</div>

@@ -54,6 +54,7 @@ import { AddressbookComponent }     from './components/forms/addressbook/address
 import { CoinSwapComponent }        from './components/forms/coin-swap/coin-swap.component';
 import { OverviewComponent }        from './components/forms/overview/overview.component';
 import { TransactionsComponent }    from './components/forms/transactions/transactions.component';
+import { PaperwalletComponent }    from './components/forms/paperwallet/paperwallet.component';
 import { SupportComponent }         from './components/forms/support/support.component';
 import { ExchangesComponent }       from './components/forms/exchanges/exchanges.component';
 
@@ -85,6 +86,7 @@ import { MatListModule, MatSidenavModule, MatTooltipModule,
     CoinSwapComponent,
     OverviewComponent,
     TransactionsComponent,
+    PaperwalletComponent,
     SupportComponent,
     ExchangesComponent
   ],
