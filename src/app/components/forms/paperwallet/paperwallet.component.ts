@@ -8,6 +8,8 @@ import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron";
 import { ElectronService } from '../../../providers/electron.service';
 import { SelectItem, MenuItem } from 'primeng/primeng';
 import { CSCUtil } from '../../../domain/csc-util';
+import * as keypairs from 'casinocoin-libjs-keypairs';
+import { QRCodeModule } from 'angular2-qrcode';
 declare var casinocoin: any;
 declare var QRCode: any;
 
@@ -28,11 +30,18 @@ export class PaperwalletComponent implements OnInit {
     }
 
     showCreateAddress(){
-        var secret = casinocoin.Seed.from_bits(casinocoin.sjcl.random.randomWords(4));
-        var address = secret.get_key().get_address().to_json();
+        var seed = keypairs.generateSeed();
+        var keypair = keypairs.deriveKeypair(seed);
+        var address = keypairs.deriveAddress(keypair.publicKey);
+
+        //var secret = casinocoin.Seed.from_bits(casinocoin.sjcl.random.randomWords(4));
+        //var address = secret.get_key().get_address().to_json();
         this.newAddress = address;
-        this.newSecretKey = secret.to_json();
-        this.generateQRCode();
+        //this.newSecretKey = secret.to_json();
+        this.newSecretKey = seed;
+        document.getElementById("qrcode_address").style.display = "block";
+        document.getElementById("qrcode_secret").style.display = "block";
+        //this.generateQRCode();
     }
 
     generateQRCode(){
