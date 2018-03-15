@@ -195,7 +195,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'export-priv-keys');
         }
-      }
+      },  
       // { label: 'Import Existing Wallet', 
       //   click(menuItem, browserWindow, event) { 
       //     browserWindow.webContents.send('context-menu-event', 'add-wallet');
@@ -203,6 +203,21 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       // }
     ];
     this.tools_context_menu = this.electron.remote.Menu.buildFromTemplate(tools_context_menu_template);
+    this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(
+      { label: 'Generate Paper Wallet', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('context-menu-event', 'paper-wallet');
+        }, enabled: true
+      })
+    );
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(
+      { label: 'Import Paper Wallet', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('context-menu-event', 'import-paper-wallet');
+        }, enabled: true
+      })
+    );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
       { label: 'Create New Wallet', 
@@ -254,6 +269,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.onPrivateKeyImport();
         else if(arg == 'export-priv-keys')
           this.onPrivateKeysExport();
+        else if(arg == 'paper-wallet')
+          this.onPaperWallet();
+        else if(arg == 'import-paper-wallet')
+            this.onImportPaperWallet();
         else if(arg == 'backup-wallet')
           this.onBackupWallet();
         else if(arg == 'restore-backup')
@@ -742,6 +761,20 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.router.navigate(['home','addressbook']);
   }
 
+  onPaperWallet(){
+    this.logger.debug("Paperwallet Clicked !!");
+    this.active_menu_item = "";
+    // navigate to paperwallet
+    this.router.navigate(['home','paperwallet']);
+  }
+
+  onImportPaperWallet(){
+    this.logger.debug("ImportPaperwallet Clicked !!");
+    this.active_menu_item = "";
+    // navigate to paperwallet
+    this.router.navigate(['home','importpaperwallet']);
+  }
+
   onCoinSwap() {
     this.logger.debug("Coin Swap Clicked !!");
     this.active_menu_item = "coinswap";
@@ -774,13 +807,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     fs.writeFileSync(backupFilePath, dbDump);
     // signal electron we are done
     // this.electron.ipcRenderer.sendSync("backup-finished");
-  }
-
-  onPaperWallet() {
-    this.logger.debug("Paper Wallet Clicked !!");
-    this.active_menu_item = "addressbook";
-    // navigate to addressbook
-    this.router.navigate(['home','paperwallet']);
   }
 
 }

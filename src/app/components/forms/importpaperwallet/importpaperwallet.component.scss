@@ -1,5 +1,17 @@
 @import "~assets/variables";
 
+/** Odd row color **/
+::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-odd {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+/** Even row color **/
+::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-even {
+    background-color: #ffffff;
+    color: #000000;
+}
+
 ::ng-deep .hide-context-menu {
     display: none;
 }
@@ -7,6 +19,17 @@
 ::ng-deep .footer-error {
     color: $casinocoinRed;
     font-weight: bolder;
+}
+
+::ng-deep .qrcode {
+    width: 100%; 
+    padding: 5px;
+    text-align: center;
+}
+
+::ng-deep input {
+    width: 100%;
+    padding-left: 5px;
 }
 
 .hidden { 
@@ -114,67 +137,8 @@ h2, p{
 	color: white;
 }
 
-.button-css {
-	padding: 15px 25px;
-	font-size: 12px;
-	text-align: center;
-	cursor: pointer;
-	outline: none;
-	color: #bf3131;
-	background-color: #ffffff;
-	border: none;
-	border-radius: 15px;
-	box-shadow: 0 5px #999;
-}
-  
-.button-css:hover {background-color: #ffbbbb}
-  
-.button-css:active {
-	background-color: #d15d5d;
-	box-shadow: 0 3px #666;
-	transform: translateY(4px);
-}
-
 .csc-logo{
 	width: 150px;
 	float: left;
 	position: relative;
 }
-
-.key_box{
-	width: 50%;
-	height: 20%;
-	float: left;
-	text-align: center;
-	border: 1px solid black;
-	background-color: #eeeeee;
-    margin: 2% 0 0 0;
-}
-.key_box1{
-	width: 50%;
-	height: 20%;
-	float: left;
-	text-align: center;
-	border: 1px solid black;
-	background-color: #cccccc;
-    margin: 2% 0 0 0;
-}
-
-#qrcode_address, #qrcode_secret{
-	display: none;
-}
-
-
-table {
-    border-collapse: collapse;
-	width: 100%;
-	color: white;
-}
-
-th, td {
-    padding: 8px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-tr:hover {background-color:#3a3636;}

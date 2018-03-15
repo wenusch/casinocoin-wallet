@@ -14,6 +14,7 @@ import { TransactionsComponent }    from './components/forms/transactions/transa
 import { PaperwalletComponent }     from './components/forms/paperwallet/paperwallet.component';
 import { SupportComponent }         from './components/forms/support/support.component';
 import { ExchangesComponent }       from './components/forms/exchanges/exchanges.component';
+import { ImportpaperwalletComponent } from './components/forms/importpaperwallet/importpaperwallet.component';
 
 const routes: Routes = [
     { path: 'home', component: HomeComponent, canActivate: [AuthGuard],
@@ -22,6 +23,7 @@ const routes: Routes = [
             { path: 'receive', component: ReceiveCoinsComponent },
             { path: 'addressbook', component: AddressbookComponent },
             { path: 'paperwallet', component: PaperwalletComponent },
+            { path: 'importpaperwallet', component: ImportpaperwalletComponent },
             { path: 'swap', component: CoinSwapComponent },
             { path: 'transactions', component: TransactionsComponent },
             { path: 'support', component: SupportComponent },
