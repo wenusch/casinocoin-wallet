@@ -48,7 +48,6 @@ export class PaperwalletComponent implements OnInit {
 
         let printContents;
         printContents = this.winRef.nativeWindow.document.getElementById('printsection').innerHTML;
-        
         /*this.winRef.nativeWindow.document.open();
         this.winRef.nativeWindow.document.write(`
           <html>
@@ -78,7 +77,8 @@ export class PaperwalletComponent implements OnInit {
         );
         this.winRef.nativeWindow.print();    
         this.winRef.nativeWindow.document.close();  
-        this.winRef.nativeWindow.location = __dirname + '/index.html#/home/paperwallet'; */
+        this.winRef.nativeWindow.location = __dirname + '/index.html#/home/paperwallet';
+        this.router.navigate(['home','transactions']); */
 
         let win = new BrowserWindow({width: 800, height: 700,icon: __dirname + '/favicon.ico'})
         win.on('closed', () => {
@@ -88,28 +88,51 @@ export class PaperwalletComponent implements OnInit {
           return (`
           <html>
             <head>
-              <title>Print tab</title>
+              <title>Paper Wallet</title>
               <style>
               //........Customized style.......
+                .csc-logo{
+                    width: 100px;
+                    float: left;
+                    position: relative;
+                }
+                .key_box{
+                    width: 48%;
+                    height: 45%;
+                    float: left;
+                    text-align: center;
+                    border: 1px solid black;
+                    margin: 2% 0 0 0;
+                }
+                .key_box1{
+                    width: 48%;
+                    height: 45%;
+                    float: left;
+                    text-align: center;
+                    border: 1px solid black;
+                    margin: 2% 0 0 0;
+                }
               </style>
             </head>
-            <body align="center" onload="printFunction()">
-            <h1>Paper Wallet</h1>${printContents}
-            <script>
-            function printFunction() {
-                window.print();
-            }
-            </script>
+            <body onload="window.print()" onfocus="window.close()">
+            <img src="https://casinocoin.org/wp-content/uploads/2018/02/Chip_Red-3.svg" alt="CasinoCoin" class="csc-logo" />
+            <h1 align="center">Casino Coin Paper Wallet</h1>
+            <h2>About</h2>
+            <p> A CasinoCoin Paper Wallet is an offline mechanism for storing CasinoCoin. The process involves printing the public and private keys onto paper.</p>
+            <strong>Disclaimer:</strong> xxxxxxxxx xxxxxxxxxx xxxxxxxxxx xxxxxxxxxx
+            ${printContents}
             </body>
           </html>`)
         }
-        
         var file = 'data:text/html;charset=UTF-8,' + encodeURIComponent(loadView({
           title: "PaperWallet",
           scriptUrl: "./paperWallet.view.js"
         }));
         win.setMenu(null);
         win.loadURL(file);
+        // setTimeout( ()=>{
+        //     win.close();
+        // }, 1000);
         //win.webContents.print();
     }
 
