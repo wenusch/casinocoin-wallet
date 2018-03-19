@@ -108,14 +108,14 @@ button:not(.offline) {
   height: 100%;
 }
 
-h1, strong {
-    color: white;
-    text-shadow: 2px 2px 4px #000000;
-}
+// h1, strong {
+//     color: white;
+//     text-shadow: 2px 2px 4px #000000;
+// }
 
-h2, p{
-	color: white;
-}
+// h2, p{
+// 	color: white;
+// }
 
 .button-css {
 	padding: 15px 25px;
@@ -150,7 +150,7 @@ h2, p{
 	float: left;
 	text-align: center;
 	border: 1px solid black;
-	background-color: #eeeeee;
+	background-color: $casinocoinGray;
     margin: 2% 0 0 0;
 }
 .key_box1{
@@ -159,7 +159,7 @@ h2, p{
 	float: left;
 	text-align: center;
 	border: 1px solid black;
-	background-color: #cccccc;
+	background-color: $casinocoinGray;
     margin: 2% 0 0 0;
 }
 
