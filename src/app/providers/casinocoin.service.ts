@@ -236,39 +236,41 @@ export class CasinocoinService implements OnDestroy {
             } else if(incommingMessage['type'] == 'transaction'){
                 let msg_tx = incommingMessage['transaction'];
                 this.logger.debug("### CasinocoinService - Incomming TX: " + JSON.stringify(msg_tx));
-                // check if we already have the TX
-                let dbTX: LokiTransaction = this.walletService.getTransaction(msg_tx.hash);
-                if(dbTX == null){
-                    dbTX = this.addTxToWallet(msg_tx, false);
-                } else {
-                    // update transaction object
-                    dbTX.timestamp = msg_tx.date;
-                    dbTX.status = LokiTxStatus.received;
-                    // update into the wallet
-                    this.walletService.updateTransaction(dbTX);
-                }
-                // notify tx change
-                this.transactionSubject.next(dbTX);
-                // update accounts
-                if(dbTX.direction == AppConstants.KEY_WALLET_TX_IN){
-                    this.getAccountInfo(dbTX.destination);
-                    this.notificationService.addMessage(
-                        {title: 'Incomming CSC Transaction', 
-                         body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                               ' coins from ' + dbTX.accountID});
-                } else if(dbTX.direction == AppConstants.KEY_WALLET_TX_OUT){
-                    this.getAccountInfo(dbTX.accountID);
-                    this.notificationService.addMessage(
-                        {title: 'Outgoing CSC Transaction', 
-                         body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                               ' coins to ' + dbTX.destination});
-                } else {
-                    this.getAccountInfo(dbTX.destination);
-                    this.getAccountInfo(dbTX.accountID);
-                    this.notificationService.addMessage(
-                        {title: 'Wallet Transaction', 
-                         body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                               ' coins to your own address ' + dbTX.destination});
+                if(msg_tx.TransactionType === "Payment"){
+                    // check if we already have the TX
+                    let dbTX: LokiTransaction = this.walletService.getTransaction(msg_tx.hash);
+                    if(dbTX == null){
+                        dbTX = this.addTxToWallet(msg_tx, false);
+                    } else {
+                        // update transaction object
+                        dbTX.timestamp = msg_tx.date;
+                        dbTX.status = LokiTxStatus.received;
+                        // update into the wallet
+                        this.walletService.updateTransaction(dbTX);
+                    }
+                    // notify tx change
+                    this.transactionSubject.next(dbTX);
+                    // update accounts
+                    if(dbTX.direction == AppConstants.KEY_WALLET_TX_IN){
+                        this.getAccountInfo(dbTX.destination);
+                        this.notificationService.addMessage(
+                            {title: 'Incomming CSC Transaction', 
+                            body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                                ' coins from ' + dbTX.accountID});
+                    } else if(dbTX.direction == AppConstants.KEY_WALLET_TX_OUT){
+                        this.getAccountInfo(dbTX.accountID);
+                        this.notificationService.addMessage(
+                            {title: 'Outgoing CSC Transaction', 
+                            body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                                ' coins to ' + dbTX.destination});
+                    } else {
+                        this.getAccountInfo(dbTX.destination);
+                        this.getAccountInfo(dbTX.accountID);
+                        this.notificationService.addMessage(
+                            {title: 'Wallet Transaction', 
+                            body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                                ' coins to your own address ' + dbTX.destination});
+                    }
                 }
             }  else if((incommingMessage['type'] == 'response') && incommingMessage.status === 'success'){
                 // this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));

@@ -45,6 +45,7 @@ export class ImportpaperwalletComponent implements OnInit {
       }
       catch(e) {
         this.errorMessage = "Invalid Private Key";
+        this.privateKey = "";
         this.showDialogFooter = true;
         return;
       }
@@ -53,6 +54,8 @@ export class ImportpaperwalletComponent implements OnInit {
       for(let account of this.allAccounts){
         if(account.accountID === this.address){
           this.errorMessage = "Paper Wallet already Imported.";
+          this.label = "";
+          this.privateKey = "";
           this.showDialogFooter = true;
           return;
         }
@@ -72,9 +75,10 @@ export class ImportpaperwalletComponent implements OnInit {
       this.walletService.addAccount(walletAccount);
       this.logger.debug("### Account Added with Paper Wallet: " + walletAccount.accountID);
       this.errorMessage = "Paper Wallet Imported Successfully.";
+      this.label = "";
+      this.privateKey = "";
       this.showDialogFooter = true;
     }
-
   }
 
 }

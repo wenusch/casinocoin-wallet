@@ -69,7 +69,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showPasswordDialog:boolean = false;
   showPasswordCallback;
 
-  walletSettings: WalletSettings;
+  walletSettings: WalletSettings = {showNotifications: true, fiatCurrency: 'USD'};
   fiatCurrencies: SelectItem[] = [];
   selectedFiatCurrency: string;
   privateKeySeed:string;
@@ -654,8 +654,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   doBalanceUpdate() {
     this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
     let balanceCSC = new Big(CSCUtil.dropsToCsc(this.balance));
-    this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice + " Fiat: " + this.marketService.coinMarketInfo.price_fiat);
     if(this.marketService.coinMarketInfo != null && this.marketService.coinMarketInfo.price_fiat !== undefined){
+      this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice + " Fiat: " + this.marketService.coinMarketInfo.price_fiat);
       let fiatValue = balanceCSC.times(new Big(this.marketService.coinMarketInfo.price_fiat)).toString();
       this.fiat_balance = this.currencyPipe.transform(fiatValue, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-2");
     }

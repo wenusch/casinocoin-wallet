@@ -1,6 +1,6 @@
 {
   "name": "casinocoin-wallet",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "productName": "CasinoCoin Wallet",
   "description": "CasinoCoin Desktop Wallet",
   "homepage": "https://github.com/casinocoin/casinocoin-wallet",
@@ -15,6 +15,9 @@
   ],
   "main": "electron.js",
   "private": true,
+  "build": {
+    "appId": "org.casinocoin.desktop.wallet"
+  },
   "scripts": {
     "ng": "ng",
     "lint": "ng lint",

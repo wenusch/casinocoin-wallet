@@ -17,7 +17,7 @@ const globalTS:any = global;
 globalTS.vars = {};
 
 // set app id
-app.setAppUserModelId("CasinoCoin Wallet");
+app.setAppUserModelId("org.casinocoin.desktop.wallet");
 
 // set property for exit dialog
 let showExitPrompt = true;

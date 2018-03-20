@@ -708,13 +708,15 @@ export class WalletService {
     let totalBalance: Big = new Big("0");
     let allAccountTX: Array<LokiTypes.LokiTransaction> = this.getAccountTransactions(inputAccountID);
     allAccountTX.forEach(element => {
-      // if accountID == inputAccountID its outgoing else its incomming
-      if(element.accountID == inputAccountID){
-        totalBalance = totalBalance.minus(element.amount);
-        // also remove fees
-        totalBalance = totalBalance.minus(element.fee);
-      } else if(element.destination == inputAccountID){
-        totalBalance = totalBalance.plus(element.amount);
+      if(element.transactionType === "Payment"){
+        // if accountID == inputAccountID its outgoing else its incomming
+        if(element.accountID == inputAccountID){
+          totalBalance = totalBalance.minus(element.amount);
+          // also remove fees
+          totalBalance = totalBalance.minus(element.fee);
+        } else if(element.destination == inputAccountID){
+          totalBalance = totalBalance.plus(element.amount);
+        }
       }
     });
     // special case for the genesis account that was initialized with 40.000.000.000 coins
