@@ -56,7 +56,7 @@ export class SupportComponent implements OnInit {
 
   openFacebook(){
     event.preventDefault();
-    this.electronService.remote.shell.openExternal("https://www.facebook.com/casinocoin.org/");
+    this.electronService.remote.shell.openExternal("https://www.facebook.com/CasinoCoin/");
   }
 
   openTwitter(){

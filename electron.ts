@@ -42,6 +42,10 @@ if (serve) {
 /* Handling squirrel.windows events on windows 
 only required if you have build the windows with target squirrel. For NSIS target you don't need it. */
 if (require('electron-squirrel-startup')) {
+  showExitPrompt = false;
+  savedBeforeQuit = true;
+  globalTS.vars.exitFromRenderer = true;
+  globalTS.vars.exitFromLogin = true;
 	app.quit();
 }
 
@@ -79,6 +83,10 @@ function appUpdater() {
 			detail: message
 		}, response => {
 			if (response === 0) {
+        showExitPrompt = false;
+        savedBeforeQuit = true;
+        globalTS.vars.exitFromRenderer = true;
+        globalTS.vars.exitFromLogin = true;
 				setTimeout(() => autoUpdater.quitAndInstall(), 1);
 			}
 		});
