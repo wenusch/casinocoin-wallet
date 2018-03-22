@@ -65,7 +65,7 @@ export class PaperwalletComponent implements OnInit {
                 }
                 .key_box{
                     width: 48%;
-                    height: 325px;
+                    height: 310px;
                     float: left;
                     text-align: center;
                     border: 1px solid black;
@@ -73,7 +73,7 @@ export class PaperwalletComponent implements OnInit {
                 }
                 .key_box1{
                     width: 48%;
-                    height: 325px;
+                    height: 310px;
                     float: left;
                     text-align: center;
                     border: 1px solid black;
