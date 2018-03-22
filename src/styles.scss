@@ -1,3 +1,9 @@
+// Global variables
+@import "./assets/variables";
+
+// Material Design
+@import "./assets/material.css";
+
 // PrimeNG
 @import "~primeng/resources/primeng.min.css";
 @import "./assets/primeng-csc/theme.css";
@@ -5,11 +11,8 @@
 // Font Awesome
 @import "~font-awesome/css/font-awesome.min.css";
 
-// Material Design
-@import "~@angular/material/prebuilt-themes/indigo-pink.css";
-
-// Global variables
-@import "./assets/variables";
+// CSC Icon Font
+@import "./assets/csc-icon-font/style.css";
 
 // Components
 // @import "./app/app.component";
@@ -50,7 +53,7 @@ html, body {
 }
 
 .loader-color {
-  color: #901119;
+  color: $casinocoinRed;
 }
 
 .loader-text {
@@ -58,7 +61,13 @@ html, body {
   font-weight: bold;
   margin-bottom: 15px;
   padding-left: 10px;
-  color: #901119;
+  color: $casinocoinRed;
+}
+
+i.csc-dialog-icon {
+  padding-right: 10px;
+  color: $casinocoinRed;
+  font-size: 1.25em;
 }
 
 .form-container { 
@@ -73,7 +82,7 @@ html, body {
   -moz-box-shadow: 20px 0px 25px 20px #000;
   box-shadow: 20px 0px 25px 20px #000;
   background-color: #ffffff;
-  background-image: url('./assets/main-bg.jpg');
+  background-image: url('./assets/brand/main-bg.jpg');
   background-repeat: no-repeat;
   background-position: right bottom;
 }

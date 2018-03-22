@@ -1,0 +1,144 @@
+@import "~assets/variables";
+
+/** Odd row color **/
+::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-odd {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+/** Even row color **/
+::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-even {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+::ng-deep .hide-context-menu {
+    display: none;
+}
+
+::ng-deep .footer-error {
+    color: $casinocoinRed;
+    font-weight: bolder;
+}
+
+::ng-deep .qrcode {
+    width: 100%; 
+    padding: 5px;
+    text-align: center;
+}
+
+::ng-deep input {
+    width: 100%;
+    padding-left: 5px;
+}
+
+.hidden { 
+	visibility: hidden; 
+}
+.displaynone { 
+	display: none !important; 
+}
+
+#mysecret[disabled] { 
+	border: none; 
+}
+
+#myaddress:empty:before { 
+	content: ""; 
+}
+
+table:empty { 
+	display: none; 
+}
+
+td.centered { 
+	text-align: center; 
+}
+
+input[type="text"] { 
+	width: 240px; 
+}
+
+input[type="text"].wide { 
+	width: 280px; 
+}
+
+input[type="text"].narrow { 
+	width: 120px; 
+}
+
+button:not(.offline) {
+	cursor: pointer;
+	font-weight: bold;
+}
+
+.editflagbutton { 
+	width: 60px; 
+}
+
+#sendbutton, .complexsendbutton, .cancelbutton { 
+	width: 72px; 
+}
+
+#trustbutton { 
+	width: 84px; 
+}
+
+#startpathfindingbutton, #rekeybutton { 
+	width: 100px; 
+}
+
+.tilde { 
+	width: 30px; 
+}
+
+.halfoffset {
+	position: relative;
+	top: 9px;
+}
+
+.pathsJSON div { 
+	display: none; 
+}
+
+.pathsJSON:hover div {
+	display: block;
+	position: absolute;
+	word-break: break-all;
+	width: 200px;
+	border: 1px solid black;
+	padding: 8px;
+	background-color: white;
+}
+.pathsJSON:after {
+	content: "hover to view";
+	font-style: italic;
+}
+.pathsJSON:after:hover { content: ""; }
+
+
+.jumbotron {
+    min-height: 300px;
+}
+
+.background-image-coin{
+  background-image: url('../../../../assets/bgpaperwallet.jpg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center; 
+}
+
+// h1, strong {
+//     color: white;
+//     text-shadow: 2px 2px 4px #000000;
+// }
+
+// h2, p{
+// 	color: white;
+// }
+
+// .csc-logo{
+// 	width: 150px;
+// 	float: left;
+// 	position: relative;
+// }

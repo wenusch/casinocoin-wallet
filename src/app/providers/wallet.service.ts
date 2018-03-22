@@ -152,7 +152,13 @@ export class WalletService {
   openWallet(walletLocation: string, walletUUID: string, walletPassword: string): Observable<string> {
     let dbPath = path.join(walletLocation, (walletUUID + '.db'));
     this.logger.debug("### WalletService Open Wallet location: " + dbPath);
-
+    // check if db file has bytes
+    let filestats = fs.statSync(dbPath);
+    if(filestats.size === 0){
+      // we need to recover main db file
+      this.logger.debug("### WalletService - Open Wallet - File 0 bytes -> Recovery!!");
+      this.recoverWallet(dbPath);
+    }
     let collectionSubject = new Subject<any>();
     let openSubject = new Subject<string>();
     openSubject.subscribe(result => {
@@ -234,6 +240,7 @@ export class WalletService {
   
   // close the wallet
   closeWallet(){
+    this.logger.debug("### WalletService - Save and Close Wallet ###");
     // first save any open changes
     if(this.walletDB != null){
       this.walletDB.saveDatabase();
@@ -252,6 +259,13 @@ export class WalletService {
     this.walletDB = null;
     // publish result
     this.openWalletSubject.next(AppConstants.KEY_INIT);
+  }
+
+  recoverWallet(dbPath: string){
+    // get default wallet file content
+    let content = this.defaultWalletContent();
+    content.filename = dbPath;
+    fs.writeFileSync(dbPath, JSON.stringify(content), 'utf8');
   }
 
   getWalletMnemonic(walletUUID: string, walletLocation: string){
@@ -698,13 +712,15 @@ export class WalletService {
     let totalBalance: Big = new Big("0");
     let allAccountTX: Array<LokiTypes.LokiTransaction> = this.getAccountTransactions(inputAccountID);
     allAccountTX.forEach(element => {
-      // if accountID == inputAccountID its outgoing else its incomming
-      if(element.accountID == inputAccountID){
-        totalBalance = totalBalance.minus(element.amount);
-        // also remove fees
-        totalBalance = totalBalance.minus(element.fee);
-      } else if(element.destination == inputAccountID){
-        totalBalance = totalBalance.plus(element.amount);
+      if(element.transactionType === "Payment"){
+        // if accountID == inputAccountID its outgoing else its incomming
+        if(element.accountID == inputAccountID){
+          totalBalance = totalBalance.minus(element.amount);
+          // also remove fees
+          totalBalance = totalBalance.minus(element.fee);
+        } else if(element.destination == inputAccountID){
+          totalBalance = totalBalance.plus(element.amount);
+        }
       }
     });
     // special case for the genesis account that was initialized with 40.000.000.000 coins
@@ -753,6 +769,9 @@ export class WalletService {
   }
 
   getAllAddresses(): Array<LokiTypes.LokiAddress> {
+      if (this.addressbook == null) {
+          return [];
+      }
       return this.addressbook.find();
   }
 
@@ -960,5 +979,213 @@ export class WalletService {
   importWalletDump(dumpContents: string){
     let decompressed = LZString.decompressFromBase64 (dumpContents);
     this.walletDB.loadJSON(decompressed);
+  }
+
+  private defaultWalletContent(): any{
+    return {
+      "filename":"",
+      "collections":[
+        {"name":"dbMetadata",
+         "data":[],
+         "idIndex":[1],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["dbVersion"],
+         "transforms":{},
+         "objType":"dbMetadata",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":1,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"accounts",
+         "data":[],
+         "idIndex":[1],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["accountID"],
+         "transforms":{},
+         "objType":"accounts",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":1,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"transactions",
+         "data":[],
+         "idIndex":[],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["txID"],
+         "transforms":{},
+         "objType":"transactions",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":0,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"addressbook",
+         "data":[],
+         "idIndex":[],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["accountID"],
+         "transforms":{},
+         "objType":"addressbook",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":0,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"log",
+         "data":[],
+         "idIndex":[],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":[],
+         "transforms":{},
+         "objType":"log",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":0,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"keys",
+         "data":[],
+         "idIndex":[1],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["accountID"],
+         "transforms":{},
+         "objType":"keys",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":1,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"swaps",
+         "data":[],
+         "idIndex":[],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["swapID"],
+         "transforms":{},
+         "objType":"swaps",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":0,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        }
+      ],
+      "databaseVersion":1.5,
+      "engineVersion":1.5,
+      "autosave":false,
+      "autosaveInterval":5000,
+      "autosaveHandle":null,
+      "throttledSaves":true,
+      "options":{"env":"NA","serializationMethod":"normal","destructureDelimiter":"$<\n"},
+      "persistenceAdapter":null,
+      "verbose":false,
+      "events":{"init":[null],"loaded":[],"flushChanges":[],"close":[],"changes":[],"warning":[]},
+      "ENV":"NA"
+    };
   }
 }

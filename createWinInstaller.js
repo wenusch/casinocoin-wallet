@@ -4,7 +4,7 @@ const appVersion = require('./package.json').version;
 const argv = require('minimist')(process.argv.slice(1));
 const arch = argv.arch || 'ia32';
 
-const iconUrlPath = "https://raw.githubusercontent.com/casinocoin/CasinoCoin-Assets/master/casinocoin-icon-256x256.png";
+const iconUrlPath = "https://raw.githubusercontent.com/casinocoin/CasinoCoin-Assets/master/v4/casinocoin-icon-256x256.png";
 
 getInstallerConfig(arch)
   .then(createWindowsInstaller)
@@ -27,9 +27,9 @@ function getInstallerConfig (arch) {
     outputDirectory: path.join(outPath, 'windows-'+arch),
     exe: 'casinocoin-wallet.exe',
     setupExe: 'casinocoin-wallet-'+arch+'-'+appVersion+'.exe',
-    setupIcon: path.join(rootPath, 'src', 'assets', 'icons', 'casinocoin.ico'),
+    setupIcon: path.join(rootPath, 'src', 'assets', 'brand', 'casinocoin-icon-256x256.ico'),
     iconUrl: iconUrlPath,
-    loadingGif: path.join(rootPath, 'src', 'assets', 'setup.gif'),
+    loadingGif: path.join(rootPath, 'src', 'assets', 'brand', 'setup.gif'),
     certificateFile: 'C:/Users/a.jochems/Documents/Crypto Service/Comodo/code-signing-cert.p12',
     certificatePassword: 'Lziio1wob716A4mLXxrF'
   })

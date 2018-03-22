@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, trigger, state, animate, 
          transition, style, ViewChild, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { DatePipe, CurrencyPipe } from '@angular/common'
+import { DatePipe, CurrencyPipe } from '@angular/common';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { LocalStorage, SessionStorage, LocalStorageService, SessionStorageService } from 'ngx-store';
 import { ElectronService } from '../../providers/electron.service';
@@ -12,6 +12,7 @@ import { ServerDefinition } from '../../domain/websocket-types';
 import { WalletService } from '../../providers/wallet.service';
 import { MarketService } from '../../providers/market.service';
 import { MenuItem as PrimeMenuItem, Message, ContextMenu } from 'primeng/primeng';
+import { SelectItem, Dropdown } from 'primeng/primeng';
 import { MatListModule, MatSidenavModule } from '@angular/material';
 import { AppConstants } from '../../domain/app-constants';
 import { CSCUtil } from '../../domain/csc-util';
@@ -20,11 +21,12 @@ import { LedgerStreamMessages, ServerStateMessage } from '../../domain/websocket
 import { SetupStep3Component} from '../wallet-setup/step3-component';
 import { SetupStep4Component} from '../wallet-setup/step4-component';
 
-import * as LokiTypes from '../../domain/lokijs';
-import Big from 'big.js';
 import { setTimeout } from 'timers';
 import { Subject } from 'rxjs/Subject';
 import { LokiKey } from '../../domain/lokijs';
+import { WalletSettings } from 'app/domain/csc-types';
+import * as LokiTypes from '../../domain/lokijs';
+import Big from 'big.js';
 
 const path = require('path');
 const fs = require('fs');
@@ -50,8 +52,10 @@ const crypto = require('crypto');
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @SessionStorage() public currentWallet: string;
-    
+
   @ViewChild('contextMenu') contextMenu: ContextMenu;
+  @ViewChild('fiatCurrenciesDrowdown') fiatCurrenciesDrowdown: Dropdown;
+
 
   //show_menu: string = 'shown';
   show_menu: string = 'small';
@@ -71,6 +75,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showChangePasswordDialog:boolean = false;
   showRecoveryDialog:boolean = false;
   showPasswordCallback;
+
+  walletSettings: WalletSettings = {showNotifications: true, fiatCurrency: 'USD'};
+  fiatCurrencies: SelectItem[] = [];
+  selectedFiatCurrency: string;
   privateKeySeed:string;
   walletPassword:string;
   importFileObject:Object;
@@ -134,15 +142,28 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
                private sessionStorageService: SessionStorageService,
                private marketService: MarketService,
                private datePipe: DatePipe,
-               private currenyPipe: CurrencyPipe ) {
+               private currencyPipe: CurrencyPipe ) {
     this.logger.debug("### INIT HOME ###");
     this.applicationVersion = this.electron.remote.app.getVersion();
     this.backupPath = this.electron.remote.getGlobal("vars").backupPath;
     this.logger.debug("### HOME Backup Path: " + this.backupPath);
-    // this.electron.ipcRenderer.on("wallet-backup", (event, arg) => {
-    //   this.backupWallet();
-    //   event.returnValue = "finished";
-    // });
+    this.electron.ipcRenderer.on("action", (event, arg) => {
+      if(arg === "save-wallet"){
+        this.logger.debug("### HOME Logout Wallet on Suspend ###");
+        this.closeWallet();
+      } else if(arg === "quit-wallet"){
+        this.logger.debug("### HOME Save Wallet on Quit ###");
+        this.walletService.openWalletSubject.subscribe(state => {
+          if (state == AppConstants.KEY_INIT){
+            this.electron.ipcRenderer.send('wallet-closed', true);
+          }
+        });
+        // backup wallet
+        this.backupWallet();
+        // close and logout
+        this.walletService.closeWallet();
+      }
+    });
   }
 
   ngAfterViewInit(){
@@ -198,6 +219,21 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.tools_context_menu = this.electron.remote.Menu.buildFromTemplate(tools_context_menu_template);
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
+      { label: 'Generate Paper Wallet',
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('context-menu-event', 'paper-wallet');
+        }, enabled: true
+      })
+    );
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(
+      { label: 'Import Paper Wallet',
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('context-menu-event', 'import-paper-wallet');
+        }, enabled: true
+      })
+    );
+    this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(
       { label: 'Create New Wallet', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'create-wallet');
@@ -249,6 +285,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.onPrivateKeysExport();
         else if(arg == 'change-password')
           this.onChangePassword();
+        else if(arg == 'paper-wallet')
+          this.onPaperWallet();
+        else if(arg == 'import-paper-wallet')
+            this.onImportPaperWallet();
         else if(arg == 'backup-wallet')
           this.onBackupWallet();
         else if(arg == 'restore-backup')
@@ -321,6 +361,16 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
     this.setConnectedMenuItem(true);
+    // load wallet settings
+    this.walletSettings = this.localStorageService.get(AppConstants.KEY_WALLET_SETTINGS);
+    if(this.walletSettings == null){
+      // settings do not exist yet so create
+      this.walletSettings = {fiatCurrency: "USD", showNotifications: true};
+      this.localStorageService.set(AppConstants.KEY_WALLET_SETTINGS, this.walletSettings);
+    }
+    // load fiat currencies and update market value
+    this.fiatCurrencies = this.marketService.getFiatCurrencies();
+    this.updateMarketService(this.walletSettings.fiatCurrency);
   }
 
   ngOnDestroy(){
@@ -415,9 +465,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   onQuit() {
     this.logger.debug("Quit Clicked !!");
     // backup database
-    this.backupWallet();
-    // save the Database!
-    this.walletService.saveWallet();
+    // this.backupWallet();
+    // close the Database!
+    // this.walletService.closeWallet();
     // Close the windows to cause an application exit
     this.electron.remote.getGlobal("vars").exitFromRenderer = true;
     this.electron.remote.getCurrentWindow.call( close() );
@@ -565,10 +615,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
               // Write the JSON array to the file 
               fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
                 if(err){
-                  this.electron.remote.dialog.showErrorBox("Error saving private keys", "An error ocurred writing your private keys to a file: " + err.message);
+                  this.electron.remote.dialog.showErrorBox("Error saving private keys", "An error occurred writing your private keys to a file: " + err.message);
                 }
                 this.electron.remote.dialog.showMessageBox(
-                  { message: "Your private keys have been saved to a file in the choosen directory. Make sure you put it in a save place as it contains your decrypted private keys!!", 
+                  { message: "Your private keys have been saved to a file in the chosen directory. Make sure you put it in a safe place as it contains your decrypted private keys!",
                     buttons: ["OK"] 
                   });
               });
@@ -593,7 +643,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
             // Write the JSON array to the file 
             fs.writeFile(backupFilePath, dbDump, (err) => {
               if(err){
-                  alert("An error ocurred creating the backup file: "+ err.message)
+                  alert("An error occurred creating the backup file: "+ err.message)
               }
                           
               alert("The backup has been succesfully saved to: " + filename);
@@ -622,7 +672,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
               this.router.navigate(['login']);
             }
           } else {
-            alert("An error ocurred reading the backup file: "+ result[0]);
+            alert("An error occurred reading the backup file: "+ result[0]);
           }
         }
     );
@@ -652,20 +702,21 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
-  doBalanceUpdate(){
-    this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
-    // until there is valid market info on new CSC we calculate market value against 1:1000 ratio
-    let balanceOldCSC = new Big(CSCUtil.dropsToCsc(this.balance)).div(1000);
+  updateMarketService(event){
+    if (this.walletSettings.fiatCurrency !== undefined) {
+        this.marketService.changeCurrency(this.walletSettings.fiatCurrency);
+    }
+  }
 
+
+  doBalanceUpdate() {
+    this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
     let balanceCSC = new Big(CSCUtil.dropsToCsc(this.balance));
-    let newCSCFiat = balanceCSC.times(this.marketService.cscPrice).times(this.marketService.btcPrice).toString();
-    this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice);
-    // this.logger.debug("### New Fiat: " + this.currenyPipe.transform(newCSCFiat, "USD", true, "1.2-2")); 
-    // let cscFiat = "0.00";
-    // if(this.marketService.coinMarketInfo){
-    //   cscFiat = balanceOldCSC.times(this.marketService.coinMarketInfo.price_usd).toString();
-    // }
-    this.fiat_balance = this.currenyPipe.transform(newCSCFiat, "USD", true, "1.2-2");
+    if(this.marketService.coinMarketInfo != null && this.marketService.coinMarketInfo.price_fiat !== undefined){
+      this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice + " Fiat: " + this.marketService.coinMarketInfo.price_fiat);
+      let fiatValue = balanceCSC.times(new Big(this.marketService.coinMarketInfo.price_fiat)).toString();
+      this.fiat_balance = this.currencyPipe.transform(fiatValue, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-2");
+    }
   }
 
   doTransacionUpdate(){
@@ -694,19 +745,20 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   createWallet(){
+    this.walletService.closeWallet();
     this.casinocoinService.disconnect();
     this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
-    this.walletService.closeWallet();
     this.walletService.openWalletSubject.next(AppConstants.KEY_INIT);
     this.sessionStorageService.set(AppConstants.KEY_CREATE_WALLET_RUNNING, true);
     this.router.navigate(['wallet-setup']);
   }
 
   closeWallet(){
+    this.walletService.closeWallet();
     this.casinocoinService.disconnect();
     this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
-    this.walletService.closeWallet();
-    this.electron.remote.getCurrentWindow().reload();
+    this.router.navigate(['login']);
+    // this.electron.remote.getCurrentWindow().reload();
   }
 
   setConnectedMenuItem(connected: boolean){
@@ -767,6 +819,20 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.router.navigate(['home','addressbook']);
   }
 
+  onPaperWallet(){
+    this.logger.debug("Paperwallet Clicked !!");
+    this.active_menu_item = "";
+    // navigate to paperwallet
+    this.router.navigate(['home','paperwallet']);
+  }
+
+  onImportPaperWallet(){
+    this.logger.debug("ImportPaperwallet Clicked !!");
+    this.active_menu_item = "";
+    // navigate to paperwallet
+    this.router.navigate(['home','importpaperwallet']);
+  }
+
   onCoinSwap() {
     this.logger.debug("Coin Swap Clicked !!");
     this.active_menu_item = "coinswap";
@@ -782,7 +848,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onSettingsSave(){
-    
+    // save the settings to localstorage
+    this.localStorageService.set(AppConstants.KEY_WALLET_SETTINGS, this.walletSettings);
+    // update the balance to reflect the last changes
+    this.doBalanceUpdate();
+    this.showSettingsDialog = false;
   }
 
   backupWallet() {

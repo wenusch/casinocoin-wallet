@@ -1,4 +1,6 @@
-import { app, BrowserWindow, screen, autoUpdater, ipcMain, dialog, Menu, MenuItem } from 'electron';
+import { app, BrowserWindow, screen, 
+         autoUpdater, ipcMain, dialog, 
+         Menu, MenuItem, powerMonitor } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -15,10 +17,11 @@ const globalTS:any = global;
 globalTS.vars = {};
 
 // set app id
-app.setAppUserModelId("CasinoCoin Wallet");
+app.setAppUserModelId("org.casinocoin.desktop.wallet");
 
 // set property for exit dialog
 let showExitPrompt = true;
+let savedBeforeQuit = false;
 globalTS.vars.exitFromRenderer = false;
 globalTS.vars.exitFromLogin = false;
 
@@ -137,7 +140,7 @@ function createWindow() {
   const electronScreen = screen;
   const size = electronScreen.getPrimaryDisplay().workAreaSize;
 
-  const minimalWidth = Math.min(size.width, 1000);
+  const minimalWidth = Math.min(size.width, 1024);
   const minimalHeight = Math.min(size.height, 720);
 
   // Create the browser window.
@@ -170,15 +173,37 @@ function createWindow() {
     win.webContents.openDevTools();
   }
 
+  powerMonitor.on('suspend', () => {
+    winston.log("debug", "### Electron -> The system is going to sleep ###");
+    // send message to save and logout wallet
+    if(win !== null){
+      win.webContents.send('action', 'save-wallet');
+    }
+  });
+
+  powerMonitor.on('resume', () => {
+    winston.log("debug", "### Electron -> The system is resuming after sleep ###");
+    if (win === null) {
+      createWindow();
+    } else {
+      win.reload();
+      win.show();
+    }
+  });
+
   // Emitted when the window is closed.
   win.on('close', (e) => {
+    // console.log("close - showExitPrompt: " + showExitPrompt + " exitFromLogin: " + globalTS.vars.exitFromLogin + " savedBeforeQuit: " + savedBeforeQuit);
     if(globalTS.vars.exitFromLogin && showExitPrompt){
-      e.preventDefault() // Prevents the window from closing 
+      // Prevent the window from closing 
+      e.preventDefault() 
       globalTS.vars.exitFromLogin = false;
       showExitPrompt = false;
+      savedBeforeQuit = true;
       win.close();
     } else if(!globalTS.vars.exitFromRenderer){
-      e.preventDefault() // Prevents the window from closing 
+      // Prevent the window from closing 
+      e.preventDefault();
       dialog.showMessageBox({
           type: 'info',
           buttons: ['Ok'],
@@ -195,10 +220,24 @@ function createWindow() {
               message: 'Are you sure you want to close the wallet?'
           }, function (response) {
               if (response === 0) { // Runs the following if 'Yes' is clicked
-                  showExitPrompt = false;
-                  win.close();
+                // on next win.on('close') the app will be finally closed
+                showExitPrompt = false;
+                win.close();
               }
           });
+      } else if(!savedBeforeQuit) {
+        // Prevent the window from closing 
+        e.preventDefault();
+        if(win != null){
+          ipcMain.on('wallet-closed', (event, arg) => {
+            savedBeforeQuit = true;
+            win.close();
+          });
+          // save and close wallet
+          win.webContents.send('action', 'quit-wallet');
+        } else {
+          win.close();
+        }
       }
     }
   });
@@ -212,7 +251,11 @@ function createWindow() {
 
   // show the windows
   win.once('ready-to-show', () => {
-      win.show();
+    showExitPrompt = true;
+    savedBeforeQuit = false;
+    globalTS.vars.exitFromRenderer = false;
+    globalTS.vars.exitFromLogin = false;
+    win.show();
   });
 
   // Create the Application's main menu
@@ -273,18 +316,13 @@ try {
     if (win === null) {
       createWindow();
     } else {
-      win.reload();
       win.show();
     }
   });
 
-  // app.on('before-quit', () => {
-  //   if(showExitPrompt == false){
-  //     //console.log('Quiting Casinocoin Wallet, save the database!!!');
-  //     // let backupResult = win.webContents.sendSync('wallet-backup');
-  //     // console.log("Backup Result: " + backupResult);
-  //   }
-  // });
+  app.on('before-quit', () => {
+    console.log("before-quit");
+  });
 
 } catch (e) {
   // Catch Error

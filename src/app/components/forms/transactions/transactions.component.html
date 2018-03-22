@@ -2,7 +2,7 @@
     <p class="form-text-header">Transactions</p>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-credit-card"></i></span>
+            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-id"></i></span>
             <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
                         placeholder="Select Account to filter ..." (onChange)="accountSelected($event)" 
                         autofocus #accountDropdown></p-dropdown>
@@ -10,7 +10,7 @@
     </div>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
-        <p-dataTable [value]="lazyTransactions" scrollable="true" [immutable]="false" scrollHeight="55vh" [contextMenu]="cm"
+        <p-dataTable [value]="lazyTransactions" scrollable="true" [immutable]="false" scrollHeight="55vh" [contextMenu]="cm" selectionMode="single"
             responsive="true" styleClass="borderless" (onContextMenuSelect)="showTxContextMenu($event)" loadingIcon="fa-spinner color_red"
             [rows]="10" [virtualScroll]="true" [lazy]="true" [totalRecords]="totalTXRecords" (onLazyLoad)="loadTXLazy($event)" #dtTX>
             <p-column [style]="{'width':'17px'}">
@@ -56,13 +56,16 @@
         </p-dataTable>
     </div>
     <div class="ui-g-12">
-        <button pButton type="button" (click)="doShowLedgers()" icon="fa-list" iconPos="left" label="Show Ledgers" class="ui-button-secondary"></button>
-        <button pButton type="button" (click)="doShowExchanges()" icon="fa-list" iconPos="left" label="Show Exchanges" class="ui-button-secondary"></button>
+        <button pButton type="button" (click)="doShowLedgers()" icon="icon icon-list-numbered" iconPos="left" label="Show Ledgers"></button>
+        <button pButton type="button" (click)="doShowExchanges()" icon="icon icon-exchange" iconPos="left" label="Show Exchanges"></button>
     </div>
 </div>
 <p-dialog class="dialog-header" [(visible)]="showLedgerDialog" [width]="500" [height]="425" 
     [closable]="true" [modal]="true" appendTo="body">
-    <p-header>Ledger Information</p-header>
+    <p-header>
+        <i class="icon csc-dialog-icon icon-chip"></i>
+        Ledger Information
+    </p-header>
     <p-dataTable [value]="ledgers" [immutable]="false" scrollable="true" scrollHeight="325px">
         <p-column field="ledger_index" header="Ledger" [style]="{'width':'75px'}"></p-column>
         <p-column field="ledger_time" header="Time" [style]="{'width':'125px'}">

@@ -34,7 +34,7 @@ function pack(plat, arch, cb) {
     // there is no darwin ia32 electron
     if (plat === 'darwin' && arch === 'ia32') return;
 
-    let icon = 'src/assets/icons/casinocoin';
+    let icon = 'src/assets/brand/casinocoin-icon-256x256';
 
     if (icon) {
         DEFAULT_OPTS.icon = icon + (() => {
