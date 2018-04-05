@@ -20,6 +20,7 @@ import { QRCodeModule } from 'angular2-qrcode';
 export class ImportpaperwalletComponent implements OnInit {
   label:string = "";
   privateKey:string = "";
+  walletPassword: string = "";
   showDialogFooter:boolean = false;
   errorMessage: string = "";
   keypair: any;
@@ -32,12 +33,14 @@ export class ImportpaperwalletComponent implements OnInit {
   }
 
   doSubmit() {
-
-    if((this.label.length == 0) || (this.privateKey.length == 0)){
-      this.errorMessage = "Both account Label and Private Key must be entered.";
+    if((this.label.length == 0) || (this.privateKey.length == 0) || (this.walletPassword.length == 0)){
+      this.errorMessage = "All fields must be entered.";
       this.showDialogFooter = true;
+      return;
+    } else if(!this.walletService.checkWalletPasswordHash(this.walletPassword)){
+      this.errorMessage = "You entered an invalid password.";
+      return;
     } else {
-
       this.errorMessage = "";
       this.showDialogFooter = false;
       try {        
@@ -56,13 +59,27 @@ export class ImportpaperwalletComponent implements OnInit {
           this.errorMessage = "Paper Wallet already Imported.";
           this.label = "";
           this.privateKey = "";
+          this.walletPassword = "";
           this.showDialogFooter = true;
           return;
         }
       }
 
-      let newKeyPair:LokiKey = this.casinocoinService.generateNewKeyPair();
-      this.walletService.addKey(newKeyPair); let walletAccount: LokiAccount = {
+      //let newKeyPair:LokiKey = this.casinocoinService.generateNewKeyPair();
+      let newKeyPair: LokiKey = { 
+        privateKey: "", 
+        publicKey: "", 
+        accountID: "", 
+        secret: "", 
+        encrypted: false
+    };
+    newKeyPair.secret = this.privateKey.trim();
+    newKeyPair.privateKey = this.keypair.privateKey;
+    newKeyPair.publicKey = this.keypair.publicKey;
+    newKeyPair.accountID = this.address;
+
+      this.walletService.addKey(newKeyPair);
+      let walletAccount: LokiAccount = {
         accountID: this.address, 
         balance: "0", 
         lastSequence: 0, 
@@ -73,10 +90,16 @@ export class ImportpaperwalletComponent implements OnInit {
         lastTxLedger: 0
       };
       this.walletService.addAccount(walletAccount);
+      this.walletService.encryptAllKeys(this.walletPassword).subscribe( result => {
+          if(result == AppConstants.KEY_FINISHED){
+            this.logger.debug("### Account Created: " + walletAccount.accountID);
+          }
+        });
       this.logger.debug("### Account Added with Paper Wallet: " + walletAccount.accountID);
       this.errorMessage = "Paper Wallet Imported Successfully.";
       this.label = "";
       this.privateKey = "";
+      this.walletPassword = "";
       this.showDialogFooter = true;
     }
   }
