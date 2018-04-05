@@ -14,7 +14,7 @@
     <!-- <input type="checkbox" [(ngModel)]="checkBox">Check this to Link with Account -->
 
     <div class="row" id="printsection">
-        <div class="key_box">
+        <div class="key_box" (contextmenu)="onPublicContextMenu()">
             <h4>Public Key</h4>
             <div class="qrcode" id="qrcode_address">
                 <qr-code [value]="newAddress" size="150" level="L"></qr-code>
@@ -23,7 +23,7 @@
             <span>{{newAddress}}</span> 
             &nbsp;<br><br>
         </div>
-        <div class="key_box1">
+        <div class="key_box1" (contextmenu)="onPrivateContextMenu()">
             <h4>Private Key</h4>
             <div class="qrcode" id = "qrcode_secret">
                 <qr-code [value]="newSecretKey" size="150" level="L"></qr-code>
