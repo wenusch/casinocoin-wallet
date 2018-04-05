@@ -63,4 +63,9 @@ export class SupportComponent implements OnInit {
     event.preventDefault();
     this.electronService.remote.shell.openExternal("https://twitter.com/CasinoCoin");
   }
+
+  openBitcoinTalk() {
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("https://bitcointalk.org/index.php?topic=616792.0")
+  }
 }
