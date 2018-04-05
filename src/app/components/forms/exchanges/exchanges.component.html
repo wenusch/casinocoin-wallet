@@ -11,7 +11,7 @@
     <p class="form-text-header">Exchanges</p>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
-        <p-dataTable [value]="exchanges" [immutable]="false" scrollable="true" scrollHeight="60vh"
+        <p-dataTable [value]="exchanges" [immutable]="false" scrollable="true" scrollHeight="40vh"
                         [contextMenu]="cm" (onRowClick)="onExchangeRowClick($event)" (onContextMenuSelect)="onExchangeContextMenu($event)">
             <p-column field="name" [style]="{'width':'200px'}">
                 <ng-template let-data="rowData" pTemplate="body">
