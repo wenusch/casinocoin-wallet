@@ -194,8 +194,11 @@ export class WalletService {
             this.addressbook = collection;
           else if(collection.name == "log")
             this.logs = collection;
-          else if(collection.name == "keys")
+          else if(collection.name == "keys"){
             this.keys = collection;
+            // make sure all keys are encrypted
+            this.encryptAllKeys(walletPassword);
+          }
           else if(collection.name == "swaps")
             this.swaps = collection;
           this.isWalletOpen = true;
