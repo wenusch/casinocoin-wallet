@@ -4,13 +4,12 @@ import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
 import { LogService } from '../../../providers/log.service';
 import { AppConstants } from '../../../domain/app-constants';
-import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron"; 
+import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron";
 import { ElectronService } from '../../../providers/electron.service';
 import { SelectItem, MenuItem } from 'primeng/primeng';
 import { CSCUtil } from '../../../domain/csc-util';
 import * as keypairs from 'casinocoin-libjs-keypairs';
 import { QRCodeModule } from 'angular2-qrcode';
-import { Router } from '@angular/router';
 
 import { WindowRef } from './WindowRef';
 
@@ -20,40 +19,111 @@ import { WindowRef } from './WindowRef';
     styleUrls: ['./paperwallet.component.scss']
 })
 export class PaperwalletComponent implements OnInit {
-    newAddress:string;
-    newSecretKey:string;
+    newAddress: string;
+    newSecretKey: string;
     checkBox: boolean = true;
     accounts: Array<LokiAccount> = [];
     keySet: any[] = [];
     showInstructions: boolean = false;
     address_context_menu: ElectronMenu;
+    key_context_menu: ElectronMenu;
+    selectedAddress: string;
 
     constructor(private winRef: WindowRef,
-        private logger: LogService, 
-        private casinocoinService: CasinocoinService, 
-        private walletService: WalletService, 
-        private electronService: ElectronService,
-        private router: Router,) { 
+        private logger: LogService,
+        private casinocoinService: CasinocoinService,
+        private walletService: WalletService,
+        private electronService: ElectronService) {
         this.logger.debug("### INIT Paperwallet ###");
     }
 
     ngOnInit() {
+        let address_context_menu_template = [
+            {
+                label: 'Copy Address',
+                click(menuItem, browserWindow, event) {
+                    browserWindow.webContents.send('address-context-menu-event', 'copy-address');
+                }
+            }
+        ];
+        let key_context_menu_template = [
+            {
+                label: 'Copy Key',
+                click(menuItem, browserWindow, event) {
+                    browserWindow.webContents.send('key-context-menu-event', 'copy-key');
+                }
+            }
+        ];
+
+        this.address_context_menu = this.electronService.remote.Menu.buildFromTemplate(address_context_menu_template);
+        this.electronService.ipcRenderer.on('address-context-menu-event', (event, arg) => {
+            this.logger.debug("### Paper Wallet Menu Event: " + arg);
+            if (arg == 'copy-address')
+                this.copyAddress();
+            else
+                this.logger.debug("### Context menu not implemented: " + arg);
+        });
+        this.key_context_menu = this.electronService.remote.Menu.buildFromTemplate(key_context_menu_template);
+        this.electronService.ipcRenderer.on('key-context-menu-event', (event, arg) => {
+            this.logger.debug("### Paper Wallet Menu Event: " + arg);
+            if (arg == 'copy-key')
+                this.copykey();
+            else
+                this.logger.debug("### Context menu not implemented: " + arg);
+        });
+    }
+
+    copyAddress() {
+        if (this.selectedAddress) {
+            this.electronService.clipboard.writeText(this.selectedAddress);
+        } else {
+            this.electronService.clipboard.writeText("");
+        }
+    }
+    copykey() {
+        if (this.selectedAddress) {
+            this.electronService.clipboard.writeText(this.selectedAddress);
+        } else {
+            this.electronService.clipboard.writeText("");
+        }
+    }
+
+    showCreateAddress() {
+
+        let newKeyPair = this.casinocoinService.generateNewKeyPair();
+        // console.log(JSON.stringify(newKeyPair));
+
+        // let seed = keypairs.generateSeed();
+        // let keypair = keypairs.deriveKeypair(seed);
+        // let address = keypairs.deriveAddress(keypair.publicKey);
+
+        this.newAddress = newKeyPair.accountID;
+        this.newSecretKey = newKeyPair.secret;
+
+        document.getElementById("qrcode_address").style.display = "block";
+        document.getElementById("qrcode_secret").style.display = "block";
+    }
+
+    onPublicContextMenu() {
+        this.selectedAddress = this.newAddress;
+        this.address_context_menu.popup(this.electronService.remote.getCurrentWindow());
+    }
+
+    onPrivateContextMenu() {
+        this.selectedAddress = this.newSecretKey;
+        this.key_context_menu.popup(this.electronService.remote.getCurrentWindow());
     }
 
     print(): void {
-
         const BrowserWindow = this.electronService.remote.BrowserWindow;;
-
         let printContents = this.winRef.nativeWindow.document.getElementById('printsection').innerHTML;
-
-        let win = new BrowserWindow({width: 800, height: 700,icon: __dirname + '/favicon.ico'});
-
+        let win = new BrowserWindow({ width: 800, height: 700, icon: __dirname + '/favicon.ico' });
         win.on('closed', () => {
-          win = null;
+            win = null;
         });
-        
-        const loadView = ({title,scriptUrl}) => {
-          return (`
+
+        const loadView = ({ title, scriptUrl }) => {
+            return (`
           <html>
             <head>
               <title>Paper Wallet</title>
@@ -111,8 +181,8 @@ export class PaperwalletComponent implements OnInit {
           </html>`)
         }
         let file = 'data:text/html;charset=UTF-8,' + encodeURIComponent(loadView({
-          title: "PaperWallet",
-          scriptUrl: "./paperWallet.view.js"
+            title: "PaperWallet",
+            scriptUrl: "./paperWallet.view.js"
         }));
         win.setMenu(null);
         win.loadURL(file);
@@ -120,20 +190,6 @@ export class PaperwalletComponent implements OnInit {
 
     instructions() {
         this.showInstructions = true;
-    }
-
-    showCreateAddress(){
-        let seed = keypairs.generateSeed();
-        let keypair = keypairs.deriveKeypair(seed);
-        let address = keypairs.deriveAddress(keypair.publicKey);
-
-        //var secret = casinocoin.Seed.from_bits(casinocoin.sjcl.random.randomWords(4));
-        //var address = secret.get_key().get_address().to_json();
-        this.newAddress = address;
-        //this.newSecretKey = secret.to_json();
-        this.newSecretKey = seed;
-        document.getElementById("qrcode_address").style.display = "block";
-        document.getElementById("qrcode_secret").style.display = "block";
     }
 
 }
