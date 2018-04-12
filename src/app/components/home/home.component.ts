@@ -112,6 +112,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   uiChangeSubject = new BehaviorSubject<string>(AppConstants.KEY_INIT);
 
   balance:string;;
+  walletBalance:string;
   fiat_balance:string;
   transaction_count:number;
   last_transaction:number;
@@ -652,8 +653,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
   doBalanceUpdate() {
-    this.balance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
-    let balanceCSC = new Big(CSCUtil.dropsToCsc(this.balance));
+    this.walletBalance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
+    this.balance = CSCUtil.dropsToCsc(this.walletBalance)
+    let balanceCSC = new Big(this.balance);
     if(this.marketService.coinMarketInfo != null && this.marketService.coinMarketInfo.price_fiat !== undefined){
       this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice + " Fiat: " + this.marketService.coinMarketInfo.price_fiat);
       let fiatValue = balanceCSC.times(new Big(this.marketService.coinMarketInfo.price_fiat)).toString();

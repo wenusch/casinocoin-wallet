@@ -6,7 +6,7 @@
                     <img src="../../../assets/brand/casinocoin-logo.png" alt="CasinoCoin" class="csc-logo" />
                     <div class="ui-g menu-balance">
                         <div class="ui-g-12 menu-text amount-label">Balance:</div>
-                        <div class="ui-g-12 amount-value"> {{balance | cscAmount : true : true}}</div>
+                        <div class="ui-g-12 amount-value"> {{walletBalance | cscAmount : true : true}}</div>
                     </div>
                     <div class="menu-nav">
                         <mat-list style="padding-top: 20px;">
@@ -82,7 +82,7 @@
                 <div class="ui-toolbar-group-left">
                     <div class="ui-g">
                         <div class="ui-g-6">
-                            <span><i class="icon icon-chip footer-icon" aria-hidden="true"></i>Balance: {{balance | cscAmount : false : true}}</span>
+                            <span><i class="icon icon-chip footer-icon" aria-hidden="true"></i>Balance: {{balance | number : '1.2-2'}}</span>
                         </div>
                         <div class="ui-g-6">
                             <span><i class="icon icon-banknote footer-icon" aria-hidden="true"></i>Fiat Value: {{fiat_balance}}</span>
