@@ -7,6 +7,7 @@ import * as os from 'os';
 
 // this is required to check if the app is running in development mode. 
 import * as isDev from 'electron-is-dev';
+import * as notifier from 'electron-notification-desktop';
 
 let win, serve;
 const args = process.argv.slice(1);
@@ -197,6 +198,20 @@ function createWindow() {
       win.reload();
       win.show();
     }
+  });
+
+  //push notification using electron-notification-desktop
+  ipcMain.on('push-notification', (event, arg) => { 
+    const notification = notifier.notify(arg.title, {
+      message: arg.body,
+      icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png'),
+      duration: 4
+    });
+    
+    notification.on('close', function (event) {
+      notification.hide();
+      event.preventDefault();
+    });
   });
 
   // Emitted when the window is closed.
