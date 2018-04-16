@@ -1,0 +1,36 @@
+<div class="ui-widget ui-g form-container">
+    <p class="form-text-header">Import Paper Wallet</p>
+    <div style="padding-top: 2%;">
+        <button pButton type="button" *ngIf="false" (click)="doCreateNewAccount()" label="Scan QR Code" style="width: 150px;"></button>
+    </div>
+    <div align="center" class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-12">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-book"></i></span>
+                <input type="text" pInputText placeholder="Label" [(ngModel)]="label" style="width: 100%;">         
+            </div>
+        </div>
+        <div class="ui-g-12">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="fa fa-suitcase"></i></span>
+                <input type="text" pInputText placeholder="Private Key" [(ngModel)]="privateKey" 
+                       style="width: 100%;">
+            </div>
+        </div>
+        <div class="ui-g-12">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-key"></i></span>
+                <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" 
+                       style="width: 100%;">
+            </div>
+        </div>
+        <div style="padding-top: 2%;">
+            <button pButton type="button" (click)="doSubmit()" icon="icon icon-save" iconPos="left" label="Submit" 
+                        style="width: 115px;"></button>
+        </div><br/>
+        <div *ngIf="showDialogFooter" style="padding-top: 2%;">
+            <br/><h4 style="color: #bf0a0a; float:left;"> {{errorMessage}} </h4>
+        </div>
+    </div>
+</div>

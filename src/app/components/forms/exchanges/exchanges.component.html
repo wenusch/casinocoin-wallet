@@ -3,7 +3,7 @@
     <div class="ui-g">
         <div class="ui-g-3 item-label">Estimated coin value</div>
         <div class="ui-g-9 coin-info-value">{{fiatValue}}</div>
-        <div class="ui-g-3 item-label">Total Coinsupply</div>
+        <div class="ui-g-3 item-label">Total Coin supply</div>
         <div class="ui-g-9 coin-info-value">{{coinSupply | number : '1.2-2'}}</div>
         <div class="ui-g-3 item-label">Estimated market capital</div>
         <div class="ui-g-9 coin-info-value">{{marketCapital}}</div>
@@ -11,7 +11,7 @@
     <p class="form-text-header">Exchanges</p>
     <div class="ui-g-12">
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
-        <p-dataTable [value]="exchanges" [immutable]="false" scrollable="true" scrollHeight="60vh"
+        <p-dataTable [value]="exchanges" [immutable]="false" scrollable="true" scrollHeight="50vh"
                         [contextMenu]="cm" (onRowClick)="onExchangeRowClick($event)" (onContextMenuSelect)="onExchangeContextMenu($event)">
             <p-column field="name" [style]="{'width':'200px'}">
                 <ng-template let-data="rowData" pTemplate="body">
@@ -26,7 +26,7 @@
                         <p class="item-p"><span class="item-label">Buy: </span><span class="item-value"> {{ data.buy | number : '1.1-8'}}</span></p>
                         <p class="item-p"><span class="item-label">Sell: </span><span class="item-value"> {{ data.sell | number : '1.1-8'}}</span></p>
                         <p class="item-p"><span class="item-label">Last: </span><span class="item-value"> {{ data.last | number : '1.1-8'}}</span></p>
-                        <p class="item-p"><span class="item-label">Volume: </span><span class="item-value"> {{ data.volume24H | number : '1.1-8'}}</span></p>
+                        <p class="item-p"><span class="item-label">Volume: </span><span class="item-value"> {{ data.volume24H | number : '1.1-2'}}</span></p>
                         <p class="item-p"><span class="item-label">Last Update: </span><span class="item-value"> {{ data.lastUpdateDate| date : 'yyyy-MM-dd HH:mm:ss' }}</span></p>
                     </span>
                 </ng-template>

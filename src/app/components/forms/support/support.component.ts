@@ -56,11 +56,16 @@ export class SupportComponent implements OnInit {
 
   openFacebook(){
     event.preventDefault();
-    this.electronService.remote.shell.openExternal("https://www.facebook.com/casinocoin.org/");
+    this.electronService.remote.shell.openExternal("https://www.facebook.com/CasinoCoin/");
   }
 
   openTwitter(){
     event.preventDefault();
     this.electronService.remote.shell.openExternal("https://twitter.com/CasinoCoin");
+  }
+
+  openBitcoinTalk() {
+    event.preventDefault();
+    this.electronService.remote.shell.openExternal("https://bitcointalk.org/index.php?topic=3262543.0");
   }
 }
