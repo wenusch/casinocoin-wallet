@@ -61,6 +61,29 @@ export class WalletService {
     this.logger.debug("### INIT WalletService ###");
    }
 
+   changePassword(newWalletPassword: string, newWalletMnemonic: string){
+    let collectionSubject1 = new Subject<any>();
+    collectionSubject1.subscribe( collection => {
+          console.log("test1231 ");
+          this.dbMetadata = collection;
+    });
+    console.log("test "+JSON.stringify(this.dbMetadata));
+    let initDBVersion: LokiTypes.LokiDBMetadata = {
+      dbVersion: AppConstants.KEY_DB_VERSION,
+      appVersion: this.electron.remote.app.getVersion(),
+      environment: this.currentDBMetadata.environment,
+      walletUUID: this.currentDBMetadata.walletUUID,
+      walletHash: this.generateWalletPasswordHash(this.currentDBMetadata.walletUUID, newWalletPassword),
+      mnemonicRecovery: newWalletMnemonic,
+      creationTimestamp: this.currentDBMetadata.creationTimestamp,
+      updatedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
+      location: this.currentDBMetadata.location,
+      lastOpenedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now())
+    }
+    this.dbMetadata.insert(initDBVersion);
+    console.log("test132 "+JSON.stringify(this.dbMetadata));
+  }
+
   createWallet( walletLocation: string, 
                 walletUUID: string, 
                 walletSecret: string, 
