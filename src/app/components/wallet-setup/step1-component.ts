@@ -33,7 +33,6 @@ import { MenuItem, MessagesModule, Message, CheckboxModule } from 'primeng/prime
     }
 
     developerOptions() {
-      console.log("coming");
       if(this.developerOptionShow){
         this.developerOptionShow = false;
       } else {
