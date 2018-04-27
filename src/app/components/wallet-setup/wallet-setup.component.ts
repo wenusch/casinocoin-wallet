@@ -176,7 +176,7 @@ export class WalletSetupComponent implements OnInit {
         this.electron.remote.dialog.showMessageBox(
           { type: "warning",
             buttons: ['Cancel', 'Ok'],
-            message: "Your are creating a wallet for the Test Network, are you sure ?"
+            message: "You are creating a wallet for the Test Network, are you sure ?"
           }, (result) => { 
               this.logger.debug("### Result: " + result);
               if(result == 0){
