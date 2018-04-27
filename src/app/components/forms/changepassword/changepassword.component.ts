@@ -21,6 +21,7 @@ export class ChangepasswordComponent implements OnInit {
   paswordConfirmationEnabled: boolean = false;
   nextButtonEnabled: boolean = false;
   newWalletMnemonic: Array<string>;
+  mnemonicHash: string = "";
 
   passwordPattern: string = "(?=.*[0-9])(?=.*[a-z]).{8,}";
 
@@ -66,7 +67,8 @@ export class ChangepasswordComponent implements OnInit {
   }
 
   finishStep3() {
-    this.walletService.changePassword(this.newWalletPassword, this.newWalletMnemonic.toString());
+    this.mnemonicHash = new CSCCrypto(this.newWalletMnemonic).encrypt(this.currentWalletPassword);
+    this.walletService.changePassword(this.newWalletPassword, this.mnemonicHash);
   }
 
   checkPasswordUpdate(newValue: string) {

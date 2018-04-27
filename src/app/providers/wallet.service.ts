@@ -62,26 +62,49 @@ export class WalletService {
    }
 
    changePassword(newWalletPassword: string, newWalletMnemonic: string){
-    let collectionSubject1 = new Subject<any>();
-    collectionSubject1.subscribe( collection => {
-          console.log("test1231 ");
-          this.dbMetadata = collection;
-    });
-    console.log("test "+JSON.stringify(this.dbMetadata));
-    let initDBVersion: LokiTypes.LokiDBMetadata = {
-      dbVersion: AppConstants.KEY_DB_VERSION,
-      appVersion: this.electron.remote.app.getVersion(),
-      environment: this.currentDBMetadata.environment,
-      walletUUID: this.currentDBMetadata.walletUUID,
-      walletHash: this.generateWalletPasswordHash(this.currentDBMetadata.walletUUID, newWalletPassword),
-      mnemonicRecovery: newWalletMnemonic,
-      creationTimestamp: this.currentDBMetadata.creationTimestamp,
-      updatedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
-      location: this.currentDBMetadata.location,
-      lastOpenedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now())
-    }
-    this.dbMetadata.insert(initDBVersion);
-    console.log("test132 "+JSON.stringify(this.dbMetadata));
+
+    this.currentDBMetadata.walletHash = this.generateWalletPasswordHash(this.currentDBMetadata.walletUUID, newWalletPassword);
+    this.currentDBMetadata.mnemonicRecovery = newWalletMnemonic; 
+    this.dbMetadata.update(this.currentDBMetadata);
+    console.log("test1231 "+JSON.stringify(this.dbMetadata));
+    this.walletDB.walletHash = this.currentDBMetadata.walletHash;
+    this.walletDB.mnemonicRecovery = this.currentDBMetadata.mnemonicRecovery;
+    this.walletDB.saveDatabase();
+
+    
+    let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
+    let walletIndex = availableWallets.findIndex( item => item['walletUUID'] == this.currentDBMetadata.walletUUID);
+    let walletObject = availableWallets[walletIndex];
+    
+    availableWallets[walletIndex].update(walletObject);
+
+    console.log("availableWallets "+ JSON.stringify(availableWallets));
+    console.log("walletIndex "+ walletIndex);
+    console.log("walletObject "+ JSON.stringify(walletObject));
+    console.log("walletObject['hash'] "+ walletObject['hash']);
+
+    // console.log("old "+JSON.stringify(this.walletDB));
+    // let updateDB: LokiTypes.LokiDBMetadata = {
+    //   $loki: this.currentDBMetadata.$loki,
+    //   meta: this.currentDBMetadata.meta,
+    //   dbVersion: AppConstants.KEY_DB_VERSION,
+    //   appVersion: this.electron.remote.app.getVersion(),
+    //   environment: this.currentDBMetadata.environment,
+    //   walletUUID: this.currentDBMetadata.walletUUID,
+    //   walletHash: this.generateWalletPasswordHash(this.currentDBMetadata.walletUUID, newWalletPassword),
+    //   mnemonicRecovery: newWalletMnemonic,
+    //   creationTimestamp: this.currentDBMetadata.creationTimestamp,
+    //   updatedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now()),
+    //   location: this.currentDBMetadata.location,
+    //   lastOpenedTimestamp: CSCUtil.unixToCasinocoinTimestamp(Date.now())
+    // }     
+    // this.dbMetadata.update(updateDB);
+    // this.walletDB.walletHash = this.currentDBMetadata.walletHash;
+    // this.walletDB.mnemonicRecovery = this.currentDBMetadata.mnemonicRecovery;
+    // this.walletDB.saveDatabase();
+
+    console.log("new "+JSON.stringify(this.walletDB));   
+    console.log("test132 "+JSON.stringify(this.getDBMetadata())); 
   }
 
   createWallet( walletLocation: string, 
