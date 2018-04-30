@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { WalletService } from '../../../providers/wallet.service';
 import { CSCCrypto } from 'app/domain/csc-crypto';
 import { Router, ActivatedRoute } from '@angular/router';
+import { LogService } from '../../../providers/log.service';
 
 @Component({
   selector: 'app-changepassword',
@@ -25,10 +26,12 @@ export class ChangepasswordComponent implements OnInit {
 
   passwordPattern: string = "(?=.*[0-9])(?=.*[a-z]).{8,}";
 
-  constructor(private walletService: WalletService,
-    private route: ActivatedRoute) { }
+  constructor(private logger: LogService,
+              private walletService: WalletService,
+              private router: Router) { }
 
   ngOnInit() {
+    this.logger.debug("### ChangePasswordComponent onInit");
   }
 
   doNext() {
@@ -42,6 +45,7 @@ export class ChangepasswordComponent implements OnInit {
   }
 
   finishStep1() {
+    // toggle to step 2
     if (this.currentWalletPassword.length == 0) {
       this.errorMessage = "Please enter your current password.";
       this.showError = true;
@@ -59,6 +63,7 @@ export class ChangepasswordComponent implements OnInit {
   }
 
   finishStep2() {
+    // toggle to step 3
     this.newWalletMnemonic = CSCCrypto.getRandomMnemonic();
     this.showPassphrase = true;
     this.showNewPassword = false;
@@ -67,11 +72,22 @@ export class ChangepasswordComponent implements OnInit {
   }
 
   finishStep3() {
-    this.mnemonicHash = new CSCCrypto(this.newWalletMnemonic).encrypt(this.currentWalletPassword);
-    this.walletService.changePassword(this.newWalletPassword, this.mnemonicHash);
+    // Finish change password
+    this.nextButtonEnabled = true;
+    // generate mnemonic hash with new password and new mnemonic recovery
+    this.mnemonicHash = new CSCCrypto(this.newWalletMnemonic).encrypt(this.newWalletPassword);
+    this.logger.debug("### ChangePasswordComponent - Mnemonic Recovery Hash Created: " + this.mnemonicHash);
+    this.walletService.changePassword(this.currentWalletPassword, this.newWalletPassword, this.mnemonicHash);
+    this.errorMessage = "Your Password has been changed Successfully.";
+    this.showError = true;
+    setTimeout(() => {
+      this.logger.debug("### ChangePasswordComponent - Password changed Successfully.");
+      this.router.navigate(['home','transactions']);
+    }, 2000);
   }
 
   checkPasswordUpdate(newValue: string) {
+    // set password match
     let testResult = newValue.match(this.passwordPattern);
     if (testResult != null) {
       this.paswordConfirmationEnabled = true;
@@ -89,6 +105,7 @@ export class ChangepasswordComponent implements OnInit {
   }
 
   onRecoveryAcceptChanged(newValue) {
+    // checkbox for mnemonic recovery
     if (newValue) {
       this.nextButtonEnabled = false;
     } else {
