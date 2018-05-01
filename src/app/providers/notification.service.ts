@@ -38,11 +38,12 @@ export class NotificationService {
 
     addMessage(msg: NotificationType){
         this.logger.debug("### NotificationService: " + JSON.stringify(msg));
-        let notificationOptions: NotificationOptions = {
+        this.electronService.ipcRenderer.send('push-notification', msg);
+        /*let notificationOptions: NotificationOptions = {
             tag: "CasinoCoin",
             icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png'),
             body: msg.body
         }
-        let notification = new Notification(msg.title, notificationOptions);
+        let notification = new Notification(msg.title, notificationOptions);*/
     }
 }
