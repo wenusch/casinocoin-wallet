@@ -56,6 +56,7 @@ import { OverviewComponent }        from './components/forms/overview/overview.c
 import { TransactionsComponent }    from './components/forms/transactions/transactions.component';
 import { PaperwalletComponent }    from './components/forms/paperwallet/paperwallet.component';
 import { ImportpaperwalletComponent } from './components/forms/importpaperwallet/importpaperwallet.component';
+import { ChangepasswordComponent } from './components/forms/changepassword/changepassword.component';
 import { SupportComponent }         from './components/forms/support/support.component';
 import { ExchangesComponent }       from './components/forms/exchanges/exchanges.component';
 import { WindowRef } from './components/forms/paperwallet/WindowRef';
@@ -91,7 +92,8 @@ import { MatListModule, MatSidenavModule, MatTooltipModule,
     PaperwalletComponent,
     SupportComponent,
     ExchangesComponent,
-    ImportpaperwalletComponent
+    ImportpaperwalletComponent,
+    ChangepasswordComponent
   ],
   imports: [
     BrowserModule,
