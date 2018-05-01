@@ -15,6 +15,11 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
+            <button pButton type="button" (click)="developerOptions()" label="Developer Options" #developerOptionsButton></button>
+        </div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-1"></div>
+        <div *ngIf="developerOptionShow" class="ui-g-6">
             <small style="font-weight: bolder;">
             <p-checkbox [(ngModel)]="walletTestNetwork" binary="false" (onChange)="onNetworkChanged($event)" 
                         label="Connect to the test network" [disabled]="networkChoiceDisabled"></p-checkbox>
