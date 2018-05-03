@@ -9,6 +9,7 @@ import { MenuItem, MessagesModule, Message, CheckboxModule } from 'primeng/prime
     encapsulation: ViewEncapsulation.None
   })
   export class SetupStep1Component {
+    developerOptionShow: boolean = false;
 
     constructor( ) { }
 
@@ -29,6 +30,14 @@ import { MenuItem, MessagesModule, Message, CheckboxModule } from 'primeng/prime
     
     onNetworkChanged(newValue) {
       this.walletNetworkChange.emit(newValue);
+    }
+
+    developerOptions() {
+      if(this.developerOptionShow){
+        this.developerOptionShow = false;
+      } else {
+        this.developerOptionShow = true;
+      }
     }
 
   }

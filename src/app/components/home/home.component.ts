@@ -218,6 +218,14 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           browserWindow.webContents.send('context-menu-event', 'import-paper-wallet');
         }, enabled: true
       })
+    );    
+    this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(
+      { label: 'Change Password', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('context-menu-event', 'change-password');
+        }, enabled: true
+      })
     );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
@@ -280,6 +288,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.onRestoreBackup();
         else if(arg == 'add-wallet')
           this.onAddWallet();
+        else if(arg == 'change-password')
+            this.changePassword();
         else if(arg == 'create-wallet')
           this.createWallet();
         else if(arg == 'close-wallet')
@@ -775,6 +785,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.active_menu_item = "";
     // navigate to paperwallet
     this.router.navigate(['home','importpaperwallet']);
+  }  
+
+  changePassword(){ 
+    this.logger.debug("Change Password Clicked !!");
+    this.active_menu_item = "";
+    this.router.navigate(['home','changepassword']);
   }
 
   onCoinSwap() {

@@ -263,6 +263,47 @@ export class WalletService {
     // publish result
     this.openWalletSubject.next(AppConstants.KEY_INIT);
   }
+  
+  changePassword(currentWalletPassword:string, newWalletPassword: string, newWalletMnemonic: string){
+    // generate wallet hash with walletUUID and new Password
+    this.logger.debug("### ChangePassword - Encrypt Wallet Password");
+    let newPasswordHash = this.generateWalletPasswordHash(this.currentDBMetadata.walletUUID, newWalletPassword);
+
+    // change password for Login in localStorage
+    let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
+    let walletIndex = availableWallets.findIndex( item => item['walletUUID'] == this.currentDBMetadata.walletUUID);
+    availableWallets[walletIndex]['hash'] = newPasswordHash;
+    this.localStorageService.set(AppConstants.KEY_AVAILABLE_WALLETS, availableWallets);   
+
+    // Decrypt all keys with old password and update DB
+    this.logger.debug("### ChangePassword - Decrypt Wallet Keys with Old Password");
+    let cscCrypto = new CSCCrypto(currentWalletPassword);
+    let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
+    allKeys.forEach( (element, index, array) => {
+      let decodedSecret:string = cscCrypto.decrypt(element.secret);
+      let decodedKey = cscCrypto.decrypt(element.privateKey);
+      element.privateKey = decodedKey;
+      element.secret = decodedSecret;
+      element.encrypted = false;
+      this.updateKey(element);
+    });
+
+    // Encrypt all keys with new password
+    this.logger.debug("### ChangePassword - Encrypt Wallet Keys with New Password");
+    this.encryptAllKeys(newWalletPassword).subscribe( result => {
+      if(result == AppConstants.KEY_FINISHED){
+        this.logger.debug("### WalletService Password Changed");
+      }
+    });
+
+    // update password in LokiDBMetadata with new password and new mnemonic recovery
+    this.currentDBMetadata.walletHash = newPasswordHash;
+    this.currentDBMetadata.mnemonicRecovery = newWalletMnemonic; 
+    this.dbMetadata.update(this.currentDBMetadata);
+    
+    //save wallet
+    this.saveWallet();
+  }
 
   recoverWallet(dbPath: string){
     // get default wallet file content
