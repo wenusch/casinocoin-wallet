@@ -237,6 +237,14 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
+      { label: 'Refresh Wallet',
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('context-menu-event', 'refresh-wallet');
+        }, enabled: true
+      })
+    );
+    this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(
       { label: 'Close Wallet', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'close-wallet');
@@ -296,6 +304,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.closeWallet();
         else if(arg == 'quit')
           this.onQuit();
+        else if(arg == 'refresh-wallet')
+          this.onRefreshWallet();
         else
           this.logger.debug("### Context menu not implemented: " + arg);
       }
@@ -778,6 +788,13 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.active_menu_item = "";
     // navigate to paperwallet
     this.router.navigate(['home','paperwallet']);
+  }
+
+  onRefreshWallet(){
+    this.logger.debug("Refreshwallet Clicked !!");
+    this.active_menu_item = "";
+    // navigate to paperwallet
+    this.router.navigate(['home','refreshwallet']);
   }
 
   onImportPaperWallet(){

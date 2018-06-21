@@ -16,6 +16,7 @@ import { SupportComponent }         from './components/forms/support/support.com
 import { ExchangesComponent }       from './components/forms/exchanges/exchanges.component';
 import { ImportpaperwalletComponent } from './components/forms/importpaperwallet/importpaperwallet.component';
 import { ChangepasswordComponent } from './components/forms/changepassword/changepassword.component';
+import { RefreshWalletComponent }   from './components/wallet-setup/refresh-wallet.component';
 
 const routes: Routes = [
     { path: 'home', component: HomeComponent, canActivate: [AuthGuard],
@@ -30,7 +31,8 @@ const routes: Routes = [
             { path: 'transactions', component: TransactionsComponent },
             { path: 'support', component: SupportComponent },
             { path: 'exchanges', component: ExchangesComponent },
-            { path: '', redirectTo: 'transactions', pathMatch: 'full'}
+            { path: '', redirectTo: 'transactions', pathMatch: 'full'},
+            { path: 'refreshwallet', component: RefreshWalletComponent }
             ] 
     },
     { path: 'wallet-setup', component: WalletSetupComponent },
