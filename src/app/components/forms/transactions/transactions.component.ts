@@ -138,6 +138,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
     // See: https://github.com/angular/angular/issues/6005
     setTimeout(_ => {
       this.viewInitComplete = true;
+      this.doBalanceUpdate();
       this.dtTX.paginate();
     }, 0);
   }
@@ -186,7 +187,10 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
       return ["fa", "fa-minus", "color_red", "text-large"];
     } else if(rowData.direction == AppConstants.KEY_WALLET_TX_IN){
       // incomming tx
-      return ["fa", "fa-plus", "color_green", "text-large"];
+      if(rowData.transactionType == "SetCRNRound")
+        return ["fa", "fa-star", "color_green", "text-large"];
+      else
+        return ["fa", "fa-plus", "color_green", "text-large"];
     } else {
       // wallet tx
       return ["fa", "fa-minus", "color_blue", "text-large"];
@@ -242,7 +246,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   showTxContextMenu(event){
     this.logger.debug("### showTxContextMenu: " + JSON.stringify(event));
     this.selectedTxRow = event.data;
-    this.tx_context_menu.popup(this.electronService.remote.getCurrentWindow());
+    this.tx_context_menu.popup({window: this.electronService.remote.getCurrentWindow()});
   }
 
   onTxRowClick(event){

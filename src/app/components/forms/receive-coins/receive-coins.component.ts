@@ -105,7 +105,7 @@ export class ReceiveCoinsComponent implements OnInit {
     } else {
       this.receive_context_menu.items[2].visible = false;
     }
-    this.receive_context_menu.popup(this.electronService.remote.getCurrentWindow());
+    this.receive_context_menu.popup({window: this.electronService.remote.getCurrentWindow()});
   }
 
   onLabelEditComplete(event){

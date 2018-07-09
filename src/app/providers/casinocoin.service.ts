@@ -17,7 +17,7 @@ import { AppConstants } from '../domain/app-constants';
 import { CasinocoinTxObject, PrepareTxPayment } from '../domain/csc-types';
 import { CSCUtil } from '../domain/csc-util';
 import { NotificationService } from './notification.service';
-import int from 'int';
+import Big from 'big.js';
 
 const crypto = require('crypto');
 
@@ -237,40 +237,9 @@ export class CasinocoinService implements OnDestroy {
                 let msg_tx = incommingMessage['transaction'];
                 this.logger.debug("### CasinocoinService - Incomming TX: " + JSON.stringify(msg_tx));
                 if(msg_tx.TransactionType === "Payment"){
-                    // check if we already have the TX
-                    let dbTX: LokiTransaction = this.walletService.getTransaction(msg_tx.hash);
-                    if(dbTX == null){
-                        dbTX = this.addTxToWallet(msg_tx, false);
-                    } else {
-                        // update transaction object
-                        dbTX.timestamp = msg_tx.date;
-                        dbTX.status = LokiTxStatus.received;
-                        // update into the wallet
-                        this.walletService.updateTransaction(dbTX);
-                    }
-                    // notify tx change
-                    this.transactionSubject.next(dbTX);
-                    // update accounts
-                    if(dbTX.direction == AppConstants.KEY_WALLET_TX_IN){
-                        this.getAccountInfo(dbTX.destination);
-                        this.notificationService.addMessage(
-                            {title: 'Incomming CSC Transaction', 
-                            body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                                ' coins from ' + dbTX.accountID});
-                    } else if(dbTX.direction == AppConstants.KEY_WALLET_TX_OUT){
-                        this.getAccountInfo(dbTX.accountID);
-                        this.notificationService.addMessage(
-                            {title: 'Outgoing CSC Transaction', 
-                            body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                                ' coins to ' + dbTX.destination});
-                    } else {
-                        this.getAccountInfo(dbTX.destination);
-                        this.getAccountInfo(dbTX.accountID);
-                        this.notificationService.addMessage(
-                            {title: 'Wallet Transaction', 
-                            body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                                ' coins to your own address ' + dbTX.destination});
-                    }
+                    this.handlePayment(msg_tx);
+                } else if(msg_tx.TransactionType === "SetCRNRound"){
+                    this.handleCRNRound(msg_tx, incommingMessage['meta']);
                 }
             }  else if((incommingMessage['type'] == 'response') && incommingMessage.status === 'success'){
                 // this.logger.debug('### CasinocoinService received message from server: ', JSON.stringify(incommingMessage));
@@ -478,27 +447,33 @@ export class CasinocoinService implements OnDestroy {
                         // Get DB transaction
                         this.logger.debug("### CasinocoinService - getTransaction: " + element.tx.hash);
                         let dbTx: LokiTransaction = this.walletService.getTransaction(element.tx.hash);
-                        if(dbTx == null){
-                            this.logger.debug("### CasinocoinService - New TX Add to DB: " + JSON.stringify(element.tx));
-                            // Tx does not exist yet so add it
-                            dbTx = this.addTxToWallet(element.tx, element.validated);
-                            this.transactionSubject.next(dbTx);
-                        } else if(dbTx.validated == false && element.validated == true){
-                            this.logger.debug("### CasinocoinService - unvalidated TX got Validated!" + JSON.stringify(element.tx));
-                            dbTx.validated = element.validated;
-                            dbTx.inLedger = element.tx.inLedger;
-                            dbTx.engineResult = element.tx.engine_result;
-                            dbTx.engineResultMessage = element.tx.engine_result_message;
-                            this.logger.debug("### CasinocoinService - updated DB TX: " + JSON.stringify(dbTx));
-                            this.walletService.updateTransaction(dbTx);
-                            this.transactionSubject.next(dbTx);
-                        } else if(dbTx.validated == true && element.validated == false){
-                            this.logger.debug("### CasinocoinService - Validated TX got Unvalidated!!!!: " + JSON.stringify(element.tx));
-                        }
-                        // check if we had inLedger
-                        if(element.tx.inLedger == undefined || element.tx.inLedger.length == 0 || element.tx.inLedger <= 0){
-                            this.logger.debug("### CasinocoinService - Account TX needs inLedger: " + JSON.stringify(element.tx));
-                            this.getTransaction(element.tx.hash);
+                        // check the TransactionType
+                        if(element.tx.TransactionType == 'Payment'){
+                            if(dbTx == null){
+                                this.logger.debug("### CasinocoinService - New TX Add to DB: " + JSON.stringify(element.tx));
+                                // Tx does not exist yet so add it
+                                dbTx = this.addTxToWallet(element.tx, element.validated);
+                                this.transactionSubject.next(dbTx);
+                            } else if(dbTx.validated == false && element.validated == true){
+                                this.logger.debug("### CasinocoinService - unvalidated TX got Validated!" + JSON.stringify(element.tx));
+                                dbTx.validated = element.validated;
+                                dbTx.inLedger = element.tx.inLedger;
+                                dbTx.engineResult = element.tx.engine_result;
+                                dbTx.engineResultMessage = element.tx.engine_result_message;
+                                this.logger.debug("### CasinocoinService - updated DB TX: " + JSON.stringify(dbTx));
+                                this.walletService.updateTransaction(dbTx);
+                                this.transactionSubject.next(dbTx);
+                            } else if(dbTx.validated == true && element.validated == false){
+                                this.logger.debug("### CasinocoinService - Validated TX got Unvalidated!!!!: " + JSON.stringify(element.tx));
+                            }
+                            // check if we had inLedger
+                            if(element.tx.inLedger == undefined || element.tx.inLedger.length == 0 || element.tx.inLedger <= 0){
+                                this.logger.debug("### CasinocoinService - Account TX needs inLedger: " + JSON.stringify(element.tx));
+                                this.getTransaction(element.tx.hash);
+                            }
+                        } else if(element.tx.TransactionType == 'SetCRNRound'){
+                            this.logger.debug("### CasinocoinService - Check SetCRNRound Tx: " + element.tx.hash);
+                            this.handleCRNRound(element.tx, element.meta);
                         }
                     });
                     // if we received a marker then there is more so get next batch
@@ -759,5 +734,103 @@ export class CasinocoinService implements OnDestroy {
 
     getCurrentServer(): ServerDefinition {
         return this.wsService.currentServer;
+    }
+
+    handlePayment(msg_tx) {
+        // check if we already have the TX
+        let dbTX: LokiTransaction = this.walletService.getTransaction(msg_tx.hash);
+        if(dbTX == null){
+            dbTX = this.addTxToWallet(msg_tx, false);
+        } else {
+            // update transaction object
+            dbTX.timestamp = msg_tx.date;
+            dbTX.status = LokiTxStatus.received;
+            // update into the wallet
+            this.walletService.updateTransaction(dbTX);
+        }
+        // notify tx change
+        this.transactionSubject.next(dbTX);
+        // update accounts
+        if(dbTX.direction == AppConstants.KEY_WALLET_TX_IN){
+            this.getAccountInfo(dbTX.destination);
+            this.notificationService.addMessage(
+                {title: 'Incomming CSC Transaction', 
+                body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                    ' coins from ' + dbTX.accountID});
+        } else if(dbTX.direction == AppConstants.KEY_WALLET_TX_OUT){
+            this.getAccountInfo(dbTX.accountID);
+            this.notificationService.addMessage(
+                {title: 'Outgoing CSC Transaction', 
+                body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                    ' coins to ' + dbTX.destination});
+        } else {
+            this.getAccountInfo(dbTX.destination);
+            this.getAccountInfo(dbTX.accountID);
+            this.notificationService.addMessage(
+                {title: 'Wallet Transaction', 
+                body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                    ' coins to your own address ' + dbTX.destination});
+        }
+    }
+
+    handleCRNRound(tx, meta) {
+        // check if we already have the TX
+        let dbTX: LokiTransaction = this.walletService.getTransaction(tx.hash);
+        // this.logger.debug("### CasinocoinService - handleCRNRound tx: " + JSON.stringify(tx) + " meta: " + JSON.stringify(meta));
+        // this.logger.debug("### CasinocoinService - handleCRNRound dbTX: " + JSON.stringify(dbTX));
+        if(dbTX == null){
+            // check if the destination account is ours
+            meta['AffectedNodes'].forEach(node => {
+                if(node.ModifiedNode !== undefined && node.ModifiedNode.LedgerEntryType === "AccountRoot"){
+                    this.logger.debug("### CasinocoinService - handleCRNRound node: " + JSON.stringify(node));
+                    if(this.walletService.isAccountMine(node.ModifiedNode.FinalFields.Account)){
+                        this.logger.debug("### CasinocoinService - Account is mine: " + node.ModifiedNode.FinalFields.Account);
+                        // calculate amount
+                        let txAmount: Big = new Big(node.ModifiedNode.FinalFields.Balance);
+                        txAmount = txAmount.minus(node.ModifiedNode.PreviousFields.Balance);
+                        // create new transaction object
+                        dbTX = {
+                            accountID: tx.Account,
+                            amount: txAmount.toString(),
+                            destination: node.ModifiedNode.FinalFields.Account,
+                            fee: tx.Fee,
+                            flags: 0,
+                            lastLedgerSequence: tx.LedgerSequence,
+                            sequence: node.ModifiedNode.FinalFields.Sequence,
+                            signingPubKey: "",
+                            timestamp: tx.date,
+                            transactionType: tx.TransactionType,
+                            txID: tx.hash,
+                            txnSignature: "",
+                            direction: AppConstants.KEY_WALLET_TX_IN,
+                            validated: true,
+                            status: LokiTxStatus.received,
+                            inLedger: tx.LedgerSequence
+                        }
+                        // insert into the wallet
+                        this.walletService.addTransaction(dbTX);
+                        this.logger.debug("### CasinocoinService - dbTX: " + JSON.stringify(dbTX));
+                        // notify tx change
+                        this.transactionSubject.next(dbTX);
+                        // update accounts
+                        this.getAccountInfo(dbTX.destination);
+                        this.notificationService.addMessage(
+                            {title: 'Incomming CRN Fee Transaction', 
+                            body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                                ' coins for CRN Ledger Round ' + dbTX.lastLedgerSequence});
+                    } else {
+                        this.logger.debug("### CasinocoinService - Account NOT mine: " + node.ModifiedNode.FinalFields.Account);
+                    }
+                } else {
+                    this.logger.debug("### CasinocoinService - node.ModifiedNode undefined");
+                }
+            });
+        } else {
+            // update transaction object
+            dbTX.timestamp = tx.date;
+            dbTX.status = LokiTxStatus.received;
+            // update into the wallet
+            this.walletService.updateTransaction(dbTX);
+        }
     }
 }

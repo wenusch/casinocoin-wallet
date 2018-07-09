@@ -56,7 +56,7 @@ function isWindowsOrmacOS() {
 }
 
 function appUpdater() {
-	autoUpdater.setFeedURL(updaterFeedURL);
+	autoUpdater.setFeedURL({url: updaterFeedURL});
 	/* Log whats happening
 	TODO send autoUpdater events to renderer so that we could console log it in developer tools
 	You could alsoe use nslog or other logging to see what's happening */
@@ -329,6 +329,7 @@ try {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
+      console.log("window-all-closed -> app.quit()");
       app.quit();
     }
   });

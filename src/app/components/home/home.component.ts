@@ -438,11 +438,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onToolsMenuClick(event) {
-    this.tools_context_menu.popup(this.electron.remote.getCurrentWindow());
+    this.tools_context_menu.popup({window: this.electron.remote.getCurrentWindow()});
   }
 
   onConnectionClick(event) {
-    this.connection_context_menu.popup(this.electron.remote.getCurrentWindow());
+    this.connection_context_menu.popup({window: this.electron.remote.getCurrentWindow()});
   }
 
   selectedMenuItem(item) {
@@ -475,7 +475,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     // this.walletService.closeWallet();
     // Close the windows to cause an application exit
     this.electron.remote.getGlobal("vars").exitFromRenderer = true;
-    this.electron.remote.getCurrentWindow.call( close() );
+    this.electron.remote.app.quit();
   }
 
   executePasswordCallback(){

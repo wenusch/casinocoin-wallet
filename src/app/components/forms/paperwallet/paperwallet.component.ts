@@ -106,12 +106,12 @@ export class PaperwalletComponent implements OnInit {
 
     onPublicContextMenu() {
         this.selectedAddress = this.newAddress;
-        this.address_context_menu.popup(this.electronService.remote.getCurrentWindow());
+        this.address_context_menu.popup({window: this.electronService.remote.getCurrentWindow()});
     }
 
     onPrivateContextMenu() {
         this.selectedAddress = this.newSecretKey;
-        this.key_context_menu.popup(this.electronService.remote.getCurrentWindow());
+        this.key_context_menu.popup({window: this.electronService.remote.getCurrentWindow()});
     }
 
     print(): void {

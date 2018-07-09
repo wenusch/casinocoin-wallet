@@ -77,7 +77,7 @@ export class ExchangesComponent implements OnInit {
   onExchangeContextMenu(event){
     this.selectedExchangeRow = event.data;
     this.logger.debug("### onExchangeContextMenu: " + JSON.stringify(this.selectedExchangeRow));
-    this.exchange_context_menu.popup(this.electronService.remote.getCurrentWindow());
+    this.exchange_context_menu.popup({window: this.electronService.remote.getCurrentWindow()});
   }
 
   onExchangeRowClick(e:any) {
