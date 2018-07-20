@@ -752,7 +752,7 @@ export class WalletService {
     let totalBalance: Big = new Big("0");
     let allAccountTX: Array<LokiTypes.LokiTransaction> = this.getAccountTransactions(inputAccountID);
     allAccountTX.forEach(element => {
-      if(element.transactionType === "Payment"){
+      if(element.transactionType === "Payment" && typeof element.amount === "string"){
         // if accountID == inputAccountID its outgoing else its incomming
         if(element.accountID == inputAccountID){
           totalBalance = totalBalance.minus(element.amount);

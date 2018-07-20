@@ -26,10 +26,14 @@ export class CSCUtil {
     }
 
     static dropsToCsc(drops: string): string {
-        let bigDrops = new Big(drops);
-        if(bigDrops > 0){
-            return (bigDrops).div(100000000.0).toString();
-        } else {
+        try{
+            let bigDrops = new Big(drops);
+            if(bigDrops > 0){
+                return (bigDrops).div(100000000.0).toString();
+            } else {
+                return "0.00";
+            }
+        } catch {
             return "0.00";
         }
         
