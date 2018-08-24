@@ -1,4 +1,4 @@
-import int from 'int';
+import { BigInteger } from 'big-integer';
 
 export type PrepareTxPayment = {
     source:string;
@@ -7,8 +7,8 @@ export type PrepareTxPayment = {
     feeDrops: string;
     description?: string;
     invoiceID?: string;
-    sourceTag?: int;
-    destinationTag?: int;
+    sourceTag?: BigInteger;
+    destinationTag?: BigInteger;
 }
 
 export type CasinocoinTxObject = {
@@ -22,8 +22,8 @@ export type CasinocoinTxObject = {
     LastLedgerSequence : number;
     InvoiceID?: string;
     Memos?: Array<CasinocoinMemo>;
-    SourceTag?: int;
-    DestinationTag?: int;
+    SourceTag?: BigInteger;
+    DestinationTag?: BigInteger;
     TxnSignature?: string;
     SigningPubKey?: string;
 }

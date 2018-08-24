@@ -1,6 +1,3 @@
-import 'zone.js/dist/zone-mix';
-import 'reflect-metadata';
-import 'polyfills';
 import { BrowserModule }            from '@angular/platform-browser';
 import { BrowserAnimationsModule }  from '@angular/platform-browser/animations';
 import { NgModule }                 from '@angular/core';

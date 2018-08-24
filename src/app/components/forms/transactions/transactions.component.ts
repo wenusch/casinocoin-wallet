@@ -12,7 +12,7 @@ import { LokiTransaction } from '../../../domain/lokijs';
 import { ElectronService } from '../../../providers/electron.service';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
 import { environment } from '../../../../environments';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import Big from 'big.js';
 
 @Component({
@@ -43,7 +43,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   signAndSubmitIcon:string = "fa-check";
   tx_context_menu: ElectronMenu;
   lazyTransactions: Array<LokiTransaction>;
-  loadingTX: boolean = true;
+  loadingTX: boolean = false;
   totalTXRecords: number;
   viewInitComplete: boolean = false;
   initialBatchLoaded: boolean = false;
@@ -145,6 +145,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
   loadTXLazy(event: LazyLoadEvent) {
     this.logger.debug("### Transactions - loadTXLazy");
+    this.loadingTX = true;
     if(this.viewInitComplete){
       this.totalTXRecords = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
       this.logger.debug("### Transactions - DB count: " + this.totalTXRecords);
@@ -153,6 +154,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         this.lazyTransactions = this.transactions.slice(event.first, (event.first + event.rows));
         this.logger.debug("### Transactions - Lazy TX count: " + this.lazyTransactions.length);
       }
+      this.loadingTX = false;
     }
   }
 
@@ -228,11 +230,15 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
   accountSelected(event){
     this.logger.debug("value selected: " + JSON.stringify(event));
+    this.loadingTX = true;
     if(event.value == null){
       this.transactions = this.walletService.getAllTransactions();
     } else {
       this.transactions = this.walletService.getAccountTransactions(event.value);
     }
+    this.lazyTransactions = this.transactions.slice(0, 20);
+    this.loadingTX = false;
+    this.dtTX.paginate();
   }
 
   doShowLedgers(){

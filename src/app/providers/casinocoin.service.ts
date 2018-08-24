@@ -1,22 +1,22 @@
 import { Injectable, OnInit, OnDestroy } from '@angular/core';
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { DecimalPipe } from '@angular/common';
+import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Subscription } from 'rxjs/Subscription';
 import { Subject } from 'rxjs/Subject';
 import { WebsocketService } from './websocket.service';
 import { WalletService } from './wallet.service';
 import { LocalStorageService } from "ngx-store";
-import { LedgerStreamMessages, ValidationStreamMessages, 
-         TransactionStreamMessages, ServerStateMessage, 
+import { LedgerStreamMessages, ServerStateMessage, 
          ServerDefinition } from '../domain/websocket-types';
 import { LogService } from './log.service';
-import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
-import * as cscBinaryAPI from 'casinocoin-libjs-binary-codec';
+// import { CasinocoinBinaryCodec, CasinocoinKeypairs } from 'casinocoin-libjs';
 import { LokiKey, LokiAccount, LokiTransaction, LokiTxStatus } from '../domain/lokijs';
 import { AppConstants } from '../domain/app-constants';
 import { CasinocoinTxObject, PrepareTxPayment } from '../domain/csc-types';
 import { CSCUtil } from '../domain/csc-util';
 import { NotificationService } from './notification.service';
+import { ElectronService } from './electron.service';
 import Big from 'big.js';
 
 const crypto = require('crypto');
@@ -48,7 +48,8 @@ export class CasinocoinService implements OnDestroy {
                 private walletService: WalletService,
                 private notificationService: NotificationService,
                 private decimalPipe: DecimalPipe,
-                private localStorageService: LocalStorageService ) {
+                private localStorageService: LocalStorageService,
+                private electron: ElectronService ) {
         logger.debug("### INIT  CasinocoinService ###");
         // Initialize server state
         this.initServerState();
@@ -500,15 +501,6 @@ export class CasinocoinService implements OnDestroy {
         this.sendCommand({id: "ping",command: "ping"});
     }
 
-    keepAlive() {
-        // start keepalive after 5 seconds and then repeat every 10 seconds
-        let timer = Observable.timer(5000,10000);
-        timer.subscribe( t => {
-            this.logger.debug("### KeepAlive Ticks: " + t);
-            this.pingServer();
-        });
-    }
-
     getServerState() {
         this.sendCommand({id: "server_state", command: "server_state"});
     }
@@ -589,11 +581,11 @@ export class CasinocoinService implements OnDestroy {
             secret: "", 
             encrypted: false
         };
-        newKeyPair.secret = cscKeyAPI.generateSeed();
-        const keypair = cscKeyAPI.deriveKeypair(newKeyPair.secret);
+        newKeyPair.secret = this.electron.remote.getGlobal("vars").cscKeypairs.generateSeed();
+        const keypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(newKeyPair.secret);
         newKeyPair.privateKey = keypair.privateKey;
         newKeyPair.publicKey = keypair.publicKey;
-        newKeyPair.accountID = cscKeyAPI.deriveAddress(keypair.publicKey);
+        newKeyPair.accountID = this.electron.remote.getGlobal("vars").cscKeypairs.deriveAddress(keypair.publicKey);
         return newKeyPair;
     }
 
@@ -666,10 +658,10 @@ export class CasinocoinService implements OnDestroy {
             // set the linked public key
             tx.SigningPubKey = accountKey.publicKey;
             // encode tx
-            let encodedTx = cscBinaryAPI.encodeForSigning(tx);
+            let encodedTx = this.electron.remote.getGlobal("vars").cscBinaryCodec.encodeForSigning(tx);
             // sign transaction
-            tx.TxnSignature = cscKeyAPI.sign(encodedTx, privateKey);
-            return cscBinaryAPI.encode(tx);   
+            tx.TxnSignature = this.electron.remote.getGlobal("vars").cscKeypairs.sign(encodedTx, privateKey);
+            return this.electron.remote.getGlobal("vars").cscBinaryCodec.encode(tx);   
         } else {
             // something went wrong, probably a wrong password
             return AppConstants.KEY_ERRORED;

@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { Logger } from "angular2-logger/core";

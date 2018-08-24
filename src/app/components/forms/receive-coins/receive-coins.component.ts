@@ -7,8 +7,11 @@ import { WalletService } from '../../../providers/wallet.service';
 import { LogService } from '../../../providers/log.service';
 import { AppConstants } from '../../../domain/app-constants';
 import { ElectronService } from '../../../providers/electron.service';
-import { SelectItem, MenuItem } from 'primeng/primeng';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
+import { DatePipe } from '@angular/common';
+
+const path = require('path');
+const fs = require('fs');
 
 @Component({
   selector: 'app-receive-coins',
@@ -20,9 +23,11 @@ export class ReceiveCoinsComponent implements OnInit {
   @LocalStorage() public availableWallets: Array<Object>;
   @SessionStorage() public currentWallet: string = "";
 
+  create_icon: string = "icon icon-save";
   accounts: Array<LokiAccount> = [];
   showCreateAccountDialog: boolean = false;
   walletPassword: string = "";
+  error_message: string = "";
   accountLabel: string = "";
   showDialogFooter: boolean = false;
   errorMessage: string = "";
@@ -33,10 +38,12 @@ export class ReceiveCoinsComponent implements OnInit {
   sendAmount:string;
   destinationTag: number;
   label: string;
+  privateKeyExportLocation: string = "";
 
   constructor(private logger: LogService,
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
+              private datePipe: DatePipe,
               private electronService: ElectronService) { 
           this.logger.debug("### INIT ReceiveCoins ###");
   }
@@ -137,6 +144,7 @@ export class ReceiveCoinsComponent implements OnInit {
     this.showDialogFooter = false;
     this.accountLabel = "";
     this.walletPassword = "";
+    this.create_icon = "icon icon-save";
     this.showCreateAccountDialog = true;
   }
 
@@ -165,6 +173,7 @@ export class ReceiveCoinsComponent implements OnInit {
       this.showDialogFooter = true;
       this.walletPassword = "";
     } else {
+      this.create_icon = "fa fa-refresh fa-spin";
       // generate new key pair offline
       let newKeyPair:LokiKey = this.casinocoinService.generateNewKeyPair();
       let accountLabel = "";
@@ -190,7 +199,9 @@ export class ReceiveCoinsComponent implements OnInit {
             // refresh account list
             this.accounts = this.walletService.getAllAccounts();
             // hide dialog
+            this.create_icon = "icon icon-save";
             this.showCreateAccountDialog = false;
+            this.selectPrivateKeysExportLocation();
           }
         });
       }
@@ -218,4 +229,36 @@ export class ReceiveCoinsComponent implements OnInit {
     }
     this.cscReceiveURI = CSCUtil.generateCSCQRCodeURI(uriObject);
   }
+
+  selectPrivateKeysExportLocation() {
+    this.logger.debug("### selectPrivateKeysExportLocation()");
+    // first check the password
+    this.logger.debug('Open File Dialog: ' + this.electronService.remote.app.getPath("documents"));
+    this.electronService.remote.dialog.showOpenDialog(
+        { title: 'Private Key Export Location',
+          defaultPath: this.electronService.remote.app.getPath("documents"), 
+          properties: ['openDirectory']}, (result) => {
+          this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
+          if(result && result.length>0) {
+            this.privateKeyExportLocation = result[0];
+            // get all decrypted private keys
+            let allPrivateKeys = this.walletService.decryptAllKeys(this.walletPassword);
+            // create a filename
+            let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss-") + this.currentWallet + '.keys';
+            let keyFilePath = path.join(result[0], filename);
+            // Write the JSON array to the file 
+            fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
+              if(err){
+                this.electronService.remote.dialog.showErrorBox("Error saving private keys", "An error occurred writing your private keys to a file: " + err.message);
+              }
+              this.electronService.remote.dialog.showMessageBox(
+                { message: "Your private keys have been saved to a file in the chosen directory. Make sure you put it in a safe place as it contains your decrypted private keys!", 
+                  buttons: ["OK"] 
+                });
+            });
+          }
+        }
+    );
+  }
+
 }

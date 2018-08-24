@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Validators,FormControl,FormGroup,FormBuilder } from '@angular/forms';
-import { InputText } from 'primeng/primeng';
 import { LogService } from '../../../providers/log.service';
 import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
@@ -10,11 +9,10 @@ import { ElectronService } from '../../../providers/electron.service';
 import { ValidatorService } from '../../../providers/validator.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { AppConstants } from '../../../domain/app-constants';
+import * as bigInt from 'big-integer';
 import Big from 'big.js';
-import { CasinocoinTxObject, PrepareTxPayment } from 'app/domain/csc-types';
-import { AppComponent } from 'app/app.component';
+import { PrepareTxPayment } from '../../../domain/csc-types';
 import { CSCAmountPipe } from '../../../app-pipes.module';
-import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-send-coins',
@@ -236,7 +234,7 @@ export class SendCoinsComponent implements OnInit {
             description: this.description
           };
         if(this.destinationTag){
-          preparePayment.destinationTag = this.destinationTag;
+          preparePayment.destinationTag = bigInt(this.destinationTag);
         }
         if(this.invoiceID && this.invoiceID.length > 0){
           preparePayment.invoiceID = CSCUtil.encodeInvoiceID(this.invoiceID);
@@ -354,7 +352,7 @@ export class SendCoinsComponent implements OnInit {
     if( CSCUtil.validateAccountID(this.recipient) && this.amount){
       if(this.recipient == this.selectedAccount){
         this.isSendValid = false;
-      } else if (new Big(CSCUtil.cscToDrops(this.totalSend)) > 0) {
+      } else if (new Big(CSCUtil.cscToDrops(this.amount)) >= 1) {
          this.isSendValid = true;
       } else {
         this.isSendValid = false;

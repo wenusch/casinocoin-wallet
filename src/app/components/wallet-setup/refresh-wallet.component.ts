@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { WalletService } from '../../providers/wallet.service';
 import { CasinocoinService } from '../../providers/casinocoin.service';
-import { LokiAddress, LokiTransaction, LokiAccount } from '../../domain/lokijs';
-import * as LokiTypes from '../../domain/lokijs';
+import { LokiTransaction, LokiAccount } from '../../domain/lokijs';
 import { AppConstants } from '../../domain/app-constants';
 
 @Component({

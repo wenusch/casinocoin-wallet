@@ -8,7 +8,7 @@ import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron";
 import { ElectronService } from '../../../providers/electron.service';
 import { SelectItem, MenuItem } from 'primeng/primeng';
 import { CSCUtil } from '../../../domain/csc-util';
-import * as keypairs from 'casinocoin-libjs-keypairs';
+// import { CasinocoinKeypairs as keypairs } from 'casinocoin-libjs';
 import { QRCodeModule } from 'angular2-qrcode';
 
 import { WindowRef } from './WindowRef';

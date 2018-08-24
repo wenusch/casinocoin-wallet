@@ -1,4 +1,4 @@
-<p-dialog [visible]="true" [width]="600" [height]="400" [closable]="false" [modal]="true">
+<p-dialog [visible]="dialog_visible" [width]="600" [height]="400" [(closable)]="dialog_closeable" [modal]="true" (onHide)="onHideSetup()">
     <p-header>
         <i class="icon csc-dialog-icon icon-chip"></i>
         CasinoCoin Wallet Setup
@@ -18,13 +18,12 @@
         <setup-step6 [hidden]="activeIndex != 6" name="step6"
                      [(walletCreated)]="walletCreated"
                      [(accountCreated)]="accountCreated"
-                     [(keysEncrypted)]="keysEncrypted"
-                     [(connectedToNetwork)]="connectedToNetwork"></setup-step6>
+                     [(keysEncrypted)]="keysEncrypted"></setup-step6>
     </div>
     <div style="text-align: right;">
         <!-- Cancel Setup -->
         <button pButton type="button" (click)="cancelSetup()" icon="fa-ban" iconPos="right" label="Cancel" 
-            *ngIf="enableCancelCreation && (activeIndex <= 5 || ((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted && connectedToNetwork))))"
+            *ngIf="enableCancelCreation && (activeIndex <= 5 || ((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted))))"
             style="width: 115px;" #cancelButton></button>
 
         <!-- Previous Step -->
@@ -40,7 +39,7 @@
         <!-- Finish Setup -->
         <button pButton type="button" (click)="finishSetup()" icon="fa-check" label="Finish" iconPos="right"
                 *ngIf="activeIndex == maxActiveIndex" style="width: 115px;"
-                [disabled]="((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted && connectedToNetwork)))" #finishButton></button>
+                [disabled]="((activeIndex == 6) && (!(walletCreated && accountCreated && keysEncrypted)))" #finishButton></button>
     </div>
     <p-footer style="text-align: center">
         <p-steps [model]="steps" styleClass="steps-custom" [activeIndex]="activeIndex-1"></p-steps>

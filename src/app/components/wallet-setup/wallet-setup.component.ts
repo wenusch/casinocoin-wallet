@@ -13,9 +13,9 @@ import { UUID } from 'angular2-uuid';
 import { WalletService } from '../../providers/wallet.service';
 import { CasinocoinService } from '../../providers/casinocoin.service';
 import { WebsocketService } from '../../providers/websocket.service';
-import { SetupStep1Component } from './step1-component';
-import { CSCCrypto } from 'app/domain/csc-crypto';
+import { CSCCrypto } from '../../domain/csc-crypto';
 import { setTimeout } from 'timers';
+import { DatePipe } from '@angular/common';
 
 let path = require('path');
 
@@ -68,7 +68,10 @@ export class WalletSetupComponent implements OnInit {
   walletCreated: boolean = false;
   accountCreated:boolean = false;
   keysEncrypted:boolean = false;
-  connectedToNetwork: boolean = false;
+  // connectedToNetwork: boolean = false;
+
+  dialog_visible: boolean = true;
+  dialog_closeable: boolean = true;
 
   private walletHash: string;
 
@@ -89,7 +92,8 @@ export class WalletSetupComponent implements OnInit {
                private sessionStorageService: SessionStorageService,
                private walletService: WalletService,
                private casinocoinService: CasinocoinService,
-               private websocketService: WebsocketService ) { }
+               private websocketService: WebsocketService,
+               private datePipe: DatePipe ) { }
 
   ngOnInit() {
     this.logger.debug("### WalletSetup INIT ###")
@@ -270,6 +274,7 @@ export class WalletSetupComponent implements OnInit {
     // toggle to step 4
     this.logger.debug("Wallet Location: " + this.walletLocation);
     this.logger.debug("### WalletSetup - Create Wallet");
+    this.dialog_closeable = false;
     // generate wallet UUID
     this.walletUUID = UUID.UUID();
     // get environment 
@@ -313,31 +318,9 @@ export class WalletSetupComponent implements OnInit {
               this.keysEncrypted = true;
             }
           });
-          this.logger.debug("### WalletSetup - Find Server to connect to");
-          let serverFound = false;
-          this.websocketService.findBestServer(!this.walletTestNetwork).subscribe( result => {
-            this.logger.debug("### WalletSetup - findBestServer Result: " + result);
-            if(result && !serverFound){
-              serverFound = true;
-              this.connectedToNetwork = true;
-              setTimeout( ()=>{ this.enableFinishCreation = true}, 2500);
-              // // server found to connect to
-              // this.logger.debug("### WalletSetup - Connect to Network");
-              // // connect and subscribe to Casinocoin Service messages
-              // this.casinocoinService.connect().subscribe((message: any) => {
-              //   this.logger.debug("### WalletSetup - Connect Message: " + message);
-              //   if(message == AppConstants.KEY_CONNECTED){
-              //     this.connectedToNetwork = true;
-              //     this.enableFinishCreation = true;
-              //     // the websocket has a queued subject so send out the messages
-              //     this.casinocoinService.getServerState();
-              //     this.casinocoinService.subscribeToLedgerStream();
-              //     this.casinocoinService.subscribeToAccountsStream([walletAccount.accountID]);
-              //   }
-                
-              // });
-            }
-          });
+          this.enableFinishCreation = true
+          // backup private keys
+          this.exportPrivateKeys();
         }
       }
     });
@@ -461,4 +444,33 @@ export class WalletSetupComponent implements OnInit {
     // });
   }
 
+  onHideSetup(){
+    this.logger.debug("### Setup -> Quit")
+    // quit the wallet
+    this.dialog_visible = false;
+    this.electron.remote.getGlobal("vars").exitFromRenderer = true;
+    this.electron.remote.getGlobal("vars").exitFromLogin = true;
+    this.electron.remote.getCurrentWindow.call( close() );
+  }
+
+  exportPrivateKeys() {
+    this.logger.debug("### exportPrivateKeys()");
+    const path = require('path');
+    const fs = require('fs');
+    // get all decrypted private keys
+    let allPrivateKeys = this.walletService.decryptAllKeys(this.walletPassword);
+    // create a filename
+    let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss-") + this.walletUUID + '.keys';
+    let keyFilePath = path.join(this.electron.remote.app.getPath("documents"), filename);
+    // Write the JSON array to the file 
+    fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
+      if(err){
+        this.logger.debug("Error saving private keys to a file: " + err.message);
+      }
+      this.electron.remote.dialog.showMessageBox(
+        { message: "Your private keys have been saved to: " + keyFilePath + ". Make sure you put it in a safe place as it contains your decrypted private keys!", 
+          buttons: ["OK"] 
+        });
+    });
+  }
 }

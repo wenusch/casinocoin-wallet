@@ -1,7 +1,7 @@
 <div class="container">
     <div class="home-sidenav">
         <mat-sidenav-container class="home-sidenav-container">
-            <mat-sidenav mode="side" opened="true">
+            <mat-sidenav mode="side" opened="true" disableClose="true">
                 <div class="app-nav">
                     <img src="../../../assets/brand/casinocoin-logo.png" alt="CasinoCoin" class="csc-logo" />
                     <div class="ui-g menu-balance">
@@ -205,7 +205,7 @@
 </p-dialog>
 
 <p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="225" [closable]="true" [modal]="true" appendTo="body">
-<p-header><span><i class="icon csc-dialog-icon icon-chip"></i>CasinoCoin Wallet Password</span></p-header>
+<p-header><span><i class="icon csc-dialog-icon icon-chip"></i>{{passwordDialogHeader}}</span></p-header>
 <div class="ui-g ui-fluid">
     <div class="ui-g-1"></div>
     <div class="ui-g-10">

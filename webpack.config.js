@@ -12,8 +12,8 @@ const { GlobCopyWebpackPlugin, BaseHrefWebpackPlugin, InsertConcatAssetsWebpackP
 const { CommonsChunkPlugin, UglifyJsPlugin } = require('webpack').optimize;
 
 // import {AngularCompilerPlugin} from '@ngtools/webpack';
-const { AotPlugin } = require('@ngtools/webpack');
-// const { AngularCompilerPlugin } = require('@ngtools/webpack');
+// const { AotPlugin } = require('@ngtools/webpack');
+const { AngularCompilerPlugin } = require('@ngtools/webpack');
 
 const nodeModules = path.join(process.cwd(), 'node_modules');
 const entryPoints = ["inline", "polyfills", "sw-register", "styles", "vendor", "main"];
@@ -168,20 +168,23 @@ if(scripts.length > 0){
       "hashDigestLength": 4
     }));
 
-    // plugins.push(new AngularCompilerPlugin({
-    //   "tsConfigPath": "tsconfig.json",
-    //   "entryModule": "src/app/app.module#AppModule",
-    //   "sourceMap": true
-    // }));
-
-    plugins.push(new AotPlugin({
-      "mainPath": "main.ts",
+    plugins.push(new AngularCompilerPlugin({
+      "tsConfigPath": "tsconfig.json",
+      "entryModule": "src/app/app.module#AppModule",
+      "sourceMap": true,
       "hostReplacementPaths": {
         "environments/index.ts": "environments/index.prod.ts"
-      },
-      "exclude": [],
-      "tsConfigPath": "src/tsconfig.app.json"
+      }
     }));
+
+    // plugins.push(new AotPlugin({
+    //   "mainPath": "main.ts",
+    //   "hostReplacementPaths": {
+    //     "environments/index.ts": "environments/index.prod.ts"
+    //   },
+    //   "exclude": [],
+    //   "tsConfigPath": "src/tsconfig.app.json"
+    // }));
 
     // plugins.push(new UglifyJsPlugin({
     //   "mangle": {
@@ -195,20 +198,23 @@ if(scripts.length > 0){
     // }));
 
   } else {
-    // plugins.push( new AngularCompilerPlugin({
-    //   tsConfigPath: 'src/tsconfig.app.json',
-    //   entryModule: 'src/app/app.module.ts#AppModule',
-    //   sourceMap: true
-    // }));
-    plugins.push(new AotPlugin({
-      "mainPath": "main.ts",
+    plugins.push(new AngularCompilerPlugin({
+      "tsConfigPath": "tsconfig.json",
+      "entryModule": "src/app/app.module#AppModule",
+      "sourceMap": true,
       "hostReplacementPaths": {
         "environments/index.ts": "environments/index.ts"
-      },
-      "exclude": [],
-      "tsConfigPath": "src/tsconfig.app.json",
-      "skipCodeGeneration": true
+      }
     }));
+    // plugins.push(new AotPlugin({
+    //   "mainPath": "main.ts",
+    //   "hostReplacementPaths": {
+    //     "environments/index.ts": "environments/index.ts"
+    //   },
+    //   "exclude": [],
+    //   "tsConfigPath": "src/tsconfig.app.json",
+    //   "skipCodeGeneration": true
+    // }));
   }
 
   return plugins;
@@ -279,10 +285,8 @@ module.exports = {
         "test": /\.(js|ts)$/,
         "loader": "source-map-loader",
         "exclude": [
-          /\/node_modules\//,
-          path.join(__dirname, 'node_modules', '@angular/compiler'),
-          path.join(__dirname, 'node_modules', 'angular2-uuid'),
-          path.join(__dirname, 'node_modules', 'primeng')
+          path.join(process.cwd(), 'node_modules'),
+          /\.ngfactory\.js$/,/\.ngstyle\.js$/
         ]
       },
       {
@@ -388,8 +392,8 @@ module.exports = {
         })
       },
       {
-        test: /\.ts$/,
-        "loader": "@ngtools/webpack"
+        test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
+        loader: "@ngtools/webpack"
       }
     ]
   },

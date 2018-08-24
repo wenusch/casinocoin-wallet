@@ -2,8 +2,9 @@ import { Component, OnInit, OnDestroy, trigger, state, animate,
          transition, style, ViewChild, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { LocalStorage, SessionStorage, LocalStorageService, SessionStorageService } from 'ngx-store';
+import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { SessionStorage, LocalStorageService, SessionStorageService } from 'ngx-store';
 import { ElectronService } from '../../providers/electron.service';
 import { LogService } from '../../providers/log.service';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
@@ -19,7 +20,6 @@ import { CSCUtil } from '../../domain/csc-util';
 import { CSCCrypto } from '../../domain/csc-crypto';
 import { LedgerStreamMessages, ServerStateMessage } from '../../domain/websocket-types';
 import { setTimeout } from 'timers';
-import { Subject } from 'rxjs/Subject';
 import { LokiKey } from '../../domain/lokijs';
 import { WalletSettings } from 'app/domain/csc-types';
 import * as LokiTypes from '../../domain/lokijs';
@@ -67,7 +67,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showSettingsDialog:boolean = false;
   showServerInfoDialog:boolean = false;
   showPasswordDialog:boolean = false;
-  showPasswordCallback;
+  showPasswordCallback:any;
 
   walletSettings: WalletSettings = {showNotifications: true, fiatCurrency: 'USD'};
   fiatCurrencies: SelectItem[] = [];
@@ -119,6 +119,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   footer_visible: boolean = false;
   error_message: string = "";
+  passwordDialogHeader: string = "CasinoCoin Wallet Password";
 
   backupPath: string;
   lastMenuEvent: string = "";
@@ -175,6 +176,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit() {
     this.logger.debug("### HOME ngOnInit() - currentWallet: " + this.currentWallet);
+
+    // PublicKey: 02C858DEE69551D61F1A1A7C75026CAFF023630FA9D1291B73EECF9E4116806D29
+    // AccountID: cPn1GuLfqDFx5rn9HgvQhVqCC7qkUCdpqD
+    // Secret:    shznd9L6s5UL1drRDSnBrykjx156d
+    let signResult = this.electron.remote.getGlobal("vars").cscAPI.signMessage('Test Message', 'shznd9L6s5UL1drRDSnBrykjx156d');
+    this.logger.debug("### HOME Signature: " + JSON.stringify(signResult));
+    let verifyResult = this.electron.remote.getGlobal("vars").cscAPI.verifyMessage('Test Message', signResult.signature, signResult.public_key);
+    this.logger.debug("### HOME Verify Result: " + verifyResult);
+
     // get the complete wallet object
     let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
     let walletIndex = availableWallets.findIndex( item => item['walletUUID'] == this.currentWallet);
@@ -245,7 +255,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
-      { label: 'Close Wallet', 
+      { label: 'Change Wallet', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'close-wallet');
         }, enabled: true
@@ -482,10 +492,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showPasswordCallback();
   }
 
-  initPasswordCheck(){
+  initPasswordCheck(label){
     this.walletPassword = "";
     this.error_message = "";
     this.footer_visible = false;
+    this.passwordDialogHeader = label;
   }
 
   onPrivateKeyImport() {
@@ -524,7 +535,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onPrivateKeysExport() {
     // show password dialog
-    this.initPasswordCheck();
+    this.initPasswordCheck("Export Private Keys");
     this.showPasswordCallback = this.selectPrivateKeysExportLocation;
     this.showPasswordDialog = true;
   }
@@ -654,7 +665,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
           if(result && result.length > 0) {
             this.importFileObject = path.parse(result[0]);
-            this.walletPassword = "";
+            this.initPasswordCheck("Add Wallet");
             this.showPasswordCallback = this.doWalletImport;
             this.showPasswordDialog = true;
             return;
@@ -679,7 +690,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     if(this.marketService.coinMarketInfo != null && this.marketService.coinMarketInfo.price_fiat !== undefined){
       this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice + " Fiat: " + this.marketService.coinMarketInfo.price_fiat);
       let fiatValue = balanceCSC.times(new Big(this.marketService.coinMarketInfo.price_fiat)).toString();
-      this.fiat_balance = this.currencyPipe.transform(fiatValue, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-2");
+      this.fiat_balance = this.currencyPipe.transform(fiatValue, this.marketService.coinMarketInfo.selected_fiat, "symbol", "1.2-2");
     }
   }
 

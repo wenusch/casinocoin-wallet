@@ -5,17 +5,26 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 
+// import casinocoin libraries from electron
+import { CasinocoinAPI, CasinocoinKeypairs, CasinocoinBinaryCodec } from 'casinocoin-libjs';
+
 // this is required to check if the app is running in development mode. 
 import * as isDev from 'electron-is-dev';
 import * as notifier from 'electron-notification-desktop';
 
-let win, serve;
+let win, serve, debug;
 const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
+debug = args.some(val => val === '--debug');
 const version = app.getVersion();
 const platform = os.platform() + '_' + os.arch();
 const globalTS:any = global;
 globalTS.vars = {};
+
+// put casinocoin libs into globals
+globalTS.vars.cscKeypairs = CasinocoinKeypairs;
+globalTS.vars.cscBinaryCodec = CasinocoinBinaryCodec;
+globalTS.vars.cscAPI = new CasinocoinAPI();
 
 // set app id
 app.setAppUserModelId("org.casinocoin.desktop.wallet");
@@ -105,7 +114,7 @@ app.setPath('userData', defaultCSCPath);
 
 // configure loggging 
 const winston = require('winston');
-if(serve){
+if(serve || debug){
   globalTS.loglevel = 'debug';
 } else {
   globalTS.loglevel = 'info';
@@ -178,7 +187,7 @@ function createWindow() {
   });
 
   // Open the DevTools.
-  if (serve) {
+  if (serve || debug) {
     win.webContents.openDevTools();
   }
 
@@ -253,6 +262,7 @@ function createWindow() {
         e.preventDefault();
         if(win != null){
           ipcMain.on('wallet-closed', (event, arg) => {
+            console.log('Saved Before Quit Finished');
             savedBeforeQuit = true;
             win.close();
           });
