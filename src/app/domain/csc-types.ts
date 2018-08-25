@@ -22,8 +22,8 @@ export type CasinocoinTxObject = {
     LastLedgerSequence : number;
     InvoiceID?: string;
     Memos?: Array<CasinocoinMemo>;
-    SourceTag?: BigInteger;
-    DestinationTag?: BigInteger;
+    SourceTag?: number;
+    DestinationTag?: number;
     TxnSignature?: string;
     SigningPubKey?: string;
 }

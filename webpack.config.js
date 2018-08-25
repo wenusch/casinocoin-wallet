@@ -162,19 +162,19 @@ if(scripts.length > 0){
   }));
 
   if (isProd) {
+    console.log('### Build Production Mode ###');
     plugins.push(new HashedModuleIdsPlugin({
       "hashFunction": "md5",
       "hashDigest": "base64",
       "hashDigestLength": 4
     }));
 
+    // plugins.push(new webpack.NormalModuleReplacementPlugin(/\.\.\/src\/environments\/index/, './src/environments/index.prod'));
     plugins.push(new AngularCompilerPlugin({
+      "mainPath": "main.prod.ts",
       "tsConfigPath": "tsconfig.json",
       "entryModule": "src/app/app.module#AppModule",
-      "sourceMap": true,
-      "hostReplacementPaths": {
-        "environments/index.ts": "environments/index.prod.ts"
-      }
+      "sourceMap": true
     }));
 
     // plugins.push(new AotPlugin({
@@ -198,13 +198,12 @@ if(scripts.length > 0){
     // }));
 
   } else {
+    console.log('### Build Development Mode ###');
     plugins.push(new AngularCompilerPlugin({
+      "mainPath": "main.ts",
       "tsConfigPath": "tsconfig.json",
       "entryModule": "src/app/app.module#AppModule",
-      "sourceMap": true,
-      "hostReplacementPaths": {
-        "environments/index.ts": "environments/index.ts"
-      }
+      "sourceMap": true
     }));
     // plugins.push(new AotPlugin({
     //   "mainPath": "main.ts",
@@ -266,7 +265,7 @@ module.exports = {
   },
   "entry": {
     "main": [
-      "./src/main.ts"
+      (isProd ? "./src/main.prod.ts" : "./src/main.ts")
     ],
     "polyfills": [
       "./src/polyfills.ts"

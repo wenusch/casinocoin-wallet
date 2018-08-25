@@ -638,10 +638,10 @@ export class CasinocoinService implements OnDestroy {
             txJSON.InvoiceID = input.invoiceID;
         }
         if (input.sourceTag !== undefined) {
-            txJSON.SourceTag = input.sourceTag;
+            txJSON.SourceTag = input.sourceTag.valueOf();
         }
         if (input.destinationTag !== undefined) {
-            txJSON.DestinationTag = input.destinationTag;
+            txJSON.DestinationTag = input.destinationTag.valueOf();
         }
         if (input.description !== undefined && input.description.length > 0) {
             txJSON.Memos = [ CSCUtil.encodeMemo({ memo: { memoData: input.description, memoFormat: "plain/text"}})];
