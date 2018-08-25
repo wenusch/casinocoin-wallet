@@ -27,6 +27,7 @@
       "jasmine"
     ],
     "typeRoots": [
+      "src/types",
       "node_modules/@types/"
     ],
     "lib": [

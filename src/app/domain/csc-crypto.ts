@@ -1,4 +1,12 @@
-import * as crypto  from 'crypto';
+import { CipherGCM,
+         DecipherGCM,
+         CipherGCMTypes, 
+         CipherGCMOptions,
+         createHash, 
+         randomBytes, 
+         pbkdf2Sync, 
+         createCipheriv, 
+         createDecipheriv }  from 'crypto';
 
 export class CSCCrypto {
 
@@ -6,7 +14,7 @@ export class CSCCrypto {
   private IV_LENGTH = 16; // For AES, this is always 16
   private SALT_LENGTH = 64;
 
-  private algorithm = "aes-256-gcm";
+  private algorithm:CipherGCMTypes = "aes-256-gcm";
   private pbkdf2KeyLength = 32;
   private pbkdf2Digest = "sha512";
   private pbkdf2Rounds = 10000;
@@ -19,24 +27,24 @@ export class CSCCrypto {
     if(Array.isArray(password)){
       // use mnemonic array
       let mnemonicString = password.join();
-      let mnemonicHash = crypto.createHash("sha512");
+      let mnemonicHash = createHash("sha512");
       mnemonicHash.update(mnemonicString);
       this.passwordKey = mnemonicHash.digest("base64");
     } else {
-      this.passwordKey = crypto.createHash('sha256').update(password).digest('hex');
+      this.passwordKey = createHash('sha256').update(password).digest('hex');
     }
     
   }
 
   encrypt(inputValue:string) {
     // Generates cryptographically strong pseudo-random data. The size argument is a number indicating the number of bytes to generate.
-    let iv:Buffer = new Buffer(crypto.randomBytes(this.IV_LENGTH));
-    let salt:Buffer = new Buffer(crypto.randomBytes(this.SALT_LENGTH));
+    let iv:Buffer = new Buffer(randomBytes(this.IV_LENGTH));
+    let salt:Buffer = new Buffer(randomBytes(this.SALT_LENGTH));
     // encrypt password
-    let key:Buffer = new Buffer(crypto.pbkdf2Sync(this.passwordKey, salt, this.pbkdf2Rounds, this.pbkdf2KeyLength, this.pbkdf2Digest));
-    let cipher = crypto.createCipheriv(this.algorithm, key, iv);
-    let encryptedData = Buffer.concat([new Buffer(cipher.update(inputValue, 'utf8')), new Buffer(cipher.final('utf8'))]);
-    let authTag:Buffer = new Buffer(cipher.getAuthTag());
+    let key:Buffer = new Buffer(pbkdf2Sync(this.passwordKey, salt, this.pbkdf2Rounds, this.pbkdf2KeyLength, this.pbkdf2Digest));
+    let gcmCipher:CipherGCM = createCipheriv(this.algorithm, key, iv, {});
+    let encryptedData = Buffer.concat([new Buffer(gcmCipher.update(inputValue, 'utf8')), new Buffer(gcmCipher.final('utf8'))]);
+    let authTag:Buffer = new Buffer(gcmCipher.getAuthTag());
     return this.urlsafe_escape(Buffer.concat([salt, iv, authTag, encryptedData]).toString('base64'));
    }
    
@@ -53,12 +61,12 @@ export class CSCCrypto {
     let data = rawData.slice(this.SALT_LENGTH + this.IV_LENGTH + 16);
 
     // decrypt password
-    let key = crypto.pbkdf2Sync(this.passwordKey, salt, this.pbkdf2Rounds, this.pbkdf2KeyLength, this.pbkdf2Digest);
-    let decipher = crypto.createDecipheriv(this.algorithm, key, iv);
-    decipher.setAuthTag(authTag);
+    let key = pbkdf2Sync(this.passwordKey, salt, this.pbkdf2Rounds, this.pbkdf2KeyLength, this.pbkdf2Digest);
+    let gcmDecipher:DecipherGCM = createDecipheriv(this.algorithm, key, iv, {});
+    gcmDecipher.setAuthTag(authTag);
 
-    var plainText = decipher.update(data, 'binary', 'utf8');
-    plainText += decipher.final('utf8');
+    var plainText = gcmDecipher.update(data, 'binary', 'utf8');
+    plainText += gcmDecipher.final('utf8');
 
     return plainText;
   }
