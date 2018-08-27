@@ -152,7 +152,7 @@ export class WalletSetupComponent implements OnInit {
           command: (event: any) => {
               this.activeIndex = 4;
               this.msgs.length = 0;
-              this.msgs.push({severity:'info', summary:'Recovery Passphrase', detail: event.item.label});
+              this.msgs.push({severity:'info', summary:'Password Recovery', detail: event.item.label});
           }
       },
       {

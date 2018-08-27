@@ -24,6 +24,7 @@ import { LokiKey } from '../../domain/lokijs';
 import { WalletSettings } from 'app/domain/csc-types';
 import * as LokiTypes from '../../domain/lokijs';
 import Big from 'big.js';
+import { NotificationService } from '../../providers/notification.service';
 
 const path = require('path');
 const fs = require('fs');
@@ -52,7 +53,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('contextMenu') contextMenu: ContextMenu;
   @ViewChild('fiatCurrenciesDrowdown') fiatCurrenciesDrowdown: Dropdown;
-
+  @ViewChild('accountDropdown') accountDropdown: Dropdown;
 
   //show_menu: string = 'shown';
   show_menu: string = 'small';
@@ -124,7 +125,19 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   backupPath: string;
   lastMenuEvent: string = "";
   navigationSucceeded: boolean = false;
-  showProgress: boolean = false;
+  
+  showSignMessageDialog:boolean = false;
+  showVerifyMessageDialog:boolean = false;
+  accounts: SelectItem[] = [];
+  selectedAccount: string;
+  msgToSign: string;
+  signPubKey: string;
+  signSignature: string;
+  msgToVerify: string;
+  verifyPubKey: string;
+  verifySignature: string;
+  verificationFinished: boolean = false;
+  verificationResult: boolean = false;
 
   constructor( private logger: LogService, 
                private router: Router,
@@ -135,6 +148,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
                private sessionStorageService: SessionStorageService,
                private marketService: MarketService,
                private datePipe: DatePipe,
+               private notificationService: NotificationService,
                private currencyPipe: CurrencyPipe ) {
     this.logger.debug("### INIT HOME ###");
     this.applicationVersion = this.electron.remote.app.getVersion();
@@ -197,16 +211,23 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     });
     // define Tools context menu
     let tools_context_menu_template = [
-      { label: 'Import Private Keys', 
-        click(menuItem, browserWindow, event) {
-          browserWindow.webContents.send('context-menu-event', 'import-priv-key');
-        }
-      },  
-      { label: 'Export Private Keys', 
-        click(menuItem, browserWindow, event) { 
-          browserWindow.webContents.send('context-menu-event', 'export-priv-keys');
-        }
-      },  
+      { label: 'Private Keys', submenu: [
+        { label: 'Import Private Key File', 
+          click(menuItem, browserWindow, event) {
+            browserWindow.webContents.send('context-menu-event', 'import-priv-key-file');
+          }
+        },
+        { label: 'Export Private Key File', 
+          click(menuItem, browserWindow, event) { 
+            browserWindow.webContents.send('context-menu-event', 'export-priv-key-file');
+          }
+        },
+        { label: 'Import Private Key', 
+          click(menuItem, browserWindow, event) {
+            browserWindow.webContents.send('context-menu-event', 'import-priv-key');
+          }
+        },  
+      ]}  
       // { label: 'Import Existing Wallet', 
       //   click(menuItem, browserWindow, event) { 
       //     browserWindow.webContents.send('context-menu-event', 'add-wallet');
@@ -214,21 +235,34 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       // }
     ];
     this.tools_context_menu = this.electron.remote.Menu.buildFromTemplate(tools_context_menu_template);
-    this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
-    this.tools_context_menu.append(new this.electron.remote.MenuItem(
+    // paperwallet submenu
+    let paperWalletMenu = { label: 'Paperwallet', submenu: [
       { label: 'Generate Paper Wallet', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'paper-wallet');
         }, enabled: true
-      })
-    );
-    this.tools_context_menu.append(new this.electron.remote.MenuItem(
+      },
       { label: 'Import Paper Wallet', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'import-paper-wallet');
         }, enabled: true
-      })
-    );    
+      }
+    ]};
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(paperWalletMenu));
+    //message signing submenu
+    let messageSigningMenu = { label: 'Message Signing', submenu: [
+      { label: 'Sign Message', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('context-menu-event', 'sign-message');
+        }, enabled: true
+      },
+      { label: 'Verify Message', 
+        click(menuItem, browserWindow, event) { 
+          browserWindow.webContents.send('context-menu-event', 'verify-message');
+        }, enabled: true
+      }
+    ]};
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(messageSigningMenu));
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
       { label: 'Change Password', 
@@ -292,10 +326,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.electron.ipcRenderer.on('context-menu-event', (event, arg) => {
       if(this.navigationSucceeded){
         this.logger.debug("### HOME Menu Event: " + arg);
-        if(arg == 'import-priv-key')
+        if(arg == 'import-priv-key-file')
           this.onPrivateKeyImport();
-        else if(arg == 'export-priv-keys')
+        else if(arg == 'export-priv-key-file')
           this.onPrivateKeysExport();
+        else if(arg == 'import-priv-key')
+          this.onImportPaperWallet();
         else if(arg == 'paper-wallet')
           this.onPaperWallet();
         else if(arg == 'import-paper-wallet')
@@ -316,6 +352,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.onQuit();
         else if(arg == 'refresh-wallet')
           this.onRefreshWallet();
+        else if(arg == 'sign-message')
+          this.onShowSignMessage();
+        else if(arg == 'verify-message')
+          this.onShowVerifyMessage();
         else
           this.logger.debug("### Context menu not implemented: " + arg);
       }
@@ -369,6 +409,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         this.doBalanceUpdate();
         // update transaction count
         this.doTransacionUpdate();
+        // load the account list
+        this.walletService.getAllAccounts().forEach( element => {
+          let accountLabel = element.label + " - " + element.accountID;
+          this.accounts.push({label: accountLabel, value: element.accountID});
+        });
       } else if(result == AppConstants.KEY_INIT && this.currentWallet){
         // wallet is not open but we seem to have a session, not good so redirect to login
         this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
@@ -855,4 +900,58 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     // this.electron.ipcRenderer.sendSync("backup-finished");
   }
 
+  onShowSignMessage(){
+    this.logger.debug("### HOME Sign Message ###");
+    this.resetSigning();
+    this.showSignMessageDialog = true;
+  }
+
+  onShowVerifyMessage(){
+    this.logger.debug("### HOME Verify Message ###");
+    this.resetVerification();
+    this.showVerifyMessageDialog = true;
+  }
+
+  signMessage(){
+    this.logger.debug("### Sign With Account: " + this.selectedAccount);
+    if(!this.walletService.checkWalletPasswordHash(this.walletPassword)){
+      this.notificationService.addMessage({title: 'Message Signing', body: 'Invalid password. Message can not be signed'});
+    } else {
+      let key:LokiKey = this.walletService.getKey(this.selectedAccount);
+      let secret = this.walletService.getDecryptSecret(this.walletPassword, key);
+      this.logger.debug("### Secret: " + secret);
+      let signResult = this.electron.remote.getGlobal("vars").cscAPI.signMessage(this.msgToSign, secret);
+      this.logger.debug("### HOME Sign Result: " + JSON.stringify(signResult));
+      this.signPubKey = signResult.public_key;
+      this.signSignature = signResult.signature;
+    }
+  }
+
+  resetSigning(){
+    this.accountDropdown.resetFilter();
+    this.selectedAccount = null;
+    this.msgToSign = "";
+    this.walletPassword = "";
+    this.signPubKey = "";
+    this.signSignature = "";
+  }
+
+  verifyMessage(){
+    if(this.msgToVerify.length == 0 || this.verifyPubKey.length < 32 || this.verifySignature.length < 128){
+      this.notificationService.addMessage({title: 'Message Verification', body: 'Invalid parameters for message signature verification.'});
+      this.verificationFinished = false;
+    } else {
+      this.verificationResult = this.electron.remote.getGlobal("vars").cscAPI.verifyMessage(this.msgToVerify, this.verifySignature, this.verifyPubKey);
+      this.verificationFinished = true;
+      this.logger.debug("### HOME Verify Result: " + this.verificationResult);
+    }
+  }
+
+  resetVerification(){
+    this.msgToVerify = "";
+    this.verifyPubKey = "";
+    this.verifySignature = "";
+    this.verificationFinished = false;
+    this.verificationResult = false;
+  }
 }

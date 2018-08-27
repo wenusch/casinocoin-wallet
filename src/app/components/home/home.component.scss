@@ -198,3 +198,27 @@ $base-height: 60px;
   overflow: auto;
   height: 90px;
 }
+
+::ng-deep p-dropdown {
+  width: 520px; padding-left: 0px;
+}
+
+::ng-deep .ui-button.sign-button {
+  background-color: $casinocoinGreen;
+  border-color: $casinocoinGreen; 
+}
+
+::ng-deep .ui-button:focus.sign-button, .ui-button:enabled:hover.sign-button {
+  background-color: $casinocoinGreenLighter;
+  border-color: $casinocoinGreenLighter; 
+}
+
+::ng-deep .verify-true {
+  color: $casinocoinGreen;
+  font-size: 150%;
+}
+
+::ng-deep .verify-false {
+  color: $casinocoinRed;
+  font-size: 150%;
+}
