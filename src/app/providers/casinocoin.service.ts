@@ -235,7 +235,7 @@ export class CasinocoinService implements OnDestroy {
                     this.reconnect();
                 }
             } else if(incommingMessage['type'] == 'transaction'){
-                this.logger.debug("### CasinocoinService - Incomming TX: " + JSON.stringify(incommingMessage));
+                this.logger.debug("### CasinocoinService - Incoming TX: " + JSON.stringify(incommingMessage));
                 let msg_tx = incommingMessage['transaction'];
                 if(msg_tx.TransactionType === "Payment"){
                     this.handlePayment(incommingMessage);
@@ -420,7 +420,7 @@ export class CasinocoinService implements OnDestroy {
                         this.getAccountInfo(tx.destination, false);
                         if(notifyUser){
                             this.notificationService.addMessage(
-                                {title: 'Incomming CSC Transaction', 
+                                {title: 'Incoming CSC Transaction', 
                                 body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(tx.amount), "1.2-8") +
                                     ' coins from ' + tx.accountID});
                         }
@@ -743,7 +743,7 @@ export class CasinocoinService implements OnDestroy {
         if(dbTX.direction == AppConstants.KEY_WALLET_TX_IN){
             this.getAccountInfo(dbTX.destination, false);
             this.notificationService.addMessage(
-                {title: 'Incomming CSC Transaction', 
+                {title: 'Incoming CSC Transaction', 
                 body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
                     ' coins from ' + dbTX.accountID});
         } else if(dbTX.direction == AppConstants.KEY_WALLET_TX_OUT){
@@ -804,7 +804,7 @@ export class CasinocoinService implements OnDestroy {
                         // update accounts
                         this.getAccountInfo(dbTX.destination, false);
                         this.notificationService.addMessage(
-                            {title: 'Incomming CRN Fee Transaction', 
+                            {title: 'Incoming CRN Fee Transaction', 
                             body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
                                 ' coins for CRN Ledger Round ' + dbTX.lastLedgerSequence});
                     } else {
