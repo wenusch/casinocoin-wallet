@@ -1,6 +1,6 @@
 import { app, BrowserWindow, screen, 
          autoUpdater, ipcMain, dialog, 
-         Menu, MenuItem, powerMonitor } from 'electron';
+         Menu, MenuItem, powerMonitor, Notification } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -211,16 +211,22 @@ function createWindow() {
 
   //push notification using electron-notification-desktop
   ipcMain.on('push-notification', (event, arg) => { 
-    const notification = notifier.notify(arg.title, {
-      message: arg.body,
-      icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png'),
-      duration: 4
+    const notification = new Notification({
+      title: arg.title,
+      body: arg.body,
+      icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png')
     });
+    notification.show();
+    // const notification = notifier.notify(arg.title, {
+    //   message: arg.body,
+    //   icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png'),
+    //   duration: 4
+    // });
     
-    notification.on('close', function (event) {
-      notification.hide();
-      event.preventDefault();
-    });
+    // notification.on('close', function (event) {
+    //   notification.hide();
+    //   event.preventDefault();
+    // });
   });
 
   ipcMain.on('action', (event, arg) => {

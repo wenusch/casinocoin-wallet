@@ -69,7 +69,7 @@
     "core-js": "2.4.1",
     "electron-is-dev": "^0.3.0",
     "electron-notification-desktop": "0.0.4",
-    "electron-osx-sign": "^0.4.7",
+    "electron-osx-sign": "^0.4.10",
     "electron-squirrel-startup": "^1.0.0",
     "enhanced-resolve": "3.3.0",
     "font-awesome": "^4.7.0",
