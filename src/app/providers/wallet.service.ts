@@ -744,7 +744,7 @@ export class WalletService {
     // return all validated transactions for an account id sorted by ascending ledger index
     return this.transactions.chain().find(
       { $or: [{ accountID: inputAccountID, validated: true}, {destination: inputAccountID, validated: true}]}
-    ).simplesort("inLedger", false).data();
+    ).simplesort("timestamp", true).data();
   }
 
   getAccountTXBalance(inputAccountID: string): string {

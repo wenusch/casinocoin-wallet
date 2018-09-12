@@ -58,6 +58,7 @@ export class WalletSetupComponent implements OnInit {
   walletTestNetwork: boolean;
   disclaimerAccepted: boolean;
   walletLocation: string;
+  backupLocation: string;
   walletPassword: string;
   recoveryMnemonicWords: Array<string>;
   recoveryAccepted:boolean;
@@ -65,9 +66,10 @@ export class WalletSetupComponent implements OnInit {
   walletUUID: string;
   walletAccount: Object;
 
-  walletCreated: boolean = false;
+  walletCreated:boolean = false;
   accountCreated:boolean = false;
   keysEncrypted:boolean = false;
+  keyBackupCompleted:boolean = false;
   // connectedToNetwork: boolean = false;
 
   dialog_visible: boolean = true;
@@ -99,6 +101,7 @@ export class WalletSetupComponent implements OnInit {
     this.logger.debug("### WalletSetup INIT ###")
     let userHome = this.electron.remote.app.getPath("home");
     this.walletLocation = path.join(userHome, '.casinocoin');
+    this.backupLocation = this.electron.remote.app.getPath("documents");
     // check if connect to network -> disconnect first
     if(this.casinocoinService.casinocoinConnectedSubject.getValue()){
       this.logger.debug("### WalletSetup Disconnect from network");
@@ -115,14 +118,6 @@ export class WalletSetupComponent implements OnInit {
 
     this.recoveryMnemonicWords = CSCCrypto.getRandomMnemonic();
 
-    // if(userHome.indexOf(':\\') > 0) {
-    //   this.walletLocation = userHome + '\\' + 'Casinocoin'; 
-    // } else if(userHome.startsWith('/')){
-    //   this.walletLocation = userHome + '/' + 'Casinocoin'; 
-    // } else {
-    //   this.walletLocation = userHome;
-    // }
-    
     this.steps = [{
           label: 'Start',
           command: (event: any) => {
@@ -156,7 +151,7 @@ export class WalletSetupComponent implements OnInit {
           }
       },
       {
-          label: 'Location',
+          label: 'Locations',
           command: (event: any) => {
               this.activeIndex = 5;
               this.msgs.length = 0;
@@ -273,6 +268,7 @@ export class WalletSetupComponent implements OnInit {
   finishStep5() {
     // toggle to step 4
     this.logger.debug("Wallet Location: " + this.walletLocation);
+    this.logger.debug("Backup Location: " + this.backupLocation);
     this.logger.debug("### WalletSetup - Create Wallet");
     this.dialog_closeable = false;
     // generate wallet UUID
@@ -318,9 +314,11 @@ export class WalletSetupComponent implements OnInit {
               this.keysEncrypted = true;
             }
           });
-          this.enableFinishCreation = true
           // backup private keys
           this.exportPrivateKeys();
+          this.keyBackupCompleted = true;
+          // we are done
+          this.enableFinishCreation = true
         }
       }
     });
@@ -351,6 +349,7 @@ export class WalletSetupComponent implements OnInit {
     this.localStorageService.set(AppConstants.KEY_CURRENT_WALLET, this.walletUUID);
     this.localStorageService.set(AppConstants.KEY_AVAILABLE_WALLETS, walletArray);
     this.localStorageService.set(AppConstants.KEY_WALLET_LOCATION, this.walletLocation);
+    this.localStorageService.set(AppConstants.KEY_BACKUP_LOCATION, this.backupLocation);
     this.localStorageService.set(AppConstants.KEY_PRODUCTION_NETWORK, !this.walletTestNetwork);
     this.localStorageService.set(AppConstants.KEY_SETUP_COMPLETED, true);
     this.sessionStorageService.remove(AppConstants.KEY_CREATE_WALLET_RUNNING);
@@ -394,9 +393,14 @@ export class WalletSetupComponent implements OnInit {
   onLocationUpdated(newLocation: string) {
     this.logger.debug("onLocationUpdated: " + newLocation);
     this.walletLocation = newLocation;
-    this.enableFinishLocation = true;
   }
   
+  onBackupLocationUpdated(newLocation: string) {
+    this.logger.debug("onBackupLocationUpdated: " + newLocation);
+    this.backupLocation = newLocation;
+    this.enableFinishLocation = true;
+  }
+
   onNetworkUpdated(testNetwork: boolean) {
     this.logger.debug("onNetworkUpdated: " + testNetwork);
     this.walletTestNetwork = testNetwork;
@@ -461,16 +465,16 @@ export class WalletSetupComponent implements OnInit {
     let allPrivateKeys = this.walletService.decryptAllKeys(this.walletPassword);
     // create a filename
     let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss-") + this.walletUUID + '.keys';
-    let keyFilePath = path.join(this.electron.remote.app.getPath("documents"), filename);
+    let keyFilePath = path.join(this.backupLocation, filename);
     // Write the JSON array to the file 
     fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
       if(err){
         this.logger.debug("Error saving private keys to a file: " + err.message);
       }
-      this.electron.remote.dialog.showMessageBox(
-        { message: "Your private keys have been saved to: " + keyFilePath + ". Make sure you put it in a safe place as it contains your decrypted private keys!", 
-          buttons: ["OK"] 
-        });
+      // this.electron.remote.dialog.showMessageBox(
+      //   { message: "Your private keys have been saved to: " + keyFilePath + ". Make sure you put it in a safe place as it contains your decrypted private keys!", 
+      //     buttons: ["OK"] 
+      //   });
     });
   }
 }

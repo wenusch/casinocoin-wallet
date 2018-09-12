@@ -223,6 +223,13 @@ function createWindow() {
     });
   });
 
+  ipcMain.on('action', (event, arg) => {
+    if(arg === "refresh-balance"){
+      // forward refresh-balance (back) to renderer
+      win.webContents.send('action', 'refresh-balance');
+    }
+  });
+
   // Emitted when the window is closed.
   win.on('close', (e) => {
     // console.log("close - showExitPrompt: " + showExitPrompt + " exitFromLogin: " + globalTS.vars.exitFromLogin + " savedBeforeQuit: " + savedBeforeQuit);

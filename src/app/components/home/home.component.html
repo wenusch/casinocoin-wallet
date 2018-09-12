@@ -274,11 +274,11 @@
             </div>
         </div>
         <div class="ui-g-2 bold-value">Public Key</div>
-        <div class="ui-g-10">
+        <div class="ui-g-10" (contextmenu)="saveCopyValue('signPubKey')">
             <textarea [rows]="2" [cols]="60" style="resize: none;" [ngModel]="signPubKey" pInputTextarea readonly></textarea>
         </div>
         <div class="ui-g-2 bold-value">Signature</div>
-        <div class="ui-g-10">
+        <div class="ui-g-10" (contextmenu)="saveCopyValue('signSignature')">
             <textarea [rows]="3" [cols]="60" style="resize: none;" [ngModel]="signSignature" pInputTextarea readonly></textarea>
         </div>
     </div>

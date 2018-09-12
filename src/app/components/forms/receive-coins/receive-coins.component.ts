@@ -1,12 +1,13 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { LokiAccount, LokiKey, LokiAddress } from '../../../domain/lokijs';
 import { CSCUtil } from '../../../domain/csc-util';
-import { LocalStorage, SessionStorage } from "ngx-store";
+import { LocalStorage, SessionStorage, LocalStorageService } from "ngx-store";
 import { CasinocoinService } from '../../../providers/casinocoin.service';
 import { WalletService } from '../../../providers/wallet.service';
 import { LogService } from '../../../providers/log.service';
 import { AppConstants } from '../../../domain/app-constants';
 import { ElectronService } from '../../../providers/electron.service';
+import { NotificationService, SeverityType } from '../../../providers/notification.service';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
 import { DatePipe } from '@angular/common';
 
@@ -23,6 +24,8 @@ export class ReceiveCoinsComponent implements OnInit {
   @LocalStorage() public availableWallets: Array<Object>;
   @SessionStorage() public currentWallet: string = "";
 
+  @ViewChild('createAccountButton') createAccountButton;
+  
   create_icon: string = "icon icon-save";
   accounts: Array<LokiAccount> = [];
   showCreateAccountDialog: boolean = false;
@@ -38,13 +41,16 @@ export class ReceiveCoinsComponent implements OnInit {
   sendAmount:string;
   destinationTag: number;
   label: string;
+  exportPrivateKeys: boolean = true;
   privateKeyExportLocation: string = "";
 
   constructor(private logger: LogService,
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
               private datePipe: DatePipe,
-              private electronService: ElectronService) { 
+              private electronService: ElectronService,
+              private notificationService: NotificationService,
+              private localStorage: LocalStorageService) { 
           this.logger.debug("### INIT ReceiveCoins ###");
   }
 
@@ -144,6 +150,13 @@ export class ReceiveCoinsComponent implements OnInit {
     this.showDialogFooter = false;
     this.accountLabel = "";
     this.walletPassword = "";
+    let location = this.localStorage.get(AppConstants.KEY_BACKUP_LOCATION);
+    if(location == null){
+      this.privateKeyExportLocation = this.electronService.remote.app.getPath("documents");
+      this.localStorage.set(AppConstants.KEY_BACKUP_LOCATION, this.privateKeyExportLocation);
+    } else {
+      this.privateKeyExportLocation = location;
+    }
     this.create_icon = "icon icon-save";
     this.showCreateAccountDialog = true;
   }
@@ -198,10 +211,25 @@ export class ReceiveCoinsComponent implements OnInit {
             this.logger.debug("### Account Created: " + walletAccount.accountID);
             // refresh account list
             this.accounts = this.walletService.getAllAccounts();
+            if(this.exportPrivateKeys){
+              // get all decrypted private keys
+              let allPrivateKeys = this.walletService.decryptAllKeys(this.walletPassword);
+              // create a filename
+              let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss-") + this.currentWallet + '.keys';
+              let keyFilePath = path.join(this.privateKeyExportLocation, filename);
+              // Write the JSON array to the file 
+              fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
+                if(err){
+                  this.notificationService.addMessage({title: "Error Saving Private Keys", severity: SeverityType.error, body: "An error occurred writing your private keys to a file: " + err.message });
+                }
+                this.notificationService.addMessage({title: "Private Keys Saved", severity: SeverityType.info, body: "Your private keys have been saved successfuly. Make sure you put it in a safe place as it contains your decrypted private keys!" });
+              });
+            }
             // hide dialog
             this.create_icon = "icon icon-save";
+            this.privateKeyExportLocation = "";
+            this.exportPrivateKeys = true;
             this.showCreateAccountDialog = false;
-            this.selectPrivateKeysExportLocation();
           }
         });
       }
@@ -241,24 +269,23 @@ export class ReceiveCoinsComponent implements OnInit {
           this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
           if(result && result.length>0) {
             this.privateKeyExportLocation = result[0];
-            // get all decrypted private keys
-            let allPrivateKeys = this.walletService.decryptAllKeys(this.walletPassword);
-            // create a filename
-            let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss-") + this.currentWallet + '.keys';
-            let keyFilePath = path.join(result[0], filename);
-            // Write the JSON array to the file 
-            fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
-              if(err){
-                this.electronService.remote.dialog.showErrorBox("Error saving private keys", "An error occurred writing your private keys to a file: " + err.message);
-              }
-              this.electronService.remote.dialog.showMessageBox(
-                { message: "Your private keys have been saved to a file in the chosen directory. Make sure you put it in a safe place as it contains your decrypted private keys!", 
-                  buttons: ["OK"] 
-                });
-            });
+            this.createAccountButton.nativeElement.focus();
           }
         }
     );
+  }
+
+  exportPKChanged(){
+    if(!this.exportPrivateKeys){
+      this.privateKeyExportLocation = "";
+    }
+  }
+
+  exportDirExists(){
+    if(this.privateKeyExportLocation.length == 0)
+      return false;
+    else
+      return fs.existsSync(this.privateKeyExportLocation);
   }
 
 }

@@ -25,5 +25,6 @@ import { MenuItem, MessagesModule, Message } from 'primeng/primeng';
     @Input() walletCreated:boolean;
     @Input() accountCreated:boolean;
     @Input() keysEncrypted:boolean;
+    @Input() keyBackupCompleted:boolean;
     // @Input() connectedToNetwork:boolean;
   }

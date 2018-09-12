@@ -139,6 +139,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   verificationFinished: boolean = false;
   verificationResult: boolean = false;
 
+  copy_context_menu: ElectronMenu;
+  copiedValue:string = "";
+
   constructor( private logger: LogService, 
                private router: Router,
                private electron: ElectronService,
@@ -169,6 +172,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         this.backupWallet();
         // close and logout
         this.walletService.closeWallet();
+      } else if(arg === "refresh-balance"){
+        this.logger.debug("### HOME Refresh Balance Received ###");
+        this.doBalanceUpdate();
+        this.doTransacionUpdate();
       }
     });
   }
@@ -177,15 +184,16 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.logger.debug("### HOME ngAfterViewInit() ###");
     // We use setTimeout to avoid the `ExpressionChangedAfterItHasBeenCheckedError`
     // See: https://github.com/angular/angular/issues/6005
-    setTimeout(_ => {}, 0);
-    // subscribe to UI changes
-    this.uiChangeSubject.subscribe(status =>{
-      if(status == AppConstants.KEY_CONNECTED){
-        this.setWalletUIConnected();
-      } else if (status == AppConstants.KEY_DISCONNECTED){
-        this.setWalletUIDisconnected();
-      }
-    });
+    // setTimeout(_ => {
+    //   // subscribe to UI changes
+    //   this.uiChangeSubject.subscribe(status =>{
+    //     if(status == AppConstants.KEY_CONNECTED){
+    //       this.setWalletUIConnected();
+    //     } else if (status == AppConstants.KEY_DISCONNECTED){
+    //       this.setWalletUIDisconnected();
+    //     }
+    //   });
+    // }, 0);
   }
 
   ngOnInit() {
@@ -236,7 +244,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     ];
     this.tools_context_menu = this.electron.remote.Menu.buildFromTemplate(tools_context_menu_template);
     // paperwallet submenu
-    let paperWalletMenu = { label: 'Paperwallet', submenu: [
+    let paperWalletMenu = { label: 'Paper Wallet', submenu: [
       { label: 'Generate Paper Wallet', 
         click(menuItem, browserWindow, event) { 
           browserWindow.webContents.send('context-menu-event', 'paper-wallet');
@@ -321,6 +329,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     ];
     this.connection_context_menu = this.electron.remote.Menu.buildFromTemplate(connect_context_menu_template);
     
+    // define Copy context menu
+    let copy_context_menu_template = [
+      { label: 'Copy', 
+        click(menuItem, browserWindow, event) {
+          browserWindow.webContents.send('copy-context-menu-event', 'copy');
+        }
+      }
+    ];
+    this.copy_context_menu = this.electron.remote.Menu.buildFromTemplate(copy_context_menu_template);
 
     // listen to tools context menu events
     this.electron.ipcRenderer.on('context-menu-event', (event, arg) => {
@@ -378,6 +395,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         }
         else if(arg == 'server-info')
           this.onServerInfo();
+      }
+    });
+
+    // listen to copy context menu events
+    this.electron.ipcRenderer.on('copy-context-menu-event', (event, arg) => {
+      if(this.navigationSucceeded){
+        if(arg == 'copy'){
+          this.copyValueToClipboard();
+        }
       }
     });
 
@@ -455,9 +481,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.casinocoinService.accountSubject.subscribe( account => {
             this.doBalanceUpdate();
           });
-          this.uiChangeSubject.next(AppConstants.KEY_CONNECTED);
+          // this.uiChangeSubject.next(AppConstants.KEY_CONNECTED);
+          this.setWalletUIConnected();
         } else if(connected == AppConstants.KEY_DISCONNECTED){
-          this.uiChangeSubject.next(AppConstants.KEY_DISCONNECTED);
+          // this.uiChangeSubject.next(AppConstants.KEY_DISCONNECTED);
+          this.setWalletUIDisconnected();
         } else {
           this.logger.debug("### HOME Connected value: " + connected);
         }
@@ -730,7 +758,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   doBalanceUpdate() {
     this.walletBalance = this.walletService.getWalletBalance() ? this.walletService.getWalletBalance() : "0";
-    this.balance = CSCUtil.dropsToCsc(this.walletBalance)
+    this.logger.debug("### HOME - Wallet Balance: " + this.walletBalance);
+    this.balance = CSCUtil.dropsToCsc(this.walletBalance);
     let balanceCSC = new Big(this.balance);
     if(this.marketService.coinMarketInfo != null && this.marketService.coinMarketInfo.price_fiat !== undefined){
       this.logger.debug("### CSC Price: " + this.marketService.cscPrice + " BTC: " + this.marketService.btcPrice + " Fiat: " + this.marketService.coinMarketInfo.price_fiat);
@@ -849,8 +878,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   onRefreshWallet(){
     this.logger.debug("Refreshwallet Clicked !!");
     this.active_menu_item = "";
-    // navigate to paperwallet
-    this.router.navigate(['home','refreshwallet']);
+    // navigate to refresh wallet
+    this.router.navigate(['home','transactions', {refreshWallet: true}]);
   }
 
   onImportPaperWallet(){
@@ -954,4 +983,20 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.verificationFinished = false;
     this.verificationResult = false;
   }
+
+  saveCopyValue(field){
+    this.logger.debug("### HOME saveCopyValue: " + field);
+    if(field === 'signPubKey')
+      this.copiedValue = this.signPubKey;
+    else if(field === 'signSignature')
+      this.copiedValue = this.signSignature;
+    this.copy_context_menu.popup({window: this.electron.remote.getCurrentWindow()});
+    
+  }
+
+  copyValueToClipboard(){
+    // copy to clipboard
+    this.electron.clipboard.writeText(this.copiedValue);
+  }
+
 }
