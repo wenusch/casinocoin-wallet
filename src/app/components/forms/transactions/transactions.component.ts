@@ -163,14 +163,12 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
       // check if Refresh Wallet was called
     this.route.params.subscribe(params => {
-      if (params['refreshWallet']) {
-        if(params['refreshWallet']){
-          this.logger.debug("### Transactions - Refresh Wallet");
-          this.executeWalletRefresh();
-        }
-        else 
-          this.logger.debug("### Transactions - Refresh Wallet IS FALSE");
+      if(params['refreshWallet']){
+        this.logger.debug("### Transactions - Refresh Wallet");
+        this.executeWalletRefresh();
       }
+      else 
+        this.logger.debug("### Transactions - Refresh Wallet IS FALSE");
     });
 
     // }, 0);

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { LokiAccount, LokiKey } from '../../../domain/lokijs';
 import { ElectronService } from '../../../providers/electron.service';
 import { WalletService } from '../../../providers/wallet.service';
@@ -21,10 +22,21 @@ export class ImportpaperwalletComponent implements OnInit {
   keypair: any;
   address: any;
   allAccounts: any;
+  importHeaderLabel:string = "Import Paper Wallet";
 
-  constructor(private electron: ElectronService, private walletService: WalletService, private logger: LogService) { }
+  constructor( private electron: ElectronService, 
+               private walletService: WalletService, 
+               private logger: LogService,
+               private route: ActivatedRoute ) { }
 
   ngOnInit() {
+    this.route.params.subscribe(params => {
+      if (params['keyimport']) {
+        this.importHeaderLabel = "Import Private Key";
+      } else {
+        this.importHeaderLabel = "Import Paper Wallet";
+      }
+    });
   }
 
   doSubmit() {

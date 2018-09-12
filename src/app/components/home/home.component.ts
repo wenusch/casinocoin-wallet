@@ -344,11 +344,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       if(this.navigationSucceeded){
         this.logger.debug("### HOME Menu Event: " + arg);
         if(arg == 'import-priv-key-file')
-          this.onPrivateKeyImport();
+          this.onPrivateKeyFileImport();
         else if(arg == 'export-priv-key-file')
           this.onPrivateKeysExport();
         else if(arg == 'import-priv-key')
-          this.onImportPaperWallet();
+          this.onPrivateKeyImport();
         else if(arg == 'paper-wallet')
           this.onPaperWallet();
         else if(arg == 'import-paper-wallet')
@@ -572,7 +572,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.passwordDialogHeader = label;
   }
 
-  onPrivateKeyImport() {
+  onPrivateKeyFileImport() {
     // this.showPrivateKeyImportDialog = true;
     this.logger.debug("### Open File Dialog: " + this.electron.remote.app.getPath("documents"));
     this.importKeys = [];
@@ -866,6 +866,13 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.active_menu_item = "addressbook";
     // navigate to addressbook
     this.router.navigate(['home','addressbook']);
+  }
+
+  onPrivateKeyImport(){
+    this.logger.debug("Private Key Import Clicked !!");
+    this.active_menu_item = "";
+    // navigate to paperwallet
+    this.router.navigate(['home','importpaperwallet', {keyimport: true}]);
   }
 
   onPaperWallet(){
