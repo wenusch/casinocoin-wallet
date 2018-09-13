@@ -12,6 +12,10 @@ import { CasinocoinAPI, CasinocoinKeypairs, CasinocoinBinaryCodec } from 'casino
 import * as isDev from 'electron-is-dev';
 import * as notifier from 'electron-notification-desktop';
 
+// set app id
+app.setAppUserModelId("com.squirrel.casinocoin-wallet.casinocoin-wallet");
+app.setAsDefaultProtocolClient("casinocoin");
+
 let win, serve, debug;
 const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
@@ -25,9 +29,6 @@ globalTS.vars = {};
 globalTS.vars.cscKeypairs = CasinocoinKeypairs;
 globalTS.vars.cscBinaryCodec = CasinocoinBinaryCodec;
 globalTS.vars.cscAPI = new CasinocoinAPI();
-
-// set app id
-app.setAppUserModelId("org.casinocoin.desktop.wallet");
 
 // set property for exit dialog
 let showExitPrompt = true;

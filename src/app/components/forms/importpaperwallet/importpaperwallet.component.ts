@@ -115,8 +115,6 @@ export class ImportpaperwalletComponent implements OnInit {
       this.privateKey = "";
       this.walletPassword = "";
       this.showDialogFooter = true;
-      // navigate to refresh wallet
-      this.router.navigate(['home','transactions', {refreshWallet: true}]);
     }
   }
 
