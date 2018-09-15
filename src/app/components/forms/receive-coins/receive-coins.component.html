@@ -39,13 +39,13 @@
         </p-dataTable>
     </div>
 </div>
-<p-dialog [(visible)]="showCreateAccountDialog" [width]="450" [height]="300" [closable]="true" 
+<p-dialog [(visible)]="showCreateAccountDialog" [width]="450" [height]="350" [closable]="true" 
     [modal]="true" appendTo="body">
     <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Create new account</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            <p>Enter a label for the new account and your wallet password.</p>
+            <p>Enter a label for the new account and your wallet password. Enable and select the location to export your new private keys after creation.</p>
         </div>
         <div class="ui-g-1"></div>
     </div>
@@ -63,14 +63,26 @@
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-key"></i></span>
                 <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" 
-                       (keyup.enter)="doCreateNewAccount()" style="width: 100%; padding-left: 5px;">
+                       (keyup.enter)="doCreateNewAccount()" style="width: 100%; padding-left: 5px;" #passwordInput>
+            </div>
+        </div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;">
+                    <p-checkbox [(ngModel)]="exportPrivateKeys" binary="true" (onChange)="exportPKChanged()"></p-checkbox>
+                </span>
+                <input type="text" pInputText placeholder="Private Key Backup" [(ngModel)]="privateKeyExportLocation" [disabled]="!exportPrivateKeys">
+                <button pButton type="button" icon="icon icon-search" (click)="selectPrivateKeysExportLocation()"
+                    [disabled]="!exportPrivateKeys" #createAccountButton></button>
             </div>
         </div>
         <div class="ui-g-1"></div>
     </div>
     <div style="text-align: right;">
-        <button pButton type="button" (click)="doCreateNewAccount()" icon="icon icon-save" iconPos="right" label="Create" 
-                style="width: 115px;"></button>
+        <button pButton type="button" (click)="doCreateNewAccount()" [(icon)]="create_icon" iconPos="right" label="Create" 
+                style="width: 115px;" [disabled]="(exportPrivateKeys && !exportDirExists())"></button>
     </div>
     <p-footer *ngIf="showDialogFooter" class="footer-error">
         <p>{{errorMessage}}</p>

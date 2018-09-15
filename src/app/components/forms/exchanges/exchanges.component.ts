@@ -6,7 +6,7 @@ import { ElectronService } from '../../../providers/electron.service';
 import { MarketService } from '../../../providers/market.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { ExchangesType } from '../../../domain/service-types';
-import { DatePipe, CurrencyPipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import Big from 'big.js';
 
 @Component({
@@ -69,15 +69,15 @@ export class ExchangesComponent implements OnInit {
       let coinFiat = this.marketService.coinMarketInfo.price_fiat ? this.marketService.coinMarketInfo.price_fiat : "0.00";
       this.logger.debug("### updateCoininfo - coinFiat: " + coinFiat);
       let marketFiat = new Big(this.coinSupply).times(new Big(coinFiat)).toString();
-      this.fiatValue = this.currencyPipe.transform(coinFiat, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-6");
-      this.marketCapital = this.currencyPipe.transform(marketFiat, this.marketService.coinMarketInfo.selected_fiat, true, "1.2-2");
+      this.fiatValue = this.currencyPipe.transform(coinFiat, this.marketService.coinMarketInfo.selected_fiat, "symbol", "1.2-6");
+      this.marketCapital = this.currencyPipe.transform(marketFiat, this.marketService.coinMarketInfo.selected_fiat, "symbol", "1.2-2");
     }
   }
 
   onExchangeContextMenu(event){
     this.selectedExchangeRow = event.data;
     this.logger.debug("### onExchangeContextMenu: " + JSON.stringify(this.selectedExchangeRow));
-    this.exchange_context_menu.popup(this.electronService.remote.getCurrentWindow());
+    this.exchange_context_menu.popup({window: this.electronService.remote.getCurrentWindow()});
   }
 
   onExchangeRowClick(e:any) {

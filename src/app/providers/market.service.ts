@@ -1,7 +1,7 @@
 import {Injectable, OnInit, OnDestroy} from '@angular/core';
 import {LogService} from './log.service';
 import {HttpClient, HttpParams, HttpHeaders} from '@angular/common/http';
-import {Observable, Subject} from 'rxjs';
+import { Subject } from 'rxjs/Subject';
 import {CoinMarketCapType, ExchangesType} from '../domain/service-types';
 import {LocalStorageService} from "ngx-store";
 import {AppConstants} from '../domain/app-constants';

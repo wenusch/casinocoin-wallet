@@ -178,7 +178,7 @@ export class CoinSwapComponent implements OnInit {
       this.swap_context_menu.items[2].visible = true;
       this.swap_context_menu.items[3].visible = true;
     }
-    this.swap_context_menu.popup(this.electronService.remote.getCurrentWindow());
+    this.swap_context_menu.popup({window: this.electronService.remote.getCurrentWindow()});
   }
 
   // onSwapRowSelect(event) {

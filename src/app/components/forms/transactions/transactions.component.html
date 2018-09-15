@@ -12,7 +12,7 @@
         <p-contextMenu #cm class="hide-context-menu"></p-contextMenu>
         <p-dataTable [value]="lazyTransactions" scrollable="true" [immutable]="false" scrollHeight="55vh" [contextMenu]="cm" selectionMode="single"
             responsive="true" styleClass="borderless" (onContextMenuSelect)="showTxContextMenu($event)" loadingIcon="fa-spinner color_red"
-            [rows]="10" [virtualScroll]="true" [lazy]="true" [totalRecords]="totalTXRecords" (onLazyLoad)="loadTXLazy($event)" #dtTX>
+            [rows]="10" [virtualScroll]="true" [lazy]="true" [totalRecords]="totalTXRecords" (onLazyLoad)="loadTXLazy($event)" [loading]="loadingTX" #dtTX>
             <p-column [style]="{'width':'17px'}">
                 <ng-template let-data="rowData" pTemplate="body">
                     <i [ngClass]="getDirectionIconClasses(data)"></i>

@@ -1,24 +1,34 @@
 import { app, BrowserWindow, screen, 
          autoUpdater, ipcMain, dialog, 
-         Menu, MenuItem, powerMonitor } from 'electron';
+         Menu, MenuItem, powerMonitor, Notification } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+
+// import casinocoin libraries from electron
+import { CasinocoinAPI, CasinocoinKeypairs, CasinocoinBinaryCodec } from 'casinocoin-libjs';
 
 // this is required to check if the app is running in development mode. 
 import * as isDev from 'electron-is-dev';
 import * as notifier from 'electron-notification-desktop';
 
-let win, serve;
+// set app id
+app.setAppUserModelId("com.squirrel.casinocoin-wallet.casinocoin-wallet");
+app.setAsDefaultProtocolClient("casinocoin");
+
+let win, serve, debug;
 const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
+debug = args.some(val => val === '--debug');
 const version = app.getVersion();
 const platform = os.platform() + '_' + os.arch();
 const globalTS:any = global;
 globalTS.vars = {};
 
-// set app id
-app.setAppUserModelId("org.casinocoin.desktop.wallet");
+// put casinocoin libs into globals
+globalTS.vars.cscKeypairs = CasinocoinKeypairs;
+globalTS.vars.cscBinaryCodec = CasinocoinBinaryCodec;
+globalTS.vars.cscAPI = new CasinocoinAPI();
 
 // set property for exit dialog
 let showExitPrompt = true;
@@ -56,7 +66,7 @@ function isWindowsOrmacOS() {
 }
 
 function appUpdater() {
-	autoUpdater.setFeedURL(updaterFeedURL);
+	autoUpdater.setFeedURL({url: updaterFeedURL});
 	/* Log whats happening
 	TODO send autoUpdater events to renderer so that we could console log it in developer tools
 	You could alsoe use nslog or other logging to see what's happening */
@@ -105,7 +115,7 @@ app.setPath('userData', defaultCSCPath);
 
 // configure loggging 
 const winston = require('winston');
-if(serve){
+if(serve || debug){
   globalTS.loglevel = 'debug';
 } else {
   globalTS.loglevel = 'info';
@@ -178,7 +188,7 @@ function createWindow() {
   });
 
   // Open the DevTools.
-  if (serve) {
+  if (serve || debug) {
     win.webContents.openDevTools();
   }
 
@@ -202,16 +212,29 @@ function createWindow() {
 
   //push notification using electron-notification-desktop
   ipcMain.on('push-notification', (event, arg) => { 
-    const notification = notifier.notify(arg.title, {
-      message: arg.body,
-      icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png'),
-      duration: 4
+    const notification = new Notification({
+      title: arg.title,
+      body: arg.body,
+      icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png')
     });
+    notification.show();
+    // const notification = notifier.notify(arg.title, {
+    //   message: arg.body,
+    //   icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png'),
+    //   duration: 4
+    // });
     
-    notification.on('close', function (event) {
-      notification.hide();
-      event.preventDefault();
-    });
+    // notification.on('close', function (event) {
+    //   notification.hide();
+    //   event.preventDefault();
+    // });
+  });
+
+  ipcMain.on('action', (event, arg) => {
+    if(arg === "refresh-balance"){
+      // forward refresh-balance (back) to renderer
+      win.webContents.send('action', 'refresh-balance');
+    }
   });
 
   // Emitted when the window is closed.
@@ -253,6 +276,7 @@ function createWindow() {
         e.preventDefault();
         if(win != null){
           ipcMain.on('wallet-closed', (event, arg) => {
+            console.log('Saved Before Quit Finished');
             savedBeforeQuit = true;
             win.close();
           });
@@ -329,6 +353,7 @@ try {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
+      console.log("window-all-closed -> app.quit()");
       app.quit();
     }
   });

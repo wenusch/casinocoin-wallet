@@ -65,7 +65,7 @@ export class AddressbookComponent implements OnInit {
   onAddressContextMenu(event){
     this.selectedAddressRow = event.data;
     this.logger.debug("### onAddressContextMenu: " + JSON.stringify(this.selectedAddressRow));
-    this.address_context_menu.popup(this.electronService.remote.getCurrentWindow());
+    this.address_context_menu.popup({window: this.electronService.remote.getCurrentWindow()});
   }
 
   onAddressRowClick(e:any) {

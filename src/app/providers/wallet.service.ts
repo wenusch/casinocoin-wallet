@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { LogService } from './log.service';
-import { LedgerStreamMessages, TransactionStreamMessages } from '../domain/websocket-types';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { LedgerStreamMessages } from '../domain/websocket-types';
+import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Subject } from 'rxjs/Subject';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { AppConstants } from '../domain/app-constants';
@@ -10,9 +11,8 @@ import { CSCCrypto } from '../domain/csc-crypto';
 import { ElectronService } from '../providers/electron.service';
 import { NotificationService, NotificationType, SeverityType } from '../providers/notification.service';
 import { WalletUpgrade } from './upgrade/walletupgrade';
-import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
+import * as bigInt from 'big-integer';
 import Big from 'big.js';
-import int from 'int';
 
 const path = require('path');
 const fs = require('fs');
@@ -377,15 +377,15 @@ export class WalletService {
   checkForUpgrades(walletPassword: string){
     this.logger.debug("### WalletService - checkForUpgrades() ### ");
     let dbVersionString = this.getDBMetadata().dbVersion;
-    let dbVersion:int = CSCUtil.convertStringVersionToNumber( dbVersionString );
-    let appDBVersion:int = CSCUtil.convertStringVersionToNumber( AppConstants.KEY_DB_VERSION);
+    let dbVersion:bigInt.BigInteger = CSCUtil.convertStringVersionToNumber( dbVersionString );
+    let appDBVersion:bigInt.BigInteger = CSCUtil.convertStringVersionToNumber( AppConstants.KEY_DB_VERSION);
     let walletUpgrade: WalletUpgrade = new WalletUpgrade(this.logger, this);
     let newVersion:string;
     let walletUpgraded:boolean = false;
     // check for updates
-    for(let v = dbVersion.add(1); v <= appDBVersion; v++){
+    for(let v = dbVersion.add(1); v.leq(appDBVersion.valueOf()); v.add(1)){
       this.logger.debug("### WalletService - Apply Update: " + v);
-      if(v == 101){
+      if(v.equals(101)){
         walletUpgrade.applyv101();
         // after upgrade v101 we need te encrypt the keys again
         this.encryptAllKeys(walletPassword);
@@ -744,7 +744,7 @@ export class WalletService {
     // return all validated transactions for an account id sorted by ascending ledger index
     return this.transactions.chain().find(
       { $or: [{ accountID: inputAccountID, validated: true}, {destination: inputAccountID, validated: true}]}
-    ).simplesort("inLedger", false).data();
+    ).simplesort("timestamp", true).data();
   }
 
   getAccountTXBalance(inputAccountID: string): string {
@@ -752,7 +752,7 @@ export class WalletService {
     let totalBalance: Big = new Big("0");
     let allAccountTX: Array<LokiTypes.LokiTransaction> = this.getAccountTransactions(inputAccountID);
     allAccountTX.forEach(element => {
-      if(element.transactionType === "Payment"){
+      if(element.transactionType === "Payment" && typeof element.amount === "string"){
         // if accountID == inputAccountID its outgoing else its incomming
         if(element.accountID == inputAccountID){
           totalBalance = totalBalance.minus(element.amount);
@@ -883,7 +883,7 @@ export class WalletService {
         // decrypt key
         this.logger.debug("Decrypt["+index+"]: " + JSON.stringify(element));
         let decodedSecret:string = cscCrypto.decrypt(element.secret);
-        let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+        let decodedKeypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(decodedSecret);
         // check if public key is the same
         if(decodedKeypair.publicKey == element.publicKey){
           // save decrypted values onto object
@@ -906,7 +906,7 @@ export class WalletService {
   getDecryptPrivateKey(password: string, walletKey: LokiTypes.LokiKey): string {
     let cscCrypto = new CSCCrypto(password);
     let decodedSecret:string = cscCrypto.decrypt(walletKey.secret);
-    let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+    let decodedKeypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(decodedSecret);
     if(decodedKeypair.publicKey == walletKey.publicKey){
       // password was correct, return decoded private key
       return decodedKeypair.privateKey;
@@ -918,7 +918,7 @@ export class WalletService {
   getDecryptSecret(password: string, walletKey: LokiTypes.LokiKey): string {
     let cscCrypto = new CSCCrypto(password);
     let decodedSecret:string = cscCrypto.decrypt(walletKey.secret);
-    let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+    let decodedKeypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(decodedSecret);
     if(decodedKeypair.publicKey == walletKey.publicKey){
       // password was correct, return decoded private key
       return decodedSecret;
@@ -950,10 +950,10 @@ export class WalletService {
       secret: "", 
       encrypted: false
     };
-    let keypair = cscKeyAPI.deriveKeypair(keySeed);
+    let keypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(keySeed);
     newKeyPair.privateKey = keypair.privateKey;
     newKeyPair.publicKey = keypair.publicKey;
-    newKeyPair.accountID = cscKeyAPI.deriveAddress(keypair.publicKey);
+    newKeyPair.accountID = this.electron.remote.getGlobal("vars").cscKeypairs.deriveAddress(keypair.publicKey);
     newKeyPair.secret = keySeed;
     // save the new private key
     this.addKey(newKeyPair);

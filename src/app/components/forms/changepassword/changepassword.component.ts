@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { WalletService } from '../../../providers/wallet.service';
-import { CSCCrypto } from 'app/domain/csc-crypto';
+import { CSCCrypto } from '../../../domain/csc-crypto';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LogService } from '../../../providers/log.service';
 
