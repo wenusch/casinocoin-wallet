@@ -1,4 +1,4 @@
-@import "~assets/variables";
+@import "src/assets/variables";
 
 ::ng-deep .hide-context-menu {
     display: none;
@@ -30,4 +30,8 @@
 .item-value {
     color: #000000;
     font-size: 100%;
+}
+
+.coin-info-value {
+    font-weight: bold;
 }

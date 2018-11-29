@@ -1,6 +1,3 @@
-import 'zone.js/dist/zone-mix';
-import 'reflect-metadata';
-import 'polyfills';
 import { BrowserModule }            from '@angular/platform-browser';
 import { BrowserAnimationsModule }  from '@angular/platform-browser/animations';
 import { NgModule }                 from '@angular/core';
@@ -54,8 +51,12 @@ import { AddressbookComponent }     from './components/forms/addressbook/address
 import { CoinSwapComponent }        from './components/forms/coin-swap/coin-swap.component';
 import { OverviewComponent }        from './components/forms/overview/overview.component';
 import { TransactionsComponent }    from './components/forms/transactions/transactions.component';
+import { PaperwalletComponent }    from './components/forms/paperwallet/paperwallet.component';
+import { ImportpaperwalletComponent } from './components/forms/importpaperwallet/importpaperwallet.component';
+import { ChangepasswordComponent } from './components/forms/changepassword/changepassword.component';
 import { SupportComponent }         from './components/forms/support/support.component';
 import { ExchangesComponent }       from './components/forms/exchanges/exchanges.component';
+import { WindowRef } from './components/forms/paperwallet/WindowRef';
 
 // import PrimeNG, Material and Bootstrap modules
 import { DialogModule, ButtonModule, CheckboxModule,
@@ -85,8 +86,11 @@ import { MatListModule, MatSidenavModule, MatTooltipModule,
     CoinSwapComponent,
     OverviewComponent,
     TransactionsComponent,
+    PaperwalletComponent,
     SupportComponent,
-    ExchangesComponent
+    ExchangesComponent,
+    ImportpaperwalletComponent,
+    ChangepasswordComponent
   ],
   imports: [
     BrowserModule,
@@ -121,7 +125,8 @@ import { MatListModule, MatSidenavModule, MatTooltipModule,
     MessageService,
     NotificationService,
     MarketService,
-    ValidatorService
+    ValidatorService,
+    WindowRef
   ],
   bootstrap: [AppComponent]
 })

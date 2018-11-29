@@ -1,5 +1,5 @@
 import Big from 'big.js';
-import int from 'int';
+import * as bigInt from 'big-integer';
 
 import { Amount, Memo, CasinocoindAmount, CasinocoinMemo, CSCURI }  from './csc-types';
 
@@ -26,10 +26,14 @@ export class CSCUtil {
     }
 
     static dropsToCsc(drops: string): string {
-        let bigDrops = new Big(drops);
-        if(bigDrops > 0){
-            return (bigDrops).div(100000000.0).toString();
-        } else {
+        try{
+            let bigDrops = new Big(drops);
+            if(bigDrops > 0){
+                return (bigDrops).div(100000000.0).toString();
+            } else {
+                return "0.00";
+            }
+        } catch {
             return "0.00";
         }
         
@@ -154,7 +158,7 @@ export class CSCUtil {
         }
         var base = 58;
         var length = accountID.length;
-        var num = int(0);
+        var num = bigInt(0);
         var leading_zero = 0;
         var seen_other = false;
         for (var i=0; i<length ; ++i) {
@@ -165,7 +169,7 @@ export class CSCUtil {
             if (p === undefined) {
                 return false;
             }
-            num = num.mul(base).add(p);
+            num = num.multiply(base).add(p);
             if (char == '1' && !seen_other) {
                 ++leading_zero;
             }
@@ -194,10 +198,10 @@ export class CSCUtil {
         }
     }
 
-    static convertStringVersionToNumber(version:string): int {
+    static convertStringVersionToNumber(version:string): bigInt.BigInteger {
         // remove points
         let dotlessVersion = version.split(".").join("");
-        return int(dotlessVersion);
+        return bigInt(dotlessVersion);
     }
 
     static generateCXXQRCodeURI(address: string){

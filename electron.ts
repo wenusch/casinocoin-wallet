@@ -1,24 +1,38 @@
-import { app, BrowserWindow, screen, autoUpdater, ipcMain, dialog, Menu, MenuItem } from 'electron';
+import { app, BrowserWindow, screen, 
+         autoUpdater, ipcMain, dialog, 
+         Menu, MenuItem, powerMonitor, Notification } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 
+// import casinocoin libraries from electron
+import { CasinocoinAPI, CasinocoinKeypairs, CasinocoinBinaryCodec } from 'casinocoin-libjs';
+
 // this is required to check if the app is running in development mode. 
 import * as isDev from 'electron-is-dev';
+import * as notifier from 'electron-notification-desktop';
 
-let win, serve;
+// set app id
+app.setAppUserModelId("com.squirrel.casinocoin-wallet.casinocoin-wallet");
+app.setAsDefaultProtocolClient("casinocoin");
+
+let win, serve, debug;
 const args = process.argv.slice(1);
 serve = args.some(val => val === '--serve');
+debug = args.some(val => val === '--debug');
 const version = app.getVersion();
 const platform = os.platform() + '_' + os.arch();
 const globalTS:any = global;
 globalTS.vars = {};
 
-// set app id
-app.setAppUserModelId("CasinoCoin Wallet");
+// put casinocoin libs into globals
+globalTS.vars.cscKeypairs = CasinocoinKeypairs;
+globalTS.vars.cscBinaryCodec = CasinocoinBinaryCodec;
+globalTS.vars.cscAPI = new CasinocoinAPI();
 
 // set property for exit dialog
 let showExitPrompt = true;
+let savedBeforeQuit = false;
 globalTS.vars.exitFromRenderer = false;
 globalTS.vars.exitFromLogin = false;
 
@@ -39,6 +53,10 @@ if (serve) {
 /* Handling squirrel.windows events on windows 
 only required if you have build the windows with target squirrel. For NSIS target you don't need it. */
 if (require('electron-squirrel-startup')) {
+  showExitPrompt = false;
+  savedBeforeQuit = true;
+  globalTS.vars.exitFromRenderer = true;
+  globalTS.vars.exitFromLogin = true;
 	app.quit();
 }
 
@@ -48,7 +66,7 @@ function isWindowsOrmacOS() {
 }
 
 function appUpdater() {
-	autoUpdater.setFeedURL(updaterFeedURL);
+	autoUpdater.setFeedURL({url: updaterFeedURL});
 	/* Log whats happening
 	TODO send autoUpdater events to renderer so that we could console log it in developer tools
 	You could alsoe use nslog or other logging to see what's happening */
@@ -76,6 +94,10 @@ function appUpdater() {
 			detail: message
 		}, response => {
 			if (response === 0) {
+        showExitPrompt = false;
+        savedBeforeQuit = true;
+        globalTS.vars.exitFromRenderer = true;
+        globalTS.vars.exitFromLogin = true;
 				setTimeout(() => autoUpdater.quitAndInstall(), 1);
 			}
 		});
@@ -93,7 +115,7 @@ app.setPath('userData', defaultCSCPath);
 
 // configure loggging 
 const winston = require('winston');
-if(serve){
+if(serve || debug){
   globalTS.loglevel = 'debug';
 } else {
   globalTS.loglevel = 'info';
@@ -137,7 +159,7 @@ function createWindow() {
   const electronScreen = screen;
   const size = electronScreen.getPrimaryDisplay().workAreaSize;
 
-  const minimalWidth = Math.min(size.width, 1000);
+  const minimalWidth = Math.min(size.width, 1024);
   const minimalHeight = Math.min(size.height, 720);
 
   // Create the browser window.
@@ -166,19 +188,68 @@ function createWindow() {
   });
 
   // Open the DevTools.
-  if (serve) {
+  if (serve || debug) {
     win.webContents.openDevTools();
   }
 
+  powerMonitor.on('suspend', () => {
+    winston.log("debug", "### Electron -> The system is going to sleep ###");
+    // send message to save and logout wallet
+    if(win !== null){
+      win.webContents.send('action', 'save-wallet');
+    }
+  });
+
+  powerMonitor.on('resume', () => {
+    winston.log("debug", "### Electron -> The system is resuming after sleep ###");
+    if (win === null) {
+      createWindow();
+    } else {
+      win.reload();
+      win.show();
+    }
+  });
+
+  //push notification using electron-notification-desktop
+  ipcMain.on('push-notification', (event, arg) => { 
+    const notification = new Notification({
+      title: arg.title,
+      body: arg.body,
+      icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png')
+    });
+    notification.show();
+    // const notification = notifier.notify(arg.title, {
+    //   message: arg.body,
+    //   icon: path.join(__dirname, 'assets/brand/casinocoin-icon-256x256.png'),
+    //   duration: 4
+    // });
+    
+    // notification.on('close', function (event) {
+    //   notification.hide();
+    //   event.preventDefault();
+    // });
+  });
+
+  ipcMain.on('action', (event, arg) => {
+    if(arg === "refresh-balance"){
+      // forward refresh-balance (back) to renderer
+      win.webContents.send('action', 'refresh-balance');
+    }
+  });
+
   // Emitted when the window is closed.
   win.on('close', (e) => {
+    // console.log("close - showExitPrompt: " + showExitPrompt + " exitFromLogin: " + globalTS.vars.exitFromLogin + " savedBeforeQuit: " + savedBeforeQuit);
     if(globalTS.vars.exitFromLogin && showExitPrompt){
-      e.preventDefault() // Prevents the window from closing 
+      // Prevent the window from closing 
+      e.preventDefault() 
       globalTS.vars.exitFromLogin = false;
       showExitPrompt = false;
+      savedBeforeQuit = true;
       win.close();
     } else if(!globalTS.vars.exitFromRenderer){
-      e.preventDefault() // Prevents the window from closing 
+      // Prevent the window from closing 
+      e.preventDefault();
       dialog.showMessageBox({
           type: 'info',
           buttons: ['Ok'],
@@ -195,10 +266,25 @@ function createWindow() {
               message: 'Are you sure you want to close the wallet?'
           }, function (response) {
               if (response === 0) { // Runs the following if 'Yes' is clicked
-                  showExitPrompt = false;
-                  win.close();
+                // on next win.on('close') the app will be finally closed
+                showExitPrompt = false;
+                win.close();
               }
           });
+      } else if(!savedBeforeQuit) {
+        // Prevent the window from closing 
+        e.preventDefault();
+        if(win != null){
+          ipcMain.on('wallet-closed', (event, arg) => {
+            console.log('Saved Before Quit Finished');
+            savedBeforeQuit = true;
+            win.close();
+          });
+          // save and close wallet
+          win.webContents.send('action', 'quit-wallet');
+        } else {
+          win.close();
+        }
       }
     }
   });
@@ -212,7 +298,11 @@ function createWindow() {
 
   // show the windows
   win.once('ready-to-show', () => {
-      win.show();
+    showExitPrompt = true;
+    savedBeforeQuit = false;
+    globalTS.vars.exitFromRenderer = false;
+    globalTS.vars.exitFromLogin = false;
+    win.show();
   });
 
   // Create the Application's main menu
@@ -263,6 +353,7 @@ try {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
+      console.log("window-all-closed -> app.quit()");
       app.quit();
     }
   });
@@ -273,18 +364,13 @@ try {
     if (win === null) {
       createWindow();
     } else {
-      win.reload();
       win.show();
     }
   });
 
-  // app.on('before-quit', () => {
-  //   if(showExitPrompt == false){
-  //     //console.log('Quiting Casinocoin Wallet, save the database!!!');
-  //     // let backupResult = win.webContents.sendSync('wallet-backup');
-  //     // console.log("Backup Result: " + backupResult);
-  //   }
-  // });
+  app.on('before-quit', () => {
+    console.log("before-quit");
+  });
 
 } catch (e) {
   // Catch Error

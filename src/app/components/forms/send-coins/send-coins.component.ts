@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Validators, FormControl, FormGroup, FormBuilder } from '@angular/forms';
-import { InputText } from 'primeng/primeng';
+import { Validators,FormControl,FormGroup,FormBuilder } from '@angular/forms';
 import { LogService } from '../../../providers/log.service';
 import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
 import { MessageService } from 'primeng/components/common/messageservice';
@@ -10,9 +9,9 @@ import { ElectronService } from '../../../providers/electron.service';
 import { ValidatorService } from '../../../providers/validator.service';
 import { CSCUtil } from '../../../domain/csc-util';
 import { AppConstants } from '../../../domain/app-constants';
+import * as bigInt from 'big-integer';
 import Big from 'big.js';
-import { CasinocoinTxObject, PrepareTxPayment } from 'app/domain/csc-types';
-import { AppComponent } from 'app/app.component';
+import { PrepareTxPayment } from '../../../domain/csc-types';
 import { CSCAmountPipe } from '../../../app-pipes.module';
 import { DecimalPipe } from '@angular/common';
 import {Menu as ElectronMenu} from 'electron';
@@ -32,7 +31,9 @@ export class SendCoinsComponent implements OnInit {
   @ViewChild('feesInput') feesInput;
 
   accounts: SelectItem[] = [];
+  addresses: SelectItem[] = [];
   selectedAccount: string;
+  selectedAddress: string;
   recipient: string = "";
   description: string = "";
   invoiceID: string;
@@ -46,6 +47,7 @@ export class SendCoinsComponent implements OnInit {
   walletPassword: string;
   paste_context_menu: ElectronMenu;
   showPasswordDialog:boolean = false;
+  showAddressSearchDialog:boolean = false;
   signAndSubmitIcon:string = "fa-check";
   amount_tooltip:string = "Enter the amount to send only using numbers and a . (dot) indicating a decimal.";
   reserve_tooltip:string = "The reserve is necessary to keep your account activated.";
@@ -152,6 +154,14 @@ export class SendCoinsComponent implements OnInit {
     //   this.logger.debug("### SendCoins - minimalFee: " + this.minimalFee);
     // });
     this.checkSendValid();
+    this.populateAddresses();
+  }
+
+  populateAddresses(){
+      this.walletService.getAllAddresses().forEach(element => {
+          let addressLabel = element.label;
+          this.addresses.push({label: addressLabel, value: element.accountID});
+      });
   }
 
   pasteSendAddress(){
@@ -257,7 +267,7 @@ export class SendCoinsComponent implements OnInit {
             description: this.description
           };
         if(this.destinationTag){
-          preparePayment.destinationTag = this.destinationTag;
+          preparePayment.destinationTag = bigInt(this.destinationTag);
         }
         if(this.invoiceID && this.invoiceID.length > 0){
           preparePayment.invoiceID = CSCUtil.encodeInvoiceID(this.invoiceID);
@@ -272,6 +282,7 @@ export class SendCoinsComponent implements OnInit {
           this.casinocoinService.submitTx(txBlob);
           // reset form and dialog fields
           this.selectedAccount = "";
+          this.selectedAddress = "";
           this.recipient = "";
           this.description = "";
           this.walletPassword = "";
@@ -306,6 +317,25 @@ export class SendCoinsComponent implements OnInit {
       this.showPasswordDialog = true;
       this.passwordInput.nativeElement.focus();
     }
+  }
+
+  startAddressSearch(){
+      this.showAddressSearchDialog = true;
+  }
+
+  closeAddressSearchDialog(){
+      this.showAddressSearchDialog = false;
+  }
+
+  cancelAddressSearch(){
+      this.closeAddressSearchDialog();
+  }
+
+  useAddressForSend(){
+      this.recipient = this.selectedAddress;
+      this.closeAddressSearchDialog();
+      this.onRecipientChange(this.recipient);
+      this.focusDescription();
   }
 
   calculateTotal(includeReserve: boolean){
@@ -355,7 +385,7 @@ export class SendCoinsComponent implements OnInit {
     if( CSCUtil.validateAccountID(this.recipient) && this.amount){
       if(this.recipient == this.selectedAccount){
         this.isSendValid = false;
-      } else if (new Big(CSCUtil.cscToDrops(this.totalSend)) > 0) {
+      } else if (new Big(CSCUtil.cscToDrops(this.amount)) >= 1) {
          this.isSendValid = true;
       } else {
         this.isSendValid = false;

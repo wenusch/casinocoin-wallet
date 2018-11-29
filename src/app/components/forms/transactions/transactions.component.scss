@@ -1,4 +1,4 @@
-@import "~assets/variables";
+@import "src/assets/variables";
 
 :host input {
     width: 450px; padding-left: 5px;
@@ -53,7 +53,17 @@
 
 /** Odd row color **/
 ::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-odd {
-    background-color: #f3f3f3;
+    background-color: #ffffff;
+}
+
+/** Odd and Even Selected Row Color ***/
+::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-odd.ui-state-highlight {
+    background-color: $casinocoinGray;
+    color: #000000;
+}
+::ng-deep .ui-datatable tbody > tr.ui-widget-content.ui-datatable-even.ui-state-highlight {
+    background-color: $casinocoinGray;
+    color: #000000;
 }
 
 ::ng-deep .color_red {

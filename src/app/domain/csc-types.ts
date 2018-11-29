@@ -1,4 +1,4 @@
-import int from 'int';
+import { BigInteger } from 'big-integer';
 
 export type PrepareTxPayment = {
     source:string;
@@ -7,8 +7,8 @@ export type PrepareTxPayment = {
     feeDrops: string;
     description?: string;
     invoiceID?: string;
-    sourceTag?: int;
-    destinationTag?: int;
+    sourceTag?: BigInteger;
+    destinationTag?: BigInteger;
 }
 
 export type CasinocoinTxObject = {
@@ -22,8 +22,8 @@ export type CasinocoinTxObject = {
     LastLedgerSequence : number;
     InvoiceID?: string;
     Memos?: Array<CasinocoinMemo>;
-    SourceTag?: int;
-    DestinationTag?: int;
+    SourceTag?: number;
+    DestinationTag?: number;
     TxnSignature?: string;
     SigningPubKey?: string;
 }
@@ -124,20 +124,25 @@ export type Instructions = {
     maxLedgerVersion?: number,
     maxLedgerVersionOffset?: number,
     signersCount?: number
-  }
+}
   
-  export type Prepare = {
+export type Prepare = {
     txJSON: string,
     instructions: {
-     fee: string,
-     sequence: number,
-     maxLedgerVersion?: number
+        fee: string,
+        sequence: number,
+        maxLedgerVersion?: number
     }
-  }
+}
 
-  export type CSCURI = {
+export type CSCURI = {
     address: string, 
     amount?: string, 
     destinationTag?: number, 
     label?: string
-  }
+}
+
+export type WalletSettings = {
+    showNotifications: boolean;
+    fiatCurrency: string;
+}

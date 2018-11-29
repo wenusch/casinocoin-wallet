@@ -1,7 +1,8 @@
 import { Injectable, OnInit, OnDestroy } from '@angular/core';
 import { LogService } from './log.service';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { WalletService } from './wallet.service';
 import { LokiSwap } from '../domain/lokijs';
 import { CSCUtil } from '../domain/csc-util';

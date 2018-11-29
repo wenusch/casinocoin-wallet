@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { LogService } from './log.service';
-import { LedgerStreamMessages, TransactionStreamMessages } from '../domain/websocket-types';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { LedgerStreamMessages } from '../domain/websocket-types';
+import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Subject } from 'rxjs/Subject';
 import { SessionStorageService, LocalStorageService } from "ngx-store";
 import { AppConstants } from '../domain/app-constants';
@@ -10,9 +11,8 @@ import { CSCCrypto } from '../domain/csc-crypto';
 import { ElectronService } from '../providers/electron.service';
 import { NotificationService, NotificationType, SeverityType } from '../providers/notification.service';
 import { WalletUpgrade } from './upgrade/walletupgrade';
-import * as cscKeyAPI from 'casinocoin-libjs-keypairs';
+import * as bigInt from 'big-integer';
 import Big from 'big.js';
-import int from 'int';
 
 const path = require('path');
 const fs = require('fs');
@@ -152,7 +152,13 @@ export class WalletService {
   openWallet(walletLocation: string, walletUUID: string, walletPassword: string): Observable<string> {
     let dbPath = path.join(walletLocation, (walletUUID + '.db'));
     this.logger.debug("### WalletService Open Wallet location: " + dbPath);
-
+    // check if db file has bytes
+    let filestats = fs.statSync(dbPath);
+    if(filestats.size === 0){
+      // we need to recover main db file
+      this.logger.debug("### WalletService - Open Wallet - File 0 bytes -> Recovery!!");
+      this.recoverWallet(dbPath);
+    }
     let collectionSubject = new Subject<any>();
     let openSubject = new Subject<string>();
     openSubject.subscribe(result => {
@@ -188,8 +194,11 @@ export class WalletService {
             this.addressbook = collection;
           else if(collection.name == "log")
             this.logs = collection;
-          else if(collection.name == "keys")
+          else if(collection.name == "keys"){
             this.keys = collection;
+            // make sure all keys are encrypted
+            this.encryptAllKeys(walletPassword);
+          }
           else if(collection.name == "swaps")
             this.swaps = collection;
           this.isWalletOpen = true;
@@ -234,6 +243,7 @@ export class WalletService {
   
   // close the wallet
   closeWallet(){
+    this.logger.debug("### WalletService - Save and Close Wallet ###");
     // first save any open changes
     if(this.walletDB != null){
       this.walletDB.saveDatabase();
@@ -252,6 +262,54 @@ export class WalletService {
     this.walletDB = null;
     // publish result
     this.openWalletSubject.next(AppConstants.KEY_INIT);
+  }
+  
+  changePassword(currentWalletPassword:string, newWalletPassword: string, newWalletMnemonic: string){
+    // generate wallet hash with walletUUID and new Password
+    this.logger.debug("### ChangePassword - Encrypt Wallet Password");
+    let newPasswordHash = this.generateWalletPasswordHash(this.currentDBMetadata.walletUUID, newWalletPassword);
+
+    // change password for Login in localStorage
+    let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
+    let walletIndex = availableWallets.findIndex( item => item['walletUUID'] == this.currentDBMetadata.walletUUID);
+    availableWallets[walletIndex]['hash'] = newPasswordHash;
+    this.localStorageService.set(AppConstants.KEY_AVAILABLE_WALLETS, availableWallets);   
+
+    // Decrypt all keys with old password and update DB
+    this.logger.debug("### ChangePassword - Decrypt Wallet Keys with Old Password");
+    let cscCrypto = new CSCCrypto(currentWalletPassword);
+    let allKeys: Array<LokiTypes.LokiKey> = this.keys.find();
+    allKeys.forEach( (element, index, array) => {
+      let decodedSecret:string = cscCrypto.decrypt(element.secret);
+      let decodedKey = cscCrypto.decrypt(element.privateKey);
+      element.privateKey = decodedKey;
+      element.secret = decodedSecret;
+      element.encrypted = false;
+      this.updateKey(element);
+    });
+
+    // Encrypt all keys with new password
+    this.logger.debug("### ChangePassword - Encrypt Wallet Keys with New Password");
+    this.encryptAllKeys(newWalletPassword).subscribe( result => {
+      if(result == AppConstants.KEY_FINISHED){
+        this.logger.debug("### WalletService Password Changed");
+      }
+    });
+
+    // update password in LokiDBMetadata with new password and new mnemonic recovery
+    this.currentDBMetadata.walletHash = newPasswordHash;
+    this.currentDBMetadata.mnemonicRecovery = newWalletMnemonic; 
+    this.dbMetadata.update(this.currentDBMetadata);
+    
+    //save wallet
+    this.saveWallet();
+  }
+
+  recoverWallet(dbPath: string){
+    // get default wallet file content
+    let content = this.defaultWalletContent();
+    content.filename = dbPath;
+    fs.writeFileSync(dbPath, JSON.stringify(content), 'utf8');
   }
 
   getWalletMnemonic(walletUUID: string, walletLocation: string){
@@ -319,15 +377,15 @@ export class WalletService {
   checkForUpgrades(walletPassword: string){
     this.logger.debug("### WalletService - checkForUpgrades() ### ");
     let dbVersionString = this.getDBMetadata().dbVersion;
-    let dbVersion:int = CSCUtil.convertStringVersionToNumber( dbVersionString );
-    let appDBVersion:int = CSCUtil.convertStringVersionToNumber( AppConstants.KEY_DB_VERSION);
+    let dbVersion:bigInt.BigInteger = CSCUtil.convertStringVersionToNumber( dbVersionString );
+    let appDBVersion:bigInt.BigInteger = CSCUtil.convertStringVersionToNumber( AppConstants.KEY_DB_VERSION);
     let walletUpgrade: WalletUpgrade = new WalletUpgrade(this.logger, this);
     let newVersion:string;
     let walletUpgraded:boolean = false;
     // check for updates
-    for(let v = dbVersion.add(1); v <= appDBVersion; v++){
+    for(let v = dbVersion.add(1); v.leq(appDBVersion.valueOf()); v.add(1)){
       this.logger.debug("### WalletService - Apply Update: " + v);
-      if(v == 101){
+      if(v.equals(101)){
         walletUpgrade.applyv101();
         // after upgrade v101 we need te encrypt the keys again
         this.encryptAllKeys(walletPassword);
@@ -686,7 +744,7 @@ export class WalletService {
     // return all validated transactions for an account id sorted by ascending ledger index
     return this.transactions.chain().find(
       { $or: [{ accountID: inputAccountID, validated: true}, {destination: inputAccountID, validated: true}]}
-    ).simplesort("inLedger", false).data();
+    ).simplesort("timestamp", true).data();
   }
 
   getAccountTXBalance(inputAccountID: string): string {
@@ -694,13 +752,15 @@ export class WalletService {
     let totalBalance: Big = new Big("0");
     let allAccountTX: Array<LokiTypes.LokiTransaction> = this.getAccountTransactions(inputAccountID);
     allAccountTX.forEach(element => {
-      // if accountID == inputAccountID its outgoing else its incomming
-      if(element.accountID == inputAccountID){
-        totalBalance = totalBalance.minus(element.amount);
-        // also remove fees
-        totalBalance = totalBalance.minus(element.fee);
-      } else if(element.destination == inputAccountID){
-        totalBalance = totalBalance.plus(element.amount);
+      if(element.transactionType === "Payment" && typeof element.amount === "string"){
+        // if accountID == inputAccountID its outgoing else its incomming
+        if(element.accountID == inputAccountID){
+          totalBalance = totalBalance.minus(element.amount);
+          // also remove fees
+          totalBalance = totalBalance.minus(element.fee);
+        } else if(element.destination == inputAccountID){
+          totalBalance = totalBalance.plus(element.amount);
+        }
       }
     });
     // special case for the genesis account that was initialized with 40.000.000.000 coins
@@ -749,6 +809,9 @@ export class WalletService {
   }
 
   getAllAddresses(): Array<LokiTypes.LokiAddress> {
+      if (this.addressbook == null) {
+          return [];
+      }
       return this.addressbook.find();
   }
 
@@ -820,7 +883,7 @@ export class WalletService {
         // decrypt key
         this.logger.debug("Decrypt["+index+"]: " + JSON.stringify(element));
         let decodedSecret:string = cscCrypto.decrypt(element.secret);
-        let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+        let decodedKeypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(decodedSecret);
         // check if public key is the same
         if(decodedKeypair.publicKey == element.publicKey){
           // save decrypted values onto object
@@ -843,7 +906,7 @@ export class WalletService {
   getDecryptPrivateKey(password: string, walletKey: LokiTypes.LokiKey): string {
     let cscCrypto = new CSCCrypto(password);
     let decodedSecret:string = cscCrypto.decrypt(walletKey.secret);
-    let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+    let decodedKeypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(decodedSecret);
     if(decodedKeypair.publicKey == walletKey.publicKey){
       // password was correct, return decoded private key
       return decodedKeypair.privateKey;
@@ -855,7 +918,7 @@ export class WalletService {
   getDecryptSecret(password: string, walletKey: LokiTypes.LokiKey): string {
     let cscCrypto = new CSCCrypto(password);
     let decodedSecret:string = cscCrypto.decrypt(walletKey.secret);
-    let decodedKeypair = cscKeyAPI.deriveKeypair(decodedSecret);
+    let decodedKeypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(decodedSecret);
     if(decodedKeypair.publicKey == walletKey.publicKey){
       // password was correct, return decoded private key
       return decodedSecret;
@@ -887,10 +950,10 @@ export class WalletService {
       secret: "", 
       encrypted: false
     };
-    let keypair = cscKeyAPI.deriveKeypair(keySeed);
+    let keypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(keySeed);
     newKeyPair.privateKey = keypair.privateKey;
     newKeyPair.publicKey = keypair.publicKey;
-    newKeyPair.accountID = cscKeyAPI.deriveAddress(keypair.publicKey);
+    newKeyPair.accountID = this.electron.remote.getGlobal("vars").cscKeypairs.deriveAddress(keypair.publicKey);
     newKeyPair.secret = keySeed;
     // save the new private key
     this.addKey(newKeyPair);
@@ -956,5 +1019,213 @@ export class WalletService {
   importWalletDump(dumpContents: string){
     let decompressed = LZString.decompressFromBase64 (dumpContents);
     this.walletDB.loadJSON(decompressed);
+  }
+
+  private defaultWalletContent(): any{
+    return {
+      "filename":"",
+      "collections":[
+        {"name":"dbMetadata",
+         "data":[],
+         "idIndex":[1],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["dbVersion"],
+         "transforms":{},
+         "objType":"dbMetadata",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":1,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"accounts",
+         "data":[],
+         "idIndex":[1],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["accountID"],
+         "transforms":{},
+         "objType":"accounts",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":1,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"transactions",
+         "data":[],
+         "idIndex":[],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["txID"],
+         "transforms":{},
+         "objType":"transactions",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":0,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"addressbook",
+         "data":[],
+         "idIndex":[],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["accountID"],
+         "transforms":{},
+         "objType":"addressbook",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":0,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"log",
+         "data":[],
+         "idIndex":[],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":[],
+         "transforms":{},
+         "objType":"log",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":0,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"keys",
+         "data":[],
+         "idIndex":[1],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["accountID"],
+         "transforms":{},
+         "objType":"keys",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":1,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        },
+        {"name":"swaps",
+         "data":[],
+         "idIndex":[],
+         "binaryIndices":{},
+         "constraints":null,
+         "uniqueNames":["swapID"],
+         "transforms":{},
+         "objType":"swaps",
+         "dirty":false,
+         "cachedIndex":null,
+         "cachedBinaryIndex":null,
+         "cachedData":null,
+         "adaptiveBinaryIndices":true,
+         "transactional":false,
+         "cloneObjects":false,
+         "cloneMethod":"parse-stringify",
+         "asyncListeners":false,
+         "disableChangesApi":true,
+         "disableDeltaChangesApi":true,
+         "autoupdate":false,
+         "serializableIndices":true,
+         "ttl":null,
+         "maxId":0,
+         "DynamicViews":[],
+         "events":{"insert":[null],"update":[null],"pre-insert":[],"pre-update":[],"close":[],"flushbuffer":[],"error":[],"delete":[null],"warning":[null]},
+         "changes":[]
+        }
+      ],
+      "databaseVersion":1.5,
+      "engineVersion":1.5,
+      "autosave":false,
+      "autosaveInterval":5000,
+      "autosaveHandle":null,
+      "throttledSaves":true,
+      "options":{"env":"NA","serializationMethod":"normal","destructureDelimiter":"$<\n"},
+      "persistenceAdapter":null,
+      "verbose":false,
+      "events":{"init":[null],"loaded":[],"flushChanges":[],"close":[],"changes":[],"warning":[]},
+      "ENV":"NA"
+    };
   }
 }
