@@ -170,7 +170,7 @@ export class SendCoinsComponent implements OnInit {
   }
 
   showPasteContextMenu(event) {
-    this.paste_context_menu.popup(this.electronService.remote.getCurrentWindow());
+    this.paste_context_menu.popup({window: this.electronService.remote.getCurrentWindow()});
   }
 
   doBalanceUpdate(){
