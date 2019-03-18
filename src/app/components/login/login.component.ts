@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { WalletService } from '../../providers/wallet.service';
 import { ElectronService } from '../../providers/electron.service';
-import { LocalStorage, SessionStorage, LocalStorageService } from "ngx-store";
+import { LocalStorage, SessionStorage, LocalStorageService, SessionStorageService } from "ngx-store";
 import { SelectItem } from 'primeng/primeng';
 import { CSCUtil } from '../../domain/csc-util';
 import { AppConstants } from '../../domain/app-constants';
@@ -11,10 +11,11 @@ import { LogService } from '../../providers/log.service';
 import { MessageService } from 'primeng/components/common/messageservice';
 import { AppComponent } from 'app/app.component';
 import { setTimeout } from 'timers';
+import { CasinocoinService } from '../../providers/casinocoin.service';
  
 @Component({
     moduleId: module.id,
-    templateUrl: 'login.component.html',
+    templateUrl: './login.component.html',
     styleUrls: ['./login.component.scss'],
     providers: [ DatePipe ]
 })
@@ -48,7 +49,10 @@ export class LoginComponent implements OnInit {
         private walletService: WalletService,
         private messageService: MessageService,
         private datePipe: DatePipe,
-        private localStorageService: LocalStorageService) { 
+        private localStorageService: LocalStorageService,
+        private sessionStorageService: SessionStorageService,
+        private casinocoinService: CasinocoinService
+    ) { 
     }
  
     ngOnInit() {
@@ -144,10 +148,13 @@ export class LoginComponent implements OnInit {
     onHideLogin(){
         this.logger.debug("### Login -> Quit")
         // quit the wallet
+        this.walletService.closeWallet();
+        this.casinocoinService.disconnect();
+        this.sessionStorageService.remove(AppConstants.KEY_CURRENT_WALLET);
         this.dialog_visible = false;
         this.electron.remote.getGlobal("vars").exitFromRenderer = true;
         this.electron.remote.getGlobal("vars").exitFromLogin = true;
-        this.electron.remote.getCurrentWindow.call( close() );
+        this.electron.remote.app.quit();
     }
 
     onRecoverPassword(){

@@ -5,11 +5,18 @@
     "baseUrl": "src",
     "sourceMap": true,
     "declaration": false,
+    "module": "commonjs",
     "moduleResolution": "node",
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "removeComments": false,
+    "preserveConstEnums": false,
+    "skipLibCheck": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "suppressImplicitAnyIndexErrors": true,
     "allowJs": true,
-    "target": "es6",
+    "target": "es2015",
     "paths": {
       "environments": [
         "./environments"
@@ -20,14 +27,22 @@
       "jasmine"
     ],
     "typeRoots": [
+      "src/types",
       "node_modules/@types/"
     ],
     "lib": [
-      "es6",
+      "es2015",
       "dom"
     ]
   },
-  "exclude": [
-    "node_modules"
-  ]
+  "include": [
+      "src/**/*.ts",
+      "node_modules/angular2-logger/app/core/level.ts",
+      "node_modules/angular2-logger/app/core/logger.ts",
+      "node_modules/angular2-logger/app/core/providers.ts"
+  ],
+  "angularCompilerOptions": {
+    "genDir": "aot", // Specify where Angular can create temporary AOT files
+    "skipMetadataEmit" : true // Don't generate not necessary metadata files. They are useful only if you're publishing an Angular UI library
+  }
 }

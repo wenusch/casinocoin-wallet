@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { InputText, DataTable, LazyLoadEvent } from 'primeng/primeng';
 import { LogService } from '../../../providers/log.service';
 import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
@@ -12,7 +12,7 @@ import { LokiTransaction } from '../../../domain/lokijs';
 import { ElectronService } from '../../../providers/electron.service';
 import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from 'electron';
 import { environment } from '../../../../environments';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import Big from 'big.js';
 
 @Component({
@@ -43,7 +43,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   signAndSubmitIcon:string = "fa-check";
   tx_context_menu: ElectronMenu;
   lazyTransactions: Array<LokiTransaction>;
-  loadingTX: boolean = true;
+  loadingTX: boolean = false;
   totalTXRecords: number;
   viewInitComplete: boolean = false;
   initialBatchLoaded: boolean = false;
@@ -53,7 +53,8 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
               private casinocoinService: CasinocoinService,
               private walletService: WalletService,
               private electronService: ElectronService,
-              private router: Router ) { }
+              private router: Router,
+              private route: ActivatedRoute ) { }
 
   ngOnInit() {
     this.logger.debug("### Transactions ngOnInit() ###");
@@ -112,7 +113,9 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         });
         // subscribe to account updates
         this.casinocoinService.accountSubject.subscribe( account => {
+          this.logger.debug("### TransactionsComponent Account Updated");
           this.doBalanceUpdate();
+          this.dtTX.paginate();
         });
         // subscribe to transaction updates
         this.casinocoinService.transactionSubject.subscribe( tx => {
@@ -123,8 +126,19 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
           } else {
             this.transactions.splice(0,0,tx);
           }
-          // update table
-          this.dtTX.paginate();
+          let accountIDTX = tx.destination;
+          if(tx.direction === AppConstants.KEY_WALLET_TX_IN){
+              accountIDTX = tx.destination;
+          }else if(tx.direction === AppConstants.KEY_WALLET_TX_OUT){
+              accountIDTX = tx.accountID;
+          }
+          let accountInfo = this.walletService.getAccount(accountIDTX);
+          if(!accountInfo.activated){
+              accountInfo.activated = true;
+              this.walletService.updateAccount(accountInfo);
+          }
+          // update balances
+          this.doBalanceUpdate();
         });
       }
     });
@@ -134,18 +148,36 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(){
     this.logger.debug("### Transactions - ngAfterViewInit() ###");
+    this.viewInitComplete = true;
+    
+    // this.doBalanceUpdate();
+    // this.dtTX.paginate();
+
     // We use setTimeout to avoid the `ExpressionChangedAfterItHasBeenCheckedError`
     // See: https://github.com/angular/angular/issues/6005
-    setTimeout(_ => {
-      this.viewInitComplete = true;
-      this.doBalanceUpdate();
-      this.dtTX.paginate();
-    }, 0);
+
+    // setTimeout(_ => {
+    //   this.viewInitComplete = true;
+    //   this.doBalanceUpdate();
+    //   this.dtTX.paginate();
+
+      // check if Refresh Wallet was called
+    this.route.params.subscribe(params => {
+      if(params['refreshWallet']){
+        this.logger.debug("### Transactions - Refresh Wallet");
+        this.executeWalletRefresh();
+      }
+      else 
+        this.logger.debug("### Transactions - Refresh Wallet IS FALSE");
+    });
+
+    // }, 0);
   }
 
   loadTXLazy(event: LazyLoadEvent) {
     this.logger.debug("### Transactions - loadTXLazy");
-    if(this.viewInitComplete){
+    setTimeout(() => {
+      this.loadingTX = true;
       this.totalTXRecords = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
       this.logger.debug("### Transactions - DB count: " + this.totalTXRecords);
       if(this.transactions !== undefined && this.transactions.length > 0){
@@ -153,7 +185,8 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
         this.lazyTransactions = this.transactions.slice(event.first, (event.first + event.rows));
         this.logger.debug("### Transactions - Lazy TX count: " + this.lazyTransactions.length);
       }
-    }
+      this.loadingTX = false;
+    }, 0);
   }
 
   doBalanceUpdate(){
@@ -228,11 +261,15 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
 
   accountSelected(event){
     this.logger.debug("value selected: " + JSON.stringify(event));
+    this.loadingTX = true;
     if(event.value == null){
       this.transactions = this.walletService.getAllTransactions();
     } else {
       this.transactions = this.walletService.getAccountTransactions(event.value);
     }
+    this.lazyTransactions = this.transactions.slice(0, 20);
+    this.loadingTX = false;
+    this.dtTX.paginate();
   }
 
   doShowLedgers(){
@@ -264,5 +301,41 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   doShowExchanges(){
     this.logger.debug("### Transactions -> Show Exchanges");
     this.router.navigate(['home', 'exchanges']);
+  }
+
+  executeWalletRefresh(){
+    this.logger.debug("### Transactions - executeWalletRefresh() ###");
+    // clear wallet transactions
+    this.walletService.clearTransactions();
+    // clear UI transactions
+    this.transactions = [];
+    this.lazyTransactions = [];
+    // get all accounts and reset their info
+    let refreshAccounts = this.walletService.getAllAccounts();
+    refreshAccounts.forEach(account => {
+        // reset account data
+        account.activated = false;
+        account.balance = "0";
+        account.lastSequence = 0;
+        account.ownerCount = 0;
+        account.lastTxID = "";
+        account.lastTxLedger = 0;
+        if(account.meta == undefined){
+            account.meta = {
+                revision: 1,
+                created: (new Date()).getTime(),
+                version: 1,
+                updated: (new Date()).getTime()
+            }
+        }
+        this.walletService.updateAccount(account);
+        // notify account change
+        this.casinocoinService.accountSubject.next(account);
+    });
+    // loop over all accounts and get their transactions
+    refreshAccounts.forEach(account => {
+        this.logger.debug("### Refresh Account: " + account.accountID);
+        this.casinocoinService.getAccountTx(account.accountID, 1);
+    });
   }
 }

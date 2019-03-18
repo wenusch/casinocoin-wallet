@@ -14,7 +14,7 @@ import { setTimeout } from 'timers';
  
 @Component({
     moduleId: module.id,
-    templateUrl: 'recover-password.component.html',
+    templateUrl: './recover-password.component.html',
     styleUrls: ['./login.component.scss'],
     providers: [ ]
 })

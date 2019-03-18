@@ -1,16 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { LokiAddress, LokiAccount, LokiKey } from '../../../domain/lokijs';
-import { CasinocoinService } from '../../../providers/casinocoin.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { LokiAccount, LokiKey } from '../../../domain/lokijs';
+import { ElectronService } from '../../../providers/electron.service';
 import { WalletService } from '../../../providers/wallet.service';
 import { LogService } from '../../../providers/log.service';
 import { AppConstants } from '../../../domain/app-constants';
-import { Menu as ElectronMenu, MenuItem as ElectronMenuItem } from "electron"; 
-import { ElectronService } from '../../../providers/electron.service';
-import { SelectItem, MenuItem } from 'primeng/primeng';
-import { CSCUtil } from '../../../domain/csc-util';
-import * as keypairs from 'casinocoin-libjs-keypairs';
-import { QRCodeModule } from 'angular2-qrcode';
-
+// import { CasinocoinKeypairs as keypairs } from 'casinocoin-libjs';
+// import { CasinocoinKeypairs } from 'casinocoin-libjs';
 
 @Component({
   selector: 'app-importpaperwallet',
@@ -26,10 +22,28 @@ export class ImportpaperwalletComponent implements OnInit {
   keypair: any;
   address: any;
   allAccounts: any;
+  importHeaderLabel:string = "Import Paper Wallet";
+  importFooterLabel:string = "Paper Wallet Imported Successfully.";
+  alreadyImportedLabel:string = "Paper Wallet already Imported.";
 
-  constructor(private casinocoinService: CasinocoinService, private walletService: WalletService, private logger: LogService) { }
+  constructor( private electron: ElectronService, 
+               private walletService: WalletService, 
+               private logger: LogService,
+               private router: Router,
+               private route: ActivatedRoute ) { }
 
   ngOnInit() {
+    this.route.params.subscribe(params => {
+      if (params['keyimport']) {
+        this.importHeaderLabel = "Import Private Key";
+        this.importFooterLabel = "Private Key Imported Successfully.";
+        this.alreadyImportedLabel = "Private Key already Imported.";
+      } else {
+        this.importHeaderLabel = "Import Paper Wallet";
+        this.importFooterLabel = "Paper Wallet Imported Successfully.";
+        this.alreadyImportedLabel = "Paper Wallet already Imported.";
+      }
+    });
   }
 
   doSubmit() {
@@ -44,7 +58,7 @@ export class ImportpaperwalletComponent implements OnInit {
       this.errorMessage = "";
       this.showDialogFooter = false;
       try {        
-        this.keypair = keypairs.deriveKeypair(this.privateKey.trim());
+        this.keypair = this.electron.remote.getGlobal("vars").cscKeypairs.deriveKeypair(this.privateKey.trim());
       }
       catch(e) {
         this.errorMessage = "Invalid Private Key";
@@ -52,11 +66,11 @@ export class ImportpaperwalletComponent implements OnInit {
         this.showDialogFooter = true;
         return;
       }
-      this.address = keypairs.deriveAddress(this.keypair.publicKey);
+      this.address = this.electron.remote.getGlobal("vars").cscKeypairs.deriveAddress(this.keypair.publicKey);
       this.allAccounts = this.walletService.getAllAccounts();
       for(let account of this.allAccounts){
         if(account.accountID === this.address){
-          this.errorMessage = "Paper Wallet already Imported.";
+          this.errorMessage = this.alreadyImportedLabel;
           this.label = "";
           this.privateKey = "";
           this.walletPassword = "";
@@ -96,7 +110,7 @@ export class ImportpaperwalletComponent implements OnInit {
           }
         });
       this.logger.debug("### Account Added with Paper Wallet: " + walletAccount.accountID);
-      this.errorMessage = "Paper Wallet Imported Successfully.";
+      this.errorMessage = this.importFooterLabel;
       this.label = "";
       this.privateKey = "";
       this.walletPassword = "";

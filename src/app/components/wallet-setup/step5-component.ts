@@ -32,8 +32,11 @@ import { WalletService } from '../../providers/wallet.service';
       private walletService: WalletService ) { }
 
     @ViewChild('inputWalletLocation') inputWalletLocation;
+    @ViewChild('inputBackupLocation') inputBackupLocation;
     @Input() newWalletLocation:string;
     @Output() locationChange:EventEmitter<string> = new EventEmitter();
+    @Input() newBackupLocation:string;
+    @Output() backupLocationChange:EventEmitter<string> = new EventEmitter();
 
     selectWalletLocation() {    
         this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("home"));
@@ -50,4 +53,18 @@ import { WalletService } from '../../providers/wallet.service';
         );
     }
 
+    selectBackupLocation() {    
+      this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("documents"));
+      this.electron.remote.dialog.showOpenDialog(
+          { title: 'Backup Location',
+          properties: ['openDirectory','createDirectory']}, (result) => {
+            this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
+            if(result && result.length>0) {
+                this.newBackupLocation = result[0];
+                this.backupLocationChange.emit(this.newBackupLocation);
+                this.inputBackupLocation.nativeElement.focus();
+            }
+          }
+      );
+    }
   }

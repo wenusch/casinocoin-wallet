@@ -1,6 +1,3 @@
-import 'zone.js/dist/zone-mix';
-import 'reflect-metadata';
-import 'polyfills';
 import { BrowserModule }            from '@angular/platform-browser';
 import { BrowserAnimationsModule }  from '@angular/platform-browser/animations';
 import { NgModule }                 from '@angular/core';
@@ -60,7 +57,6 @@ import { ChangepasswordComponent } from './components/forms/changepassword/chang
 import { SupportComponent }         from './components/forms/support/support.component';
 import { ExchangesComponent }       from './components/forms/exchanges/exchanges.component';
 import { WindowRef } from './components/forms/paperwallet/WindowRef';
-import { RefreshWalletComponent }   from './components/wallet-setup/refresh-wallet.component';
 
 // import PrimeNG, Material and Bootstrap modules
 import { DialogModule, ButtonModule, CheckboxModule,
@@ -94,8 +90,7 @@ import { MatListModule, MatSidenavModule, MatTooltipModule,
     SupportComponent,
     ExchangesComponent,
     ImportpaperwalletComponent,
-    ChangepasswordComponent,
-    RefreshWalletComponent
+    ChangepasswordComponent
   ],
   imports: [
     BrowserModule,

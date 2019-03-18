@@ -1,8 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Logger } from "angular2-logger/core";
-import * as binary from 'casinocoin-libjs-binary-codec';
-import * as keypairs from 'casinocoin-libjs-keypairs';
-import * as computeBinaryTransactionHash  from 'casinocoin-libjs-hashes';
 import { Payment, PaymentFlags, Instructions, Prepare, Amount } from './csc-types';
 import { CSCUtil } from './csc-util';
 import * as _ from "lodash";
