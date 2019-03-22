@@ -48,7 +48,7 @@
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Amount</span>
             <input type="text" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()"
                     [disabled]="!selectedAccount || invalidReceipient" (ngModelChange)="onAmountChange($event)" 
-                    autocomplete="off" #amountInput>
+                    autocomplete="off" #amountInput id="amount">
             <button pButton type="button" (click)="sendAllCoins()" label="all" [disabled]="!selectedAccount || invalidReceipient"></button>
         </div>
     </div>

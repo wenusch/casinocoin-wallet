@@ -692,7 +692,7 @@ export class WalletService {
   addTransaction(newTransaction: LokiTypes.LokiTransaction): LokiTypes.LokiTransaction {
     let tx = this.getTransaction(newTransaction.txID);
     this.logger.debug("### WalletService - addTransaction: " + JSON.stringify(tx));
-    if(tx == null){
+    if(tx == null && newTransaction.engineResult === 'tesSUCCESS'){
       return this.transactions.insert(newTransaction);
     } else {
       return tx;

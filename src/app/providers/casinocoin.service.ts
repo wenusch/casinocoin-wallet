@@ -697,7 +697,9 @@ export class CasinocoinService implements OnDestroy {
             direction: txDirection,
             validated: validated,
             status: LokiTxStatus.received,
-            inLedger: inLedger
+            inLedger: inLedger,
+            engineResult: tx.engine_result,
+            engineResultMessage: tx.engine_result_message
         }
         // add Memos if defined
         if(tx.Memos){
@@ -738,27 +740,33 @@ export class CasinocoinService implements OnDestroy {
             this.walletService.updateTransaction(dbTX);
         }
         // notify tx change
-        this.transactionSubject.next(dbTX);
+        let bodyMessage = '';
+        if(tx.engine_result === 'tesSUCCESS'){
+            this.transactionSubject.next(dbTX);
+        }
+        else{
+            bodyMessage = ". Which got declined due to " + tx.engine_result_message;
+        }
         // update accounts
         if(dbTX.direction == AppConstants.KEY_WALLET_TX_IN){
             this.getAccountInfo(dbTX.destination, false);
             this.notificationService.addMessage(
                 {title: 'Incoming CSC Transaction', 
                 body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                    ' coins from ' + dbTX.accountID});
+                    ' coins from ' + dbTX.accountID + bodyMessage});
         } else if(dbTX.direction == AppConstants.KEY_WALLET_TX_OUT){
             this.getAccountInfo(dbTX.accountID, false);
             this.notificationService.addMessage(
                 {title: 'Outgoing CSC Transaction', 
                 body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                    ' coins to ' + dbTX.destination});
+                    ' coins to ' + dbTX.destination + bodyMessage});
         } else {
             this.getAccountInfo(dbTX.destination, false);
             this.getAccountInfo(dbTX.accountID, false);
             this.notificationService.addMessage(
                 {title: 'Wallet Transaction', 
                 body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                    ' coins to your own address ' + dbTX.destination});
+                    ' coins to your own address ' + dbTX.destination + bodyMessage});
         }
     }
 
@@ -794,7 +802,9 @@ export class CasinocoinService implements OnDestroy {
                             direction: AppConstants.KEY_WALLET_TX_IN,
                             validated: true,
                             status: LokiTxStatus.received,
-                            inLedger: tx.LedgerSequence
+                            inLedger: tx.LedgerSequence,
+                            engineResult: tx.engine_result,
+                            engineResultMessage: tx.engine_result_message
                         }
                         // insert into the wallet
                         this.walletService.addTransaction(dbTX);
