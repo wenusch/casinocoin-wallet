@@ -740,11 +740,9 @@ export class CasinocoinService implements OnDestroy {
             this.walletService.updateTransaction(dbTX);
         }
         // notify tx change
+        this.transactionSubject.next(dbTX);
         let bodyMessage = '';
-        if(tx.engine_result === 'tesSUCCESS'){
-            this.transactionSubject.next(dbTX);
-        }
-        else{
+        if(tx.engine_result !== 'tesSUCCESS'){
             bodyMessage = ". Which got declined due to " + tx.engine_result_message;
         }
         // update accounts
