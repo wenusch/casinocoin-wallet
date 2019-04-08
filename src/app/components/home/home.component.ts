@@ -53,6 +53,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('contextMenu') contextMenu: ContextMenu;
   @ViewChild('fiatCurrenciesDrowdown') fiatCurrenciesDrowdown: Dropdown;
+  @ViewChild('notificationsDrowdown') notificationsDrowdown: Dropdown;
   @ViewChild('accountDropdown') accountDropdown: Dropdown;
 
   //show_menu: string = 'shown';
@@ -70,8 +71,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showPasswordDialog:boolean = false;
   showPasswordCallback:any;
 
-  walletSettings: WalletSettings = {showNotifications: true, fiatCurrency: 'USD'};
+  walletSettings: WalletSettings = {showNotifications: AppConstants.NOTIFICATION_ENABLED, fiatCurrency: 'USD'};
   fiatCurrencies: SelectItem[] = [];
+  notifications: SelectItem[] = [];
   selectedFiatCurrency: string;
   privateKeySeed:string;
   walletPassword:string;
@@ -153,6 +155,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
                private datePipe: DatePipe,
                private notificationService: NotificationService,
                private currencyPipe: CurrencyPipe ) {
+    this.notifications.push({label: 'True', value: true});
+    this.notifications.push({label: 'False', value: false});
     this.logger.debug("### INIT HOME ###");
     this.applicationVersion = this.electron.remote.app.getVersion();
     this.backupPath = this.electron.remote.getGlobal("vars").backupPath;
@@ -451,7 +455,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.walletSettings = this.localStorageService.get(AppConstants.KEY_WALLET_SETTINGS);
     if(this.walletSettings == null){
       // settings do not exist yet so create
-      this.walletSettings = {fiatCurrency: "USD", showNotifications: true};
+      this.walletSettings = {fiatCurrency: "USD", showNotifications: AppConstants.NOTIFICATION_ENABLED};
       this.localStorageService.set(AppConstants.KEY_WALLET_SETTINGS, this.walletSettings);
     }
     // load fiat currencies and update market value
@@ -753,6 +757,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.walletSettings.fiatCurrency !== undefined) {
         this.marketService.changeCurrency(this.walletSettings.fiatCurrency);
     }
+  }
+
+  updateShowNotification(event){
+    this.localStorageService.set(AppConstants.KEY_WALLET_SETTINGS, this.walletSettings);
   }
 
 

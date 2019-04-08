@@ -174,7 +174,15 @@
                             appendTo="body"
                             autofocus #fiatCurrenciesDrowdown></p-dropdown>
                 </div>
-                <div class="ui-g-4">Show desktop notifications</div><div class="ui-g-8 bold-value">{{this.walletSettings.showNotifications}}</div>
+                <div class="ui-g-4">Show desktop notifications</div><div class="ui-g-8 bold-value">
+                        <p-dropdown
+                        [style]="{'width':'100%'}"
+                        [options]="notifications"
+                        [(ngModel)]="walletSettings.showNotifications"
+                        (ngModelChange)="updateShowNotification($event)"
+                        appendTo="body"
+                        autofocus #notificationsDrowdown></p-dropdown>
+                </div>
             </div>
         </div>
         <div class="ui-g-1"></div>
