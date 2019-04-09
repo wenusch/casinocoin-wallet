@@ -660,9 +660,45 @@ export class CasinocoinService implements OnDestroy {
         }
     }
 
-    submitTx(txBlob: string){
-        let submitRequest = {
-            id: "submitTx",
+    computeSignature(tx: Object, privateKey: string, signAs?: string) {
+        const signingData = signAs ?
+          this.electron.remote.getGlobal('vars').cscBinaryCodec.encodeForMultisigning(tx, signAs) : this.electron.remote.getGlobal('vars').cscBinaryCodec.encodeForSigning(tx)
+        return this.electron.remote.getGlobal('vars').cscKeypairs.sign(signingData, privateKey)
+    }
+
+    sign(txJSON: string, secret: string, options: { signAs?: string } = {}
+    ): { signedTransaction: string; id: string } {
+
+        const tx = JSON.parse(txJSON)
+        if (tx.TxnSignature || tx.Signers) {
+            delete tx.TxnSignature;
+            delete tx.Signers;
+        }
+
+        const keypair = this.electron.remote.getGlobal('vars').cscKeypairs.deriveKeypair(secret)
+        tx.SigningPubKey = options.signAs ? '' : keypair.publicKey
+
+        if (options.signAs) {
+            const signer = {
+                Account: options.signAs,
+                SigningPubKey: keypair.publicKey,
+                TxnSignature: this.computeSignature(tx, keypair.privateKey, options.signAs)
+            }
+            tx.Signers = [{Signer: signer}]
+        } else {
+            tx.TxnSignature = this.computeSignature(tx, keypair.privateKey)
+        }
+
+        const serialized = this.electron.remote.getGlobal('vars').cscBinaryCodec.encode(tx)
+        return {
+            signedTransaction: serialized,
+            id: this.electron.remote.getGlobal('vars').cscHashes.computeBinaryTransactionHash(serialized)
+        }
+    }
+
+    submitTx(txBlob: string) {
+    let submitRequest = {
+      id: 'submitTx',
             command: "submit",
             tx_blob: txBlob
         }
