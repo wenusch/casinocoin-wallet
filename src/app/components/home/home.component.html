@@ -3,15 +3,15 @@
         <mat-sidenav-container class="home-sidenav-container">
             <mat-sidenav mode="side" opened="true" disableClose="true">
                 <div class="app-nav">
-                    <img src="../../../assets/brand/casinocoin-logo.png" alt="CasinoCoin" class="csc-logo" />
+                    <img src="../../../assets/brand/casinocoin-logo.png" alt="CasinoCoin" class="csc-logo"/>
                     <div class="ui-g menu-balance">
                         <div class="ui-g-12 menu-text amount-label">Balance:</div>
                         <div class="ui-g-12 amount-value"> {{walletBalance | cscAmount : true : true}}</div>
                     </div>
                     <div class="menu-nav">
                         <mat-list style="padding-top: 20px;">
-                            <mat-list-item (click)="onTransactions()" class="menu-item" 
-                                            [ngClass]="{active_menu_item: active_menu_item === 'transactions'}">
+                            <mat-list-item (click)="onTransactions()" class="menu-item"
+                                           [ngClass]="{active_menu_item: active_menu_item === 'transactions'}">
                                 <div class="ui-g">
                                     <div class="ui-g-3">
                                         <i class="icon icon-transactions menu-icon"></i>
@@ -22,7 +22,7 @@
                                 </div>
                             </mat-list-item>
                             <mat-list-item (click)="onSendCoins()" class="menu-item"
-                                            [ngClass]="{active_menu_item: active_menu_item === 'send'}"> 
+                                           [ngClass]="{active_menu_item: active_menu_item === 'send'}">
                                 <div class="ui-g">
                                     <div class="ui-g-3">
                                         <i class="icon icon-send menu-icon"></i>
@@ -31,7 +31,7 @@
                                 </div>
                             </mat-list-item>
                             <mat-list-item (click)="onReceiveCoins()" class="menu-item"
-                                            [ngClass]="{active_menu_item: active_menu_item === 'receive'}"> 
+                                           [ngClass]="{active_menu_item: active_menu_item === 'receive'}">
                                 <div class="ui-g">
                                     <div class="ui-g-3">
                                         <i class="icon icon-receive menu-icon"></i>
@@ -40,7 +40,7 @@
                                 </div>
                             </mat-list-item>
                             <mat-list-item (click)="onAddressbook()" class="menu-item"
-                                            [ngClass]="{active_menu_item: active_menu_item === 'addressbook'}"> 
+                                           [ngClass]="{active_menu_item: active_menu_item === 'addressbook'}">
                                 <div class="ui-g">
                                     <div class="ui-g-3">
                                         <i class="icon icon-book menu-icon"></i>
@@ -58,7 +58,7 @@
                                 </div>
                             </mat-list-item> -->
                             <mat-list-item (click)="onSupport()" class="menu-item"
-                                            [ngClass]="{active_menu_item: active_menu_item === 'support'}"> 
+                                           [ngClass]="{active_menu_item: active_menu_item === 'support'}">
                                 <div class="ui-g">
                                     <div class="ui-g-3">
                                         <i class="icon icon-question menu-icon"></i>
@@ -82,10 +82,12 @@
                 <div class="ui-toolbar-group-left">
                     <div class="ui-g">
                         <div class="ui-g-6">
-                            <span><i class="icon icon-chip footer-icon" aria-hidden="true"></i>Balance: {{balance | number : '1.2-2'}}</span>
+                            <span><i class="icon icon-chip footer-icon"
+                                     aria-hidden="true"></i>Balance: {{balance | number : '1.2-2'}}</span>
                         </div>
                         <div class="ui-g-6">
-                            <span><i class="icon icon-banknote footer-icon" aria-hidden="true"></i>Fiat Value: {{fiat_balance}}</span>
+                            <span><i class="icon icon-banknote footer-icon"
+                                     aria-hidden="true"></i>Fiat Value: {{fiat_balance}}</span>
                         </div>
                     </div>
                 </div>
@@ -103,7 +105,8 @@
                         </div>
                         <div class="ui-g-5" style="text-align: right">
                             <div (click)="onConnectionClick($event)" [matTooltip]="connected_tooltip">
-                                <span [ngClass]="connectionColorClass"><i class="icon icon-globe footer-icon" aria-hidden="true"></i>{{connected_tooltip}}</span>
+                                <span [ngClass]="connectionColorClass"><i class="icon icon-globe footer-icon"
+                                                                          aria-hidden="true"></i>{{connected_tooltip}}</span>
                             </div>
                         </div>
                     </div>
@@ -112,8 +115,8 @@
         </mat-sidenav-container>
     </div>
 </div>
-<p-dialog class="dialog-header" [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="350" [closable]="true" 
-        [modal]="true" appendTo="body">
+<p-dialog class="dialog-header" [(visible)]="showPrivateKeyImportDialog" [width]="450" [height]="350" [closable]="true"
+          [modal]="true" appendTo="body">
     <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Import private keys</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
@@ -125,8 +128,8 @@
         <div class="ui-g-10">
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon"><i class="icon icon-key"></i></span>
-                <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" 
-                        (keyup.enter)="onImportPrivateKey()" style="width: 100%; padding-left: 5px;">
+                <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword"
+                       (keyup.enter)="onImportPrivateKey()" style="width: 100%; padding-left: 5px;">
             </div>
         </div>
         <div class="ui-g-1"></div>
@@ -140,13 +143,15 @@
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <mat-list class="mat-list-address">
-                <mat-list-item *ngFor="let key of importKeys" class="import-key"><span class="mat-list-address-item">{{key.accountID}}</span></mat-list-item>
+                <mat-list-item *ngFor="let key of importKeys" class="import-key"><span
+                        class="mat-list-address-item">{{key.accountID}}</span></mat-list-item>
             </mat-list>
         </div>
         <div class="ui-g-1"></div>
     </div>
     <div style="text-align: right; margin-top: 10px;">
-        <button pButton type="button" (click)="onImportPrivateKey()" icon="icon icon-arrow-right" iconPos="right" label="Import" 
+        <button pButton type="button" (click)="onImportPrivateKey()" icon="icon icon-arrow-right" iconPos="right"
+                label="Import"
                 style="width: 115px;"></button>
     </div>
     <p-footer *ngIf="footer_visible" class="footer-error">
@@ -154,16 +159,19 @@
     </p-footer>
 </p-dialog>
 
-<p-dialog class="dialog-header" [(visible)]="showSettingsDialog" [width]="640" [height]="400" [closable]="true" 
-        [modal]="true" appendTo="body">
+<p-dialog class="dialog-header" [(visible)]="showSettingsDialog" [width]="640" [height]="400" [closable]="true"
+          [modal]="true" appendTo="body">
     <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Settings</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
             <div class="ui-g">
-                <div class="ui-g-4">Wallet Language</div><div class="ui-g-8 bold-value">English</div>
-                <div class="ui-g-4">Wallet UUID</div><div class="ui-g-8 bold-value">{{currentWalletObject['walletUUID']}}</div>
-                <div class="ui-g-4">Wallet Creationdate</div><div class="ui-g-8 bold-value">{{currentWalletObject['creationDate'] | cscDate : 'yyyy-MM-dd HH:mm:ss'}}</div>
+                <div class="ui-g-4">Wallet Language</div>
+                <div class="ui-g-8 bold-value">English</div>
+                <div class="ui-g-4">Wallet UUID</div>
+                <div class="ui-g-8 bold-value">{{currentWalletObject['walletUUID']}}</div>
+                <div class="ui-g-4">Wallet Creationdate</div>
+                <div class="ui-g-8 bold-value">{{currentWalletObject['creationDate'] | cscDate : 'yyyy-MM-dd HH:mm:ss'}}</div>
                 <div class="ui-g-4">Fiat value currency</div>
                 <div class="ui-g-8 bold-value">
                     <p-dropdown
@@ -174,80 +182,97 @@
                             appendTo="body"
                             autofocus #fiatCurrenciesDrowdown></p-dropdown>
                 </div>
-                <div class="ui-g-4">Show desktop notifications</div><div class="ui-g-8 bold-value">{{this.walletSettings.showNotifications}}</div>
+                <div class="ui-g-4">Show desktop notifications</div>
+                <div class="ui-g-8 bold-value">{{this.walletSettings.showNotifications}}</div>
             </div>
         </div>
         <div class="ui-g-1"></div>
     </div>
     <div style="text-align: right;">
-        <button pButton type="button" (click)="onSettingsSave()" icon="icon icon-save" iconPos="right" label="Save" *ngIf="true"
+        <button pButton type="button" (click)="onSettingsSave()" icon="icon icon-save" iconPos="right" label="Save"
+                *ngIf="true"
                 style="width: 115px;"></button>
     </div>
 </p-dialog>
-<p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="640" [height]="500" [closable]="true" 
-        [modal]="true" appendTo="body">
+<p-dialog class="dialog-header" [(visible)]="showServerInfoDialog" [width]="640" [height]="500" [closable]="true"
+          [modal]="true" appendTo="body">
     <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Server Information</span></p-header>
     <div class="ui-g">
-        <div class="ui-g-6">Server</div><div class="ui-g-6 bold-value">{{currentServer?.server_id}}</div>
-        <div class="ui-g-6">Server Version</div><div class="ui-g-6 bold-value">{{serverState?.build_version}}</div>
-        <div class="ui-g-6">Environment</div><div class="ui-g-6 bold-value">{{dbMetadata?.environment}}</div>
-        <div class="ui-g-6">Response Time (msec)</div><div class="ui-g-6 bold-value">{{currentServer?.response_time}}</div>
-        <div class="ui-g-6">Available Ledgers</div><div class="ui-g-6 bold-value">{{serverState?.complete_ledgers}}</div>
-        <div class="ui-g-6">Server Status</div><div class="ui-g-6 bold-value">{{serverState?.server_state}}</div>
-        <div class="ui-g-6">Connected Peers</div><div class="ui-g-6 bold-value">{{serverState?.peers}}</div>
-        <div class="ui-g-6">Last Ledger Sequence</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.seq}}</div>
-        <div class="ui-g-6">Last Closing Time</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.close_time | cscDate: 'HH:mm:ss'}}</div>
-        <div class="ui-g-6">Close Duration (msec)</div><div class="ui-g-6 bold-value">{{serverState?.last_close?.converge_time}}</div>
-        <div class="ui-g-6">Last Close Proposers</div><div class="ui-g-6 bold-value">{{serverState?.last_close?.proposers}}</div>
-        <div class="ui-g-6">Current Fee</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.base_fee | cscAmount}}</div>
-        <div class="ui-g-6">Current Account Reserve</div><div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.reserve_base | cscAmount}}</div>
+        <div class="ui-g-6">Server</div>
+        <div class="ui-g-6 bold-value">{{currentServer?.server_id}}</div>
+        <div class="ui-g-6">Server Version</div>
+        <div class="ui-g-6 bold-value">{{serverState?.build_version}}</div>
+        <div class="ui-g-6">Environment</div>
+        <div class="ui-g-6 bold-value">{{dbMetadata?.environment}}</div>
+        <div class="ui-g-6">Response Time (msec)</div>
+        <div class="ui-g-6 bold-value">{{currentServer?.response_time}}</div>
+        <div class="ui-g-6">Available Ledgers</div>
+        <div class="ui-g-6 bold-value">{{serverState?.complete_ledgers}}</div>
+        <div class="ui-g-6">Server Status</div>
+        <div class="ui-g-6 bold-value">{{serverState?.server_state}}</div>
+        <div class="ui-g-6">Connected Peers</div>
+        <div class="ui-g-6 bold-value">{{serverState?.peers}}</div>
+        <div class="ui-g-6">Last Ledger Sequence</div>
+        <div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.seq}}</div>
+        <div class="ui-g-6">Last Closing Time</div>
+        <div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.close_time | cscDate: 'HH:mm:ss'}}</div>
+        <div class="ui-g-6">Close Duration (msec)</div>
+        <div class="ui-g-6 bold-value">{{serverState?.last_close?.converge_time}}</div>
+        <div class="ui-g-6">Last Close Proposers</div>
+        <div class="ui-g-6 bold-value">{{serverState?.last_close?.proposers}}</div>
+        <div class="ui-g-6">Current Fee</div>
+        <div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.base_fee | cscAmount}}</div>
+        <div class="ui-g-6">Current Account Reserve</div>
+        <div class="ui-g-6 bold-value">{{serverState?.validated_ledger?.reserve_base | cscAmount}}</div>
     </div>
 </p-dialog>
 
-<p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="225" [closable]="true" [modal]="true" appendTo="body">
-<p-header><span><i class="icon csc-dialog-icon icon-chip"></i>{{passwordDialogHeader}}</span></p-header>
-<div class="ui-g ui-fluid">
-    <div class="ui-g-1"></div>
-    <div class="ui-g-10">
-        <p>Please enter the password for the wallet.</p>
-    </div>
-    <div class="ui-g-1"></div>
-</div>
-<div class="ui-g ui-fluid">
-    <div class="ui-g-1"></div>
-    <div class="ui-g-10">
-        <div class="ui-inputgroup">
-            <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-key"></i></span>
-            <input type="password" pInputText placeholder="Wallet Password" style="width: 100%; padding-left: 5px;"
-                   [(ngModel)]="walletPassword" (keyup.enter)="executePasswordCallback()" #passwordInput>         
+<p-dialog [(visible)]="showPasswordDialog" [width]="450" [height]="225" [closable]="true" [modal]="true"
+          appendTo="body">
+    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>{{passwordDialogHeader}}</span></p-header>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <p>Please enter the password for the wallet.</p>
         </div>
+        <div class="ui-g-1"></div>
     </div>
-    <div class="ui-g-1"></div>
-</div>
-<div class="ui-g ui-fluid">
-    <div class="ui-g-1"></div>
-    <div class="ui-g-5">
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-key"></i></span>
+                <input type="password" pInputText placeholder="Wallet Password" style="width: 100%; padding-left: 5px;"
+                       [(ngModel)]="walletPassword" (keyup.enter)="executePasswordCallback()" #passwordInput>
+            </div>
+        </div>
+        <div class="ui-g-1"></div>
     </div>
-    <div class="ui-g-5">
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-5">
+        </div>
+        <div class="ui-g-5">
         <span>
-            <button pButton type="button" (click)="executePasswordCallback()" icon="fa-check" iconPos="right" 
+            <button pButton type="button" (click)="executePasswordCallback()" icon="fa-check" iconPos="right"
                     label="Ok" style="width: 150px;"></button>
         </span>
+        </div>
+        <div class="ui-g-1"></div>
     </div>
-    <div class="ui-g-1"></div>
-</div>
-<p-footer *ngIf="footer_visible" class="footer-error">
-    Error: {{error_message}}
-</p-footer>
+    <p-footer *ngIf="footer_visible" class="footer-error">
+        Error: {{error_message}}
+    </p-footer>
 </p-dialog>
 
-<p-dialog [(visible)]="showSignMessageDialog" [width]="725" [height]="500" [closable]="true" [modal]="true" appendTo="body">
+<p-dialog [(visible)]="showSignMessageDialog" [width]="725" [height]="500" [closable]="true" [modal]="true"
+          appendTo="body">
     <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Sign Message</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-12">
-            <p>Please select the account you want to sign the message with. 
-             Then enter the message to sign and the wallet password. 
-             Using the generated Public Key and Signature your signed message can be verified.</p>
+            <p>Please select the account you want to sign the message with.
+                Then enter the message to sign and the wallet password.
+                Using the generated Public Key and Signature your signed message can be verified.</p>
         </div>
     </div>
     <div class="ui-g ui-fluid">
@@ -255,7 +280,7 @@
         <div class="ui-g-10">
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-id"></i></span>
-                <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount" 
+                <p-dropdown [style]="{'width':'100%'}" [options]="accounts" [(ngModel)]="selectedAccount"
                             placeholder="Select Account ..." #accountDropdown autofocus></p-dropdown>
             </div>
         </div>
@@ -275,16 +300,19 @@
         </div>
         <div class="ui-g-2 bold-value">Public Key</div>
         <div class="ui-g-10" (contextmenu)="saveCopyValue('signPubKey')">
-            <textarea [rows]="2" [cols]="60" style="resize: none;" [ngModel]="signPubKey" pInputTextarea readonly></textarea>
+            <textarea [rows]="2" [cols]="60" style="resize: none;" [ngModel]="signPubKey" pInputTextarea
+                      readonly></textarea>
         </div>
         <div class="ui-g-2 bold-value">Signature</div>
         <div class="ui-g-10" (contextmenu)="saveCopyValue('signSignature')">
-            <textarea [rows]="3" [cols]="60" style="resize: none;" [ngModel]="signSignature" pInputTextarea readonly></textarea>
+            <textarea [rows]="3" [cols]="60" style="resize: none;" [ngModel]="signSignature" pInputTextarea
+                      readonly></textarea>
         </div>
     </div>
 </p-dialog>
 
-<p-dialog [(visible)]="showVerifyMessageDialog" [width]="720" [height]="500" [closable]="true" [modal]="true" appendTo="body">
+<p-dialog [(visible)]="showVerifyMessageDialog" [width]="720" [height]="500" [closable]="true" [modal]="true"
+          appendTo="body">
     <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Verify Message</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-12">
@@ -302,7 +330,8 @@
         </div>
         <div class="ui-g-2 bold-value">Signature</div>
         <div class="ui-g-10">
-            <textarea [rows]="3" [cols]="60" style="resize: none;" [(ngModel)]="verifySignature" pInputTextarea></textarea>
+            <textarea [rows]="3" [cols]="60" style="resize: none;" [(ngModel)]="verifySignature"
+                      pInputTextarea></textarea>
         </div>
         <div class="ui-g-2 bold-value">Result</div>
         <div class="ui-g-10">
@@ -314,3 +343,281 @@
         </div>
     </div>
 </p-dialog>
+
+
+<p-dialog
+        [(visible)]="showEnableMultisignDialog"
+        [width]="720"
+        [height]="700"
+        [closable]="true"
+        [modal]="true"
+        appendTo="body">
+
+    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Enable Multisigning</span></p-header>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-12">
+            <p>Please select the account for enabling multisgining.</p>
+        </div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-2 bold-value">Account</div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <p-dropdown
+                        [style]="{'width':'100%'}"
+                        [options]="accounts"
+                        [(ngModel)]="ms_setting_account"
+                        (ngModelChange)="updateMultisignAccountDetails()"
+                        [disabled]="ms_setting_signers.length > 0"
+                        placeholder="Select Account ..."
+                        #accountDropdown
+                        autofocus>
+                </p-dropdown>
+            </div>
+        </div>
+        <div class="ui-g-2 bold-value">Quorum</div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <input
+                        [style]="{'width':'100%'}"
+                        type="number"
+                        placeholder="Quorum"
+                        [(ngModel)]="ms_setting_quorum"
+                        [disabled]="!ms_setting_account"
+                        min="1"
+                        step="1"
+                        #quorumInput>
+            </div>
+        </div>
+
+        <div class="ui-g-2 bold-value">Signers</div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <input
+                        [style]="{'width':'100%'}"
+                        type="text"
+                        placeholder="Signer"
+                        [(ngModel)]="signer_account"
+                        [disabled]="!ms_setting_quorum"
+                        #signerInput>
+                <br/>
+                <input
+                        [style]="{'width':'100%'}"
+                        type="number"
+                        placeholder="Weight"
+                        [(ngModel)]="signer_weight"
+                        [disabled]="!ms_setting_quorum"
+                        min="1"
+                        step="1"
+                        #weightInput>
+
+                <button pButton type="button" (click)="addSigner(signer_account, signer_weight)" icon="icon icon-text"
+                        iconPos="left" label="Add Signer"></button>
+            </div>
+
+        </div>
+
+        <p-dataTable
+                [value]="ms_setting_signers"
+                [immutable]="false"
+                scrollable="false"
+                scrollHeight="325px">
+            <p-column field="signer" header="Signer" [style]="{'width':'125px'}"></p-column>
+            <p-column field="weight" header="Weight" [style]="{'width':'30px'}"></p-column>
+            <ng-template pTemplate="emptymessage">
+                <p>No signers configured yet.</p>
+            </ng-template>
+        </p-dataTable>
+
+
+    </div>
+
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-12">
+            <p>By disabling the masterkey, the mutlisign account will be locked down for sending transactions.</p>
+        </div>
+    </div>
+    <div class="ui-g-10">
+        <div class="ui-inputgroup">
+
+
+            <p-checkbox
+                    [disabled]="!(ms_setting_signers.length > 0)"
+                    [(ngModel)]="disableMasterKey"
+                    (onChange)="updateMultisignAccountDetails()"
+                    binary="false"
+                    label="Check if you want to disable the master key">
+            </p-checkbox>
+
+        </div>
+
+    </div>
+    <div class="ui-g-10">
+        <div class="ui-inputgroup">
+
+            <span class="ui-inputgroup-addon"><i class="icon icon-key"></i></span>
+            <input
+                    type="password"
+                    pInputText
+                    placeholder="Wallet Password"
+                    [(ngModel)]="walletPassword"
+                    style="width: 100%; padding-left: 5px;">
+
+        </div>
+
+    </div>
+    <div class="ui-g-12" style="text-align: left;">
+        <button
+                pButton
+                type="button"
+                (click)="enableMultisigning()"
+                label="Enable mutlisigning"
+                style="float: left; width: 115px;">
+
+        </button>
+    </div>
+
+</p-dialog>
+
+
+<p-dialog
+        [(visible)]="showComposeTransactionDialog"
+        [width]="720"
+        [height]="700"
+        [closable]="true"
+        [modal]="true"
+        appendTo="body">
+
+
+    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Compose transaction</span></p-header>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-12">
+            <p>Add all signatures by pasting each one in the field and press "Add signature".</p>
+        </div>
+    </div>
+
+    <!--</div>-->
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-2 bold-value">Singed TX</div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <textarea [rows]="10" [cols]="10" [(ngModel)]="baseMultiSignedTx" pInputTextarea></textarea>
+            </div>
+        </div>
+
+    </div>
+    <p-dataTable
+            [value]="signerSignedTxSignatures"
+            [immutable]="false"
+            scrollable="false"
+            scrollHeight="325px">
+        <p-column field="signature" header="Signatures" [style]="{'width':'325px'}"></p-column>
+        <ng-template pTemplate="emptymessage">
+            <p>No signatures added yet.</p>
+        </ng-template>
+    </p-dataTable>
+    <div class="ui-g-12" style="text-align: left;">
+        <button
+                pButton
+                type="button"
+                (click)="addSignature()"
+                label="Add signature"
+                style="float: left; width: 115px;">
+        </button>
+        <button
+                pButton
+                type="button"
+                (click)="combineSignatures()"
+                label="Combine"
+                style="float: left; width: 115px;">
+        </button>
+    </div>
+</p-dialog>
+
+
+<p-dialog
+        [(visible)]="showSignTransactionDialog"
+        [width]="720"
+        [height]="700"
+        [closable]="true"
+        [modal]="true"
+        appendTo="body">
+
+
+    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Sign transaction</span></p-header>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-12">
+            <p>Paste the transaction signature, select the signer account and view the signed transaction signature.</p>
+        </div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-2 bold-value">Singed TX</div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <textarea [rows]="10" [cols]="10" [(ngModel)]="multisignTxSignatureToSign"  (ngModelChange)="getAccountSettingsForSignature()" pInputTextarea></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-2 bold-value">Account</div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <p-dropdown
+                        [style]="{'width':'100%'}"
+                        [options]="accountsForSigning"
+                        [(ngModel)]="selectedSignerAccount"
+                        [disabled]="!(accountsForSigning.length > 0 && multisignTxSignatureToSign)"
+                        placeholder="Select Account ..."
+                        #accountDropdown
+                        autofocus>
+                </p-dropdown>
+            </div>
+        </div>
+
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <div class="ui-inputgroup">
+                <span class="ui-inputgroup-addon"><i class="icon icon-key"></i></span>
+                <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" style="width: 100%; padding-left: 5px;">
+            </div>
+        </div>
+        <div class="ui-g-1"></div>
+    </div>
+
+    <div class="ui-g-12" style="text-align: left;">
+        <button
+                pButton
+                type="button"
+                (click)="viewSignedMutlisignTranscation()"
+                label="View signature"
+                style="float: left; width: 115px;">
+        </button>
+    </div>
+</p-dialog>
+
+
+<p-dialog [(visible)]="showSignedMutlisignTransaction" [width]="450" [height]="500" [closable]="true"
+          [modal]="true" appendTo="body">
+    <p-header>
+        <i class="icon csc-dialog-icon icon-chip"></i>
+        Signed multisign transaction signature
+    </p-header>
+
+    <div class="ui-g ui-fluid">
+        <p>This is the signed multisign transaction signature. Use this signature along with other signed signatures to
+            submit the transaction to the ledger.</p>
+    </div>
+    <div [hidden]="(submitThresholdNeeded === 0)" class="ui-g ui-fluid">
+
+        <p>Weight of {{submitThresholdNeeded}} is needed to submit the transaction.</p>
+    </div>
+    <div class="ui-g ui-fluid">
+        <div class="ui-g-10" style="text-align: right;">
+            <textarea [rows]="10" [cols]="15" [(ngModel)]="signedMultisignTxSignature" pInputTextarea></textarea>
+            <div class="ui-g-1"></div>
+        </div>
+    </div>
+</p-dialog>
+
