@@ -1,18 +1,23 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { Validators,FormControl,FormGroup,FormBuilder } from '@angular/forms';
-import { LogService } from '../../../providers/log.service';
-import { SelectItem, Dropdown, MenuItem, Message } from 'primeng/primeng';
-import { MessageService } from 'primeng/components/common/messageservice';
-import { CasinocoinService } from '../../../providers/casinocoin.service';
-import { WalletService } from '../../../providers/wallet.service';
-import { ElectronService } from '../../../providers/electron.service';
-import { ValidatorService } from '../../../providers/validator.service';
-import { CSCUtil } from '../../../domain/csc-util';
-import { AppConstants } from '../../../domain/app-constants';
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {Validators, FormControl, FormGroup, FormBuilder} from '@angular/forms';
+import {LogService} from '../../../providers/log.service';
+import {SelectItem, Dropdown, MenuItem, Message} from 'primeng/primeng';
+import {MessageService} from 'primeng/components/common/messageservice';
+import {CasinocoinService} from '../../../providers/casinocoin.service';
+import {WalletService} from '../../../providers/wallet.service';
+
+import {ElectronService} from '../../../providers/electron.service';
+import {ValidatorService} from '../../../providers/validator.service';
+import {CSCUtil} from '../../../domain/csc-util';
+import {AppConstants} from '../../../domain/app-constants';
 import * as bigInt from 'big-integer';
 import Big from 'big.js';
-import { PrepareTxPayment } from '../../../domain/csc-types';
-import { CSCAmountPipe } from '../../../app-pipes.module';
+import {CasinocoinTxObject, PrepareTxPayment} from '../../../domain/csc-types';
+import {csclibPayment} from '../../../domain/csclib-types';
+import {CSCAmountPipe} from '../../../app-pipes.module';
+import {LokiKey} from '../../../domain/lokijs';
+import {CasinocoinAPI, CasinocoinAPIBroadcast} from '@casinocoin/libjs/dist';
+
 
 @Component({
   selector: 'app-send-coins',
@@ -31,30 +36,42 @@ export class SendCoinsComponent implements OnInit {
   accounts: SelectItem[] = [];
   addresses: SelectItem[] = [];
   selectedAccount: string;
+  accountSettings: any;
+  multiSignEnabled: boolean = false;
+  signers: any;
+  walletMasterKeyDisabled: boolean = false;
+  showMultisignTxDialog: boolean = false;
+  preparedPayment: string;
+  multiSignTxSignature: string;
+  signerSignature: string;
+  signersSignatures: Array<string> = [];
   selectedAddress: string;
-  recipient: string = "";
-  description: string = "";
+  recipient: string = '';
+  txObject: CasinocoinTxObject;
+  description: string = '';
   invoiceID: string;
   destinationTag: number;
-  amount: string = "";
-  fees: string = "";
-  minimalFee: string = "";
-  accountReserve: string = "";
-  totalSend: string = "";
-  totalSendFormatted: string = "";
+  amount: string = '';
+  payment: PrepareTxPayment;
+  fees: string = '';
+  minimalFee: string = '';
+  accountReserve: string = '';
+  totalSend: string = '';
+  totalSendFormatted: string = '';
   walletPassword: string;
-  showPasswordDialog:boolean = false;
-  showAddressSearchDialog:boolean = false;
-  signAndSubmitIcon:string = "fa-check";
-  amount_tooltip:string = "Enter the amount to send only using numbers and a . (dot) indicating a decimal.";
-  reserve_tooltip:string = "The reserve is necessary to keep your account activated.";
-  total_tooltip:string = "Total amount necessary to sent " + this.amount;
-  includeReserve:boolean = false;
+  showPasswordDialog: boolean = false;
+  showPasswordDialogForSignature: boolean = false;
+  showAddressSearchDialog: boolean = false;
+  signAndSubmitIcon: string = 'fa-check';
+  amount_tooltip: string = 'Enter the amount to send only using numbers and a . (dot) indicating a decimal.';
+  reserve_tooltip: string = 'The reserve is necessary to keep your account activated.';
+  total_tooltip: string = 'Total amount necessary to sent ' + this.amount;
+  includeReserve: boolean = false;
   invalidReceipient: boolean = true;
-  isSendValid:boolean = true;
-  isConnected: boolean =false;
-  connected_tooltip: string = "";
-
+  isSendValid: boolean = true;
+  isConnected: boolean = false;
+  connected_tooltip: string = '';
+  api: CasinocoinAPI;
   sendCoinsform: FormGroup;
 
   allowSendFromCurrentConnection: boolean = false;
@@ -115,6 +132,10 @@ export class SendCoinsComponent implements OnInit {
     // subscribe to account updates
     this.casinocoinService.accountSubject.subscribe( account => {
       this.doBalanceUpdate();
+    });
+
+    this.casinocoinService.accountSettingsSubject.subscribe(settings => {
+      this.loadSettings(settings);
     });
 
     this.sendCoinsform = this.fb.group({
@@ -362,22 +383,81 @@ export class SendCoinsComponent implements OnInit {
     }
   }
 
-  sendAllCoins(){
-    this.logger.debug("### Send All coins !!");
-    if(!this.includeReserve){
+  loadSettings(settings){
+    this.accountSettings = settings;
+    this.walletMasterKeyDisabled = false;
+    this.multiSignEnabled = false;
+    if (settings.hasOwnProperty('disableMasterKey')) {
+      this.walletMasterKeyDisabled = settings.disableMasterKey;
+    }
+
+    if (settings.hasOwnProperty('signers')) {
+      this.multiSignEnabled = true;
+      this.signers = settings.signers;
+    }
+  }
+
+  getAccountInfo() {
+    this.casinocoinService.getSettings(this.selectedAccount);
+  }
+
+  sendAllCoins() {
+    this.logger.debug('### Send All coins !!');
+    if (!this.includeReserve) {
       this.amount = CSCUtil.dropsToCsc(
         new Big(this.walletService.getAccountBalance(this.selectedAccount))
-        .minus(new Big(CSCUtil.cscToDrops(this.fees)))
-        .minus(new Big(CSCUtil.cscToDrops(this.accountReserve)))
+          .minus(new Big(CSCUtil.cscToDrops(this.fees)))
+          .minus(new Big(CSCUtil.cscToDrops(this.accountReserve)))
       );
     } else {
       this.amount = CSCUtil.dropsToCsc(
         new Big(this.walletService.getAccountBalance(this.selectedAccount))
-        .minus(new Big(CSCUtil.cscToDrops(this.fees)))
+          .minus(new Big(CSCUtil.cscToDrops(this.fees)))
       );
     }
     this.calculateTotal(this.includeReserve);
     this.checkSendValid();
   }
 
+
+  showTxSignatureNow() {
+    this.logger.debug('### Show the multisign signature');
+    const key: LokiKey = this.walletService.getKey(this.selectedAccount);
+    const secret = this.walletService.getDecryptSecret(this.walletPassword, key);
+    this.showPasswordDialogForSignature = false;
+    const signedTransaction = this.casinocoinService.sign(JSON.stringify(this.txObject), secret);
+    this.multiSignTxSignature = signedTransaction.signedTransaction;
+    this.showMultisignTxDialog = true;
+    return false;
+  }
+
+  showTxSignature() {
+    let fee = new Big(this.fees);
+    if (this.accountSettings.signers.length > 0) {
+       fee = (new Big(this.fees) * (this.accountSettings.signers.length + 1));
+    }
+
+    this.payment = {
+          source: this.selectedAccount,
+          destination: this.recipient,
+          amountDrops: CSCUtil.cscToDrops(this.amount),
+          feeDrops: CSCUtil.cscToDrops(fee.toString()),
+          description: this.description,
+          sequence: this.accountSettings.Sequence
+        };
+    if (this.destinationTag) {
+      this.payment.destinationTag = bigInt(this.destinationTag);
+    }
+    if (this.invoiceID && this.invoiceID.length > 0) {
+      this.payment.invoiceID = CSCUtil.encodeInvoiceID(this.invoiceID);
+    }
+
+
+    this.txObject = this.casinocoinService.createPaymentTx(this.payment);
+    this.logger.debug('### Sign: ' + JSON.stringify( this.txObject));
+    this.initPasswordCheck();
+    this.showPasswordDialogForSignature = true;
+    this.passwordInput.nativeElement.focus();
+
+  }
 }
