@@ -13,10 +13,8 @@ import {AppConstants} from '../../../domain/app-constants';
 import * as bigInt from 'big-integer';
 import Big from 'big.js';
 import {CasinocoinTxObject, PrepareTxPayment} from '../../../domain/csc-types';
-import {csclibPayment} from '../../../domain/csclib-types';
 import {CSCAmountPipe} from '../../../app-pipes.module';
 import {LokiKey} from '../../../domain/lokijs';
-import {CasinocoinAPI, CasinocoinAPIBroadcast} from '@casinocoin/libjs/dist';
 
 
 @Component({
@@ -71,7 +69,6 @@ export class SendCoinsComponent implements OnInit {
   isSendValid: boolean = true;
   isConnected: boolean = false;
   connected_tooltip: string = '';
-  api: CasinocoinAPI;
   sendCoinsform: FormGroup;
 
   allowSendFromCurrentConnection: boolean = false;
