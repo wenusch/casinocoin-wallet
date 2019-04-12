@@ -36,91 +36,91 @@ export class CSC {
         const maxValue = amount.currency === 'CSC' ? maxCSCValue : maxIOUValue
         return _.assign({}, amount, { value: maxValue })
     }
-
-    createPaymentTransaction(address: string, paymentArgument: Payment): Object {
-        let payment = _.cloneDeep(paymentArgument)
-        this.applyAnyCounterpartyEncoding(payment)
-    
-        if (address !== payment.source.address) {
-            this.logger.error("### CSC: address must match payment.source.address");
-            return;
-        }
-    
-        if ((payment.source.maxAmount && payment.destination.minAmount) ||
-            (payment.source.amount && payment.destination.amount)) {
-                this.logger.error("### CSC: payment must specify either (source.maxAmount " +
-                "and destination.amount) or (source.amount and destination.minAmount)");
-                return;
-        }
-    
-        // when using destination.minAmount, casinocoind still requires that we set
-        // a destination amount in addition to DeliverMin. the destination amount
-        // is interpreted as the maximum amount to send. we want to be sure to
-        // send the whole source amount, so we set the destination amount to the
-        // maximum possible amount. otherwise it's possible that the destination
-        // cap could be hit before the source cap.
-        let amount = payment.destination.minAmount && !this.isCSCToCSCPayment(payment) ?
-            this.createMaximalAmount(payment.destination.minAmount) :
-            (payment.destination.amount || payment.destination.minAmount)
-    
-        let paymentFlags: PaymentFlags;
-        let txJSON: Object = {
-            TransactionType: 'Payment',
-            Account: payment.source.address,
-            Destination: payment.destination.address,
-            Amount: CSCUtil.toCasinocoindAmount(amount),
-            Flags: 0
-        }
-    
-        if (payment.invoiceID !== undefined) {
-            txJSON['InvoiceID'] = payment.invoiceID;
-        }
-        if (payment.source.tag !== undefined) {
-            txJSON['SourceTag'] = payment.source.tag;
-        }
-        if (payment.destination.tag !== undefined) {
-            txJSON['DestinationTag'] = payment.destination.tag;
-        }
-        if (payment.memos !== undefined) {
-            txJSON['Memos'] = _.map(payment.memos, CSCUtil.encodeMemo);
-        }
-        if (payment.noDirectCasinocoin === true) {
-            txJSON['Flags'] |= paymentFlags.NoCasinocoinDirect;
-        }
-        if (payment.limitQuality === true) {
-            txJSON['Flags'] |= paymentFlags.LimitQuality;
-        }
-        // set Account Sequence
-        txJSON['Sequence'] = 10;
-
-        // Set last allow ledger sequence if required
-        txJSON['LastLedgerSequence'] = 123;
-
-        // Transaction Fee
-        txJSON['Fee'] = 1000000;
-
-        // Future use of non CSC payments
-        // if (!this.isCSCToCSCPayment(payment)) {
-        //     // Don't set SendMax for CSC->CSC payment
-        //     if (payment.allowPartialPayment === true ||
-        //         payment.destination.minAmount !== undefined) {
-        //         txJSON['Flags'] |= paymentFlags.PartialPayment;
-        //     }
-    
-        //     txJSON['SendMax'] = CSCUtil.toCasinocoindAmount(payment.source.maxAmount || payment.source.amount);
-    
-        //     if (payment.destination.minAmount !== undefined) {
-        //         txJSON['DeliverMin'] = CSCUtil.toCasinocoindAmount(payment.destination.minAmount);
-        //     }
-    
-        //     if (payment.paths !== undefined) {
-        //         txJSON['Paths'] = JSON.parse(payment.paths);
-        //     }
-        // } else if (payment.allowPartialPayment === true) {
-        //     this.logger.error("### CSC: CSC to CSC payments cannot be partial payments");
-        // }
-        return txJSON;
-    }
+    //
+    // createPaymentTransaction(address: string, paymentArgument: Payment): Object {
+    //     let payment = _.cloneDeep(paymentArgument)
+    //     this.applyAnyCounterpartyEncoding(payment)
+    //
+    //     if (address !== payment.source.address) {
+    //         this.logger.error("### CSC: address must match payment.source.address");
+    //         return;
+    //     }
+    //
+    //     if ((payment.source.maxAmount && payment.destination.minAmount) ||
+    //         (payment.source.amount && payment.destination.amount)) {
+    //             this.logger.error("### CSC: payment must specify either (source.maxAmount " +
+    //             "and destination.amount) or (source.amount and destination.minAmount)");
+    //             return;
+    //     }
+    //
+    //     // when using destination.minAmount, casinocoind still requires that we set
+    //     // a destination amount in addition to DeliverMin. the destination amount
+    //     // is interpreted as the maximum amount to send. we want to be sure to
+    //     // send the whole source amount, so we set the destination amount to the
+    //     // maximum possible amount. otherwise it's possible that the destination
+    //     // cap could be hit before the source cap.
+    //     let amount = payment.destination.minAmount && !this.isCSCToCSCPayment(payment) ?
+    //         this.createMaximalAmount(payment.destination.minAmount) :
+    //         (payment.destination.amount || payment.destination.minAmount)
+    //
+    //     let paymentFlags: PaymentFlags;
+    //     let txJSON: Object = {
+    //         TransactionType: 'Payment',
+    //         Account: payment.source.address,
+    //         Destination: payment.destination.address,
+    //         Amount: CSCUtil.toCasinocoindAmount(amount),
+    //         Flags: 0
+    //     }
+    //
+    //     if (payment.invoiceID !== undefined) {
+    //         txJSON['InvoiceID'] = payment.invoiceID;
+    //     }
+    //     if (payment.source.tag !== undefined) {
+    //         txJSON['SourceTag'] = payment.source.tag;
+    //     }
+    //     if (payment.destination.tag !== undefined) {
+    //         txJSON['DestinationTag'] = payment.destination.tag;
+    //     }
+    //     if (payment.memos !== undefined) {
+    //         txJSON['Memos'] = _.map(payment.memos, CSCUtil.encodeMemo);
+    //     }
+    //     if (payment.noDirectCasinocoin === true) {
+    //         txJSON['Flags'] |= paymentFlags.NoCasinocoinDirect;
+    //     }
+    //     if (payment.limitQuality === true) {
+    //         txJSON['Flags'] |= paymentFlags.LimitQuality;
+    //     }
+    //     // set Account Sequence
+    //     txJSON['Sequence'] = 10;
+    //
+    //     // Set last allow ledger sequence if required
+    //     txJSON['LastLedgerSequence'] = 123;
+    //
+    //     // Transaction Fee
+    //     txJSON['Fee'] = 1000000;
+    //
+    //     // Future use of non CSC payments
+    //     // if (!this.isCSCToCSCPayment(payment)) {
+    //     //     // Don't set SendMax for CSC->CSC payment
+    //     //     if (payment.allowPartialPayment === true ||
+    //     //         payment.destination.minAmount !== undefined) {
+    //     //         txJSON['Flags'] |= paymentFlags.PartialPayment;
+    //     //     }
+    //
+    //     //     txJSON['SendMax'] = CSCUtil.toCasinocoindAmount(payment.source.maxAmount || payment.source.amount);
+    //
+    //     //     if (payment.destination.minAmount !== undefined) {
+    //     //         txJSON['DeliverMin'] = CSCUtil.toCasinocoindAmount(payment.destination.minAmount);
+    //     //     }
+    //
+    //     //     if (payment.paths !== undefined) {
+    //     //         txJSON['Paths'] = JSON.parse(payment.paths);
+    //     //     }
+    //     // } else if (payment.allowPartialPayment === true) {
+    //     //     this.logger.error("### CSC: CSC to CSC payments cannot be partial payments");
+    //     // }
+    //     return txJSON;
+    // }
 
     // preparePayment(address: string, payment: Payment, instructions: Instructions = {}): Prepare {
     //     let txJSON = this.createPaymentTransaction(address, payment)
