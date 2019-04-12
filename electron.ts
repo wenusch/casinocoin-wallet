@@ -6,7 +6,10 @@ import * as fs from 'fs';
 import * as os from 'os';
 
 // import casinocoin libraries from electron
-import { CasinocoinAPI, CasinocoinKeypairs, CasinocoinBinaryCodec } from 'casinocoin-libjs';
+import * as CasinocoinKeypairs from 'casinocoin-libjs-keypairs/distrib/npm/index';
+import * as CasinocoinHashes from 'casinocoin-libjs-hashes';
+import * as CasinocoinBinaryCodec from 'casinocoin-libjs-binary-codec';
+import * as CasinocoinAddressCodec from 'casinocoin-libjs-address-codec/src/index';
 
 // this is required to check if the app is running in development mode. 
 import * as isDev from 'electron-is-dev';
@@ -27,8 +30,9 @@ globalTS.vars = {};
 
 // put casinocoin libs into globals
 globalTS.vars.cscKeypairs = CasinocoinKeypairs;
+globalTS.vars.cscAddresses = CasinocoinAddressCodec;
+globalTS.vars.cscHashes = CasinocoinHashes;
 globalTS.vars.cscBinaryCodec = CasinocoinBinaryCodec;
-globalTS.vars.cscAPI = new CasinocoinAPI();
 
 // set property for exit dialog
 let showExitPrompt = true;
