@@ -65,6 +65,7 @@
     "async": "^2.6.0",
     "big-integer": "^1.6.34",
     "big.js": "^5.0.3",
+    "bufferutil": "^4.0.1",
     "casinocoin-libjs": "^1.0.12",
     "core-js": "2.4.1",
     "electron-is-dev": "^0.3.0",
@@ -84,6 +85,7 @@
     "rxjs": "5.5.8",
     "rxjs-websockets": "4.0.0",
     "scandir": "^0.1.2",
+    "utf-8-validate": "^5.0.2",
     "winston": "^2.4.0",
     "zone.js": "0.8.17"
   },
