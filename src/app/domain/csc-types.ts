@@ -8,6 +8,7 @@ export type PrepareTxPayment = {
     description?: string;
     invoiceID?: string;
     sourceTag?: BigInteger;
+    sequence?: number;
     destinationTag?: BigInteger;
 }
 

@@ -1,3 +1,4 @@
+import * as _ from 'lodash'
 import { Injectable, OnInit, OnDestroy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Observable } from 'rxjs/Observable';
@@ -10,15 +11,16 @@ import { LocalStorageService } from "ngx-store";
 import { LedgerStreamMessages, ServerStateMessage, 
          ServerDefinition } from '../domain/websocket-types';
 import { LogService } from './log.service';
-// import { CasinocoinBinaryCodec, CasinocoinKeypairs } from 'casinocoin-libjs';
-import { LokiKey, LokiAccount, LokiTransaction, LokiTxStatus } from '../domain/lokijs';
+import { LokiKey, LokiAccount, LokiTransaction, LokiTxStatus, LokiAccountSettings, LokiSignedTransaction } from '../domain/lokijs';
 import { AppConstants } from '../domain/app-constants';
 import { CasinocoinTxObject, PrepareTxPayment } from '../domain/csc-types';
 import { CSCUtil } from '../domain/csc-util';
 import { NotificationService } from './notification.service';
 import { ElectronService } from './electron.service';
 import Big from 'big.js';
-
+import BigNumber from 'bignumber.js'
+import {utils} from 'protractor';
+import * as CasinocoinAddressCodec from 'casinocoin-libjs-address-codec/src/index';
 const crypto = require('crypto');
 
 @Injectable()
@@ -37,6 +39,8 @@ export class CasinocoinService implements OnDestroy {
     public ledgers: Array<LedgerStreamMessages> = [];
     public serverStateSubject = new BehaviorSubject<ServerStateMessage>(this.initServerState());
     public accounts: Array<LokiAccount> = [];
+    public accountSettings: Array<LokiAccountSettings> = [];
+    public accountSettingsSubject = new Subject<LokiAccountSettings>();
     public accountSubject = new Subject<LokiAccount>();
     public transactions: Array<LokiTransaction> = [];
     public transactionSubject = new Subject<LokiTransaction>();
@@ -51,7 +55,7 @@ export class CasinocoinService implements OnDestroy {
                 private localStorageService: LocalStorageService,
                 private electron: ElectronService ) {
         logger.debug("### INIT  CasinocoinService ###");
-        // Initialize server state
+
         this.initServerState();
     }
 
@@ -270,6 +274,31 @@ export class CasinocoinService implements OnDestroy {
                     }
                     this.addLedger(ledgerMessage);
                     this.ledgerSubject.next(ledgerMessage);
+                } else if (incommingMessage['id'].startsWith('getAccountSettings')){
+                    let response = incommingMessage.result.account_data;
+                    let accountSettings: LokiAccountSettings = {
+                        accountID: response.Account,
+                        Sequence: response.Sequence
+                    };
+                    if(typeof response.signer_lists !== 'undefined' && response.signer_lists.length >= 1){
+                        response.signer_lists.forEach(signer_list => {
+                            accountSettings.signers = [];
+                            signer_list.SignerEntries.forEach(signer => {
+                                accountSettings.signerQuorum = signer_list.SignerQuorum
+                                accountSettings.signers.push({
+                                    accountID: signer.SignerEntry.Account,
+                                    weight: signer.SignerEntry.SignerWeight
+                                });
+                            });
+                        });
+                    }
+                    accountSettings.disableMasterKey = false;
+                    if(typeof response.Flags !== 'undefined' && response.Flags === 1048576){
+                        accountSettings.disableMasterKey = true;
+                    }
+
+                    this.accountSettings.push(accountSettings);
+                    this.accountSettingsSubject.next(accountSettings);
                 } else if (incommingMessage['id'].startsWith('getAccountInfo')){
                     // we received account info
                     this.logger.debug("### CasinocoinService - getAccountInfo: " + JSON.stringify(incommingMessage.result));
@@ -285,6 +314,19 @@ export class CasinocoinService implements OnDestroy {
                     walletAccount.lastSequence = account_result.Sequence;
                     walletAccount.lastTxID = account_result.PreviousTxnID;
                     walletAccount.lastTxLedger = account_result.PreviousTxnLgrSeq;
+                    if(typeof account_result.signer_lists !== 'undefined' && account_result.signer_lists.length >= 1){
+                        account_result.signer_lists.forEach(signer_list => {
+                            signer_list.SignerEntries.forEach(signer => {
+                                walletAccount.signerQuorum = signer_list.SignerQuorum
+                                walletAccount.signers = [];
+                                walletAccount.signers.push({
+                                    accountID: signer.SignerEntry.Account,
+                                    weight: signer.SignerEntry.SignerWeight
+                                });
+                            });
+                        });
+                    }
+
                     // save back to the wallet
                     this.walletService.updateAccount(walletAccount);
                     // update accounts array
@@ -514,12 +556,29 @@ export class CasinocoinService implements OnDestroy {
         this.sendCommand(ledgerRequest);
     }
 
+    getAccountSettings(accountID: string, callbackIdentifier: string = null){
+        if(callbackIdentifier === null){
+            callbackIdentifier = "getAccountSettings";
+        }
+
+
+        let accountInfoRequest = {
+            id: callbackIdentifier,
+            command: "account_info",
+            ledger_index: "validated",
+            account: accountID,
+            signer_lists: true
+        }
+        this.sendCommand(accountInfoRequest);
+    }
+
     getAccountInfo(accountID: string, refresh: boolean){
         let accountInfoRequest = {
             id: "getAccountInfo",
             command: "account_info",
             ledger_index: "validated",
-            account: accountID
+            account: accountID,
+            signer_lists: true
         }
         if(refresh)
             accountInfoRequest.id = "getAccountInfoRefresh";
@@ -625,6 +684,10 @@ export class CasinocoinService implements OnDestroy {
             Sequence: txWalletAccount.lastSequence,
             LastLedgerSequence: lastLedgerForTx
         }
+
+        if(input.sequence !== undefined){
+             txJSON.Sequence = input.sequence;
+        }
     
         if (input.invoiceID !== undefined) {
             txJSON.InvoiceID = input.invoiceID;
@@ -638,20 +701,16 @@ export class CasinocoinService implements OnDestroy {
         if (input.description !== undefined && input.description.length > 0) {
             txJSON.Memos = [ CSCUtil.encodeMemo({ memo: { memoData: input.description, memoFormat: "plain/text"}})];
         }
+
         return txJSON;
     }
 
     signTx(tx: CasinocoinTxObject, password: string): string{
-        // get keypair for sending account
         let accountKey: LokiKey = this.walletService.getKey(tx.Account);
-        // decrypt private key
         let privateKey = this.walletService.getDecryptPrivateKey(password, accountKey);
         if(privateKey != AppConstants.KEY_ERRORED){
-            // set the linked public key
             tx.SigningPubKey = accountKey.publicKey;
-            // encode tx
             let encodedTx = this.electron.remote.getGlobal("vars").cscBinaryCodec.encodeForSigning(tx);
-            // sign transaction
             tx.TxnSignature = this.electron.remote.getGlobal("vars").cscKeypairs.sign(encodedTx, privateKey);
             return this.electron.remote.getGlobal("vars").cscBinaryCodec.encode(tx);   
         } else {
@@ -660,9 +719,45 @@ export class CasinocoinService implements OnDestroy {
         }
     }
 
-    submitTx(txBlob: string){
-        let submitRequest = {
-            id: "submitTx",
+    computeSignature(tx: Object, privateKey: string, signAs?: string) {
+        const signingData = signAs ?
+          this.electron.remote.getGlobal('vars').cscBinaryCodec.encodeForMultisigning(tx, signAs) : this.electron.remote.getGlobal('vars').cscBinaryCodec.encodeForSigning(tx)
+        return this.electron.remote.getGlobal('vars').cscKeypairs.sign(signingData, privateKey)
+    }
+
+    sign(txJSON: string, secret: string, options: { signAs?: string } = {}
+    ): { signedTransaction: string; id: string } {
+
+        const tx = JSON.parse(txJSON)
+        if (tx.TxnSignature || tx.Signers) {
+            delete tx.TxnSignature;
+            delete tx.Signers;
+        }
+
+        const keypair = this.electron.remote.getGlobal('vars').cscKeypairs.deriveKeypair(secret)
+        tx.SigningPubKey = options.signAs ? '' : keypair.publicKey
+
+        if (options.signAs) {
+            const signer = {
+                Account: options.signAs,
+                SigningPubKey: keypair.publicKey,
+                TxnSignature: this.computeSignature(tx, keypair.privateKey, options.signAs)
+            }
+            tx.Signers = [{Signer: signer}]
+        } else {
+            tx.TxnSignature = this.computeSignature(tx, keypair.privateKey)
+        }
+
+        const serialized = this.electron.remote.getGlobal('vars').cscBinaryCodec.encode(tx)
+        return {
+            signedTransaction: serialized,
+            id: this.electron.remote.getGlobal('vars').cscHashes.computeBinaryTransactionHash(serialized)
+        }
+    }
+
+    submitTx(txBlob: string) {
+    let submitRequest = {
+      id: 'submitTx',
             command: "submit",
             tx_blob: txBlob
         }
@@ -830,4 +925,52 @@ export class CasinocoinService implements OnDestroy {
             this.walletService.updateTransaction(dbTX);
         }
     }
+
+    getSettings(account: string){
+        this.getAccountSettings(account);
+    }
+    
+    combine(signedTransactions: Array<string>): LokiSignedTransaction {
+    
+        const txs: any[] = _.map(signedTransactions,  this.electron.remote.getGlobal('vars').cscBinaryCodec.decode)
+        const tx = _.omit(txs[0], 'Signers')
+        if (!_.every(txs, _tx => _.isEqual(tx, _.omit(_tx, 'Signers')))) {
+        throw new Error(
+            'txJSON is not the same for all signedTransactions');
+        }
+
+
+        const unsortedSigners = _.reduce(txs, (accumulator, _tx) =>
+        accumulator.concat(_tx.Signers || []), []);
+       
+        const signers = unsortedSigners.sort((a, b) => {
+            const hexA = new BigNumber((Buffer.from( CasinocoinAddressCodec.decodeAddress(a.Signer.Account))).toString('hex'), 16);
+            const hexB = new BigNumber((Buffer.from( CasinocoinAddressCodec.decodeAddress(b.Signer.Account))).toString('hex'), 16);
+            return hexA.comparedTo(hexB);
+        });
+
+        const signedTx = _.assign({}, tx, {Signers: signers});
+        const signedTransaction = this.electron.remote.getGlobal('vars').cscBinaryCodec.encode(signedTx);
+        const id = this.electron.remote.getGlobal('vars').cscHashes.computeBinaryTransactionHash(signedTransaction);
+        return {signedTransaction, id};
+    }
+
+
+    hexToString(hex: string): string {
+        return hex ? new Buffer(hex, 'hex').toString('utf-8') : undefined
+    }
+    
+    convertStringToHex(inputString: string) {
+        if (inputString !== undefined && inputString.length > 0) {
+        return new Buffer(inputString, 'utf8').toString('hex').toUpperCase();
+        } else {
+        return "";
+        }
+    }
+    
+    verifyMessage(msg: string, signature: string, publicKey: string): boolean {
+        return this.electron.remote.getGlobal('vars').cscKeypairs.verifyMessage(this.convertStringToHex(msg), signature, publicKey);
+    } 
+  
+
 }
