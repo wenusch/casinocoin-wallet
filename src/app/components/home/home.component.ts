@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, trigger, state, animate, 
+import { Component, OnInit, OnDestroy, trigger, state, animate,
          transition, style, ViewChild, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
@@ -25,10 +25,10 @@ import { WalletSettings } from 'app/domain/csc-types';
 import * as LokiTypes from '../../domain/lokijs';
 import Big from 'big.js';
 import { NotificationService } from '../../providers/notification.service';
-
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+import * as CasinocoinAddressCodec from 'casinocoin-libjs-address-codec';
 
 @Component({
   selector: 'app-home',
@@ -127,9 +127,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   backupPath: string;
   lastMenuEvent: string = "";
   navigationSucceeded: boolean = false;
-  
+
   showSignMessageDialog:boolean = false;
   showVerifyMessageDialog:boolean = false;
+
   accounts: SelectItem[] = [];
   selectedAccount: string;
   msgToSign: string;
@@ -140,11 +141,36 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   verifySignature: string;
   verificationFinished: boolean = false;
   verificationResult: boolean = false;
-
   copy_context_menu: ElectronMenu;
-  copiedValue:string = "";
+  copiedValue:string = '';
 
-  constructor( private logger: LogService, 
+  // multisigning
+  showEnableMultisignDialog: boolean = false;
+  ms_setting_account: string;
+  ms_setting_sequence: number;
+  ms_setting_quorum: number;
+  signer_account: string;
+  signer_weight: number;
+  ms_setting_signers: Array<{
+    signer: string;
+    weight: number;
+  }> = [];
+  disableMasterKey: boolean = false;
+  baseMultiSignedTx: string;
+  signerSignedTransactions: Array<string> = [];
+  signerSignedTxSignatures: Array<object> = [];
+
+  // compose transaction
+  showComposeTransactionDialog: boolean = false;
+  showSignTransactionDialog: boolean = false;
+  accountsForSigning: SelectItem[] = [];
+  selectedSignerAccount: any;
+  showSignedMutlisignTransaction: boolean = false;
+  signedMultisignTxSignature: string;
+  multisignTxSignatureToSign: string;
+  submitThresholdNeeded: number = 0;
+
+  constructor( private logger: LogService,
                private router: Router,
                private electron: ElectronService,
                private walletService: WalletService,
@@ -186,30 +212,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngAfterViewInit(){
     this.logger.debug("### HOME ngAfterViewInit() ###");
-    // We use setTimeout to avoid the `ExpressionChangedAfterItHasBeenCheckedError`
-    // See: https://github.com/angular/angular/issues/6005
-    // setTimeout(_ => {
-    //   // subscribe to UI changes
-    //   this.uiChangeSubject.subscribe(status =>{
-    //     if(status == AppConstants.KEY_CONNECTED){
-    //       this.setWalletUIConnected();
-    //     } else if (status == AppConstants.KEY_DISCONNECTED){
-    //       this.setWalletUIDisconnected();
-    //     }
-    //   });
-    // }, 0);
   }
 
   ngOnInit() {
     this.logger.debug("### HOME ngOnInit() - currentWallet: " + this.currentWallet);
-
-    // PublicKey: 02C858DEE69551D61F1A1A7C75026CAFF023630FA9D1291B73EECF9E4116806D29
-    // AccountID: cPn1GuLfqDFx5rn9HgvQhVqCC7qkUCdpqD
-    // Secret:    shznd9L6s5UL1drRDSnBrykjx156d
-    let signResult = this.electron.remote.getGlobal("vars").cscAPI.signMessage('Test Message', 'shznd9L6s5UL1drRDSnBrykjx156d');
-    this.logger.debug("### HOME Signature: " + JSON.stringify(signResult));
-    let verifyResult = this.electron.remote.getGlobal("vars").cscAPI.verifyMessage('Test Message', signResult.signature, signResult.public_key);
-    this.logger.debug("### HOME Verify Result: " + verifyResult);
 
     // get the complete wallet object
     let availableWallets = this.localStorageService.get(AppConstants.KEY_AVAILABLE_WALLETS);
@@ -224,22 +230,22 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     // define Tools context menu
     let tools_context_menu_template = [
       { label: 'Private Keys', submenu: [
-        { label: 'Import Private Key File', 
+        { label: 'Import Private Key File',
           click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('context-menu-event', 'import-priv-key-file');
           }
         },
-        { label: 'Export Private Key File', 
-          click(menuItem, browserWindow, event) { 
+        { label: 'Export Private Key File',
+          click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('context-menu-event', 'export-priv-key-file');
           }
         },
-        { label: 'Import Private Key', 
+        { label: 'Import Private Key',
           click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('context-menu-event', 'import-priv-key');
           }
-        },  
-      ]}  
+        },
+      ]}
       // { label: 'Import Existing Wallet', 
       //   click(menuItem, browserWindow, event) { 
       //     browserWindow.webContents.send('context-menu-event', 'add-wallet');
@@ -249,13 +255,13 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.tools_context_menu = this.electron.remote.Menu.buildFromTemplate(tools_context_menu_template);
     // paperwallet submenu
     let paperWalletMenu = { label: 'Paper Wallet', submenu: [
-      { label: 'Generate Paper Wallet', 
-        click(menuItem, browserWindow, event) { 
+      { label: 'Generate Paper Wallet',
+        click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('context-menu-event', 'paper-wallet');
         }, enabled: true
       },
-      { label: 'Import Paper Wallet', 
-        click(menuItem, browserWindow, event) { 
+      { label: 'Import Paper Wallet',
+        click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('context-menu-event', 'import-paper-wallet');
         }, enabled: true
       }
@@ -263,30 +269,49 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.tools_context_menu.append(new this.electron.remote.MenuItem(paperWalletMenu));
     //message signing submenu
     let messageSigningMenu = { label: 'Message Signing', submenu: [
-      { label: 'Sign Message', 
-        click(menuItem, browserWindow, event) { 
-          browserWindow.webContents.send('context-menu-event', 'sign-message');
-        }, enabled: true
-      },
-      { label: 'Verify Message', 
-        click(menuItem, browserWindow, event) { 
-          browserWindow.webContents.send('context-menu-event', 'verify-message');
-        }, enabled: true
-      }
-    ]};
+        { label: 'Sign Message',
+          click(menuItem, browserWindow, event) {
+            browserWindow.webContents.send('context-menu-event', 'sign-message');
+          }, enabled: true
+        },
+        { label: 'Verify Message',
+          click(menuItem, browserWindow, event) {
+            browserWindow.webContents.send('context-menu-event', 'verify-message');
+          }, enabled: true
+        }
+      ]};
     this.tools_context_menu.append(new this.electron.remote.MenuItem(messageSigningMenu));
+
+    const multiSigningMenu = { label: 'Multisigning', submenu: [
+        { label: 'Enable multisigning',
+          click(menuItem, browserWindow, event) {
+            browserWindow.webContents.send('context-menu-event', 'enable-multisign');
+          }, enabled: true
+        },
+        { label: 'Compose transaction',
+          click(menuItem, browserWindow, event) {
+            browserWindow.webContents.send('context-menu-event', 'compose-transaction');
+          }, enabled: true
+        },
+        { label: 'Sign transaction',
+          click(menuItem, browserWindow, event) {
+            browserWindow.webContents.send('context-menu-event', 'sign-transaction');
+          }, enabled: true
+        }
+      ]};
+    this.tools_context_menu.append(new this.electron.remote.MenuItem(multiSigningMenu));
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
-      { label: 'Change Password', 
-        click(menuItem, browserWindow, event) { 
+      { label: 'Change Password',
+        click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('context-menu-event', 'change-password');
         }, enabled: true
       })
     );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
-      { label: 'Create New Wallet', 
-        click(menuItem, browserWindow, event) { 
+      { label: 'Create New Wallet',
+        click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('context-menu-event', 'create-wallet');
         }, enabled: true
       })
@@ -301,16 +326,16 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
-      { label: 'Change Wallet', 
-        click(menuItem, browserWindow, event) { 
+      { label: 'Change Wallet',
+        click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('context-menu-event', 'close-wallet');
         }, enabled: true
       })
     );
     this.tools_context_menu.append(new this.electron.remote.MenuItem({ type: 'separator' }));
     this.tools_context_menu.append(new this.electron.remote.MenuItem(
-      { label: 'Quit', 
-        click(menuItem, browserWindow, event) { 
+      { label: 'Quit',
+        click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('context-menu-event', 'quit');
         }
       })
@@ -318,24 +343,24 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // define Connection context menu
     let connect_context_menu_template = [
-     { label: 'Connect to Network', 
-       click(menuItem, browserWindow, event) { 
+     { label: 'Connect to Network',
+       click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('connect-context-menu-event', 'connect'); }, visible: true
       },
-      { label: 'Disconnect from Network', 
-        click(menuItem, browserWindow, event) { 
+      { label: 'Disconnect from Network',
+        click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('connect-context-menu-event', 'disconnect'); }, visible: false
       },
-      { label: 'Server Information', 
-        click(menuItem, browserWindow, event) { 
+      { label: 'Server Information',
+        click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('connect-context-menu-event', 'server-info'); }, visible: false
       }
     ];
     this.connection_context_menu = this.electron.remote.Menu.buildFromTemplate(connect_context_menu_template);
-    
+
     // define Copy context menu
     let copy_context_menu_template = [
-      { label: 'Copy', 
+      { label: 'Copy',
         click(menuItem, browserWindow, event) {
           browserWindow.webContents.send('copy-context-menu-event', 'copy');
         }
@@ -377,7 +402,13 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.onShowSignMessage();
         else if(arg == 'verify-message')
           this.onShowVerifyMessage();
-        else
+        else if(arg == 'enable-multisign'){
+          this.onShowEnableMultisign();
+        }else if(arg == 'compose-transaction'){
+          this.onShowComposeTransaction();
+        }else if(arg == 'sign-transaction'){
+          this.onShowSignTransaction();
+        }else
           this.logger.debug("### Context menu not implemented: " + arg);
       }
     });
@@ -484,6 +515,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           // subscribe to account updates
           this.casinocoinService.accountSubject.subscribe( account => {
             this.doBalanceUpdate();
+          });
+
+          this.casinocoinService.accountSettingsSubject.subscribe( settings => {
+            if(this.showSignTransactionDialog){
+              this.updateSignersSelection();
+            }         
           });
           // this.uiChangeSubject.next(AppConstants.KEY_CONNECTED);
           this.setWalletUIConnected();
@@ -653,7 +690,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("documents"));
       this.electron.remote.dialog.showOpenDialog(
           { title: 'Private Key Export Location',
-            defaultPath: this.electron.remote.app.getPath("documents"), 
+            defaultPath: this.electron.remote.app.getPath("documents"),
             properties: ['openDirectory']}, (result) => {
             this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
             if(result && result.length>0) {
@@ -663,14 +700,14 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
               // create a filename
               let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss-") + this.currentWallet + '.keys';
               let keyFilePath = path.join(result[0], filename);
-              // Write the JSON array to the file 
+              // Write the JSON array to the file
               fs.writeFile(keyFilePath, JSON.stringify(allPrivateKeys), (err) => {
                 if(err){
                   this.electron.remote.dialog.showErrorBox("Error saving private keys", "An error occurred writing your private keys to a file: " + err.message);
                 }
                 this.electron.remote.dialog.showMessageBox(
-                  { message: "Your private keys have been saved to a file in the chosen directory. Make sure you put it in a safe place as it contains your decrypted private keys!", 
-                    buttons: ["OK"] 
+                  { message: "Your private keys have been saved to a file in the chosen directory. Make sure you put it in a safe place as it contains your decrypted private keys!",
+                    buttons: ["OK"]
                   });
               });
             }
@@ -683,7 +720,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.logger.debug('Open File Dialog: ' + this.electron.remote.app.getPath("documents"));
     this.electron.remote.dialog.showOpenDialog(
         { title: 'Wallet Backup Location',
-          defaultPath: this.electron.remote.app.getPath("documents"), 
+          defaultPath: this.electron.remote.app.getPath("documents"),
           properties: ['openDirectory','createDirectory']}, (result) => {
           this.logger.debug('File Dialog Result: ' + JSON.stringify(result));
           if(result && result.length>0) {
@@ -691,12 +728,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
             // create a filename
             let filename = this.datePipe.transform(Date.now(), "yyyy-MM-dd-HH-mm-ss") + "-"+ this.currentWallet + ".backup";
             let backupFilePath = path.join(result[0], filename);
-            // Write the JSON array to the file 
+            // Write the JSON array to the file
             fs.writeFile(backupFilePath, dbDump, (err) => {
               if(err){
                   alert("An error occurred creating the backup file: "+ err.message)
               }
-                          
+
               alert("The backup has been succesfully saved to: " + filename);
             });
           }
@@ -788,7 +825,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.logger.debug("Add Wallet Location: " + JSON.stringify(this.importFileObject));
     let walletHash = this.walletService.generateWalletPasswordHash(this.importFileObject['name'], this.walletPassword);
     let newWallet =
-        { "walletUUID": this.importFileObject['name'], 
+        { "walletUUID": this.importFileObject['name'],
           "importedDate": CSCUtil.iso8601ToCasinocoinTime(new Date().toISOString()),
           "location": this.importFileObject['dir'],
           "hash": walletHash
@@ -902,9 +939,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.active_menu_item = "";
     // navigate to paperwallet
     this.router.navigate(['home','importpaperwallet']);
-  }  
+  }
 
-  changePassword(){ 
+  changePassword(){
     this.logger.debug("Change Password Clicked !!");
     this.active_menu_item = "";
     this.router.navigate(['home','changepassword']);
@@ -956,6 +993,24 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showVerifyMessageDialog = true;
   }
 
+  onShowEnableMultisign(){
+    this.logger.debug("### HOME Enable Multisigning ###");
+    this.resetEnableMutlisign();
+    this.showEnableMultisignDialog = true;
+  }
+
+  onShowComposeTransaction(){
+    this.logger.debug("### HOME Compose Transaction###");
+    this.resetEnableMutlisign();
+    this.showComposeTransactionDialog = true;
+  }
+
+  onShowSignTransaction(){
+    this.logger.debug("### HOME Sign Transaction###");
+    this.resetEnableMutlisign();
+    this.showSignTransactionDialog = true;
+  }
+
   signMessage(){
     this.logger.debug("### Sign With Account: " + this.selectedAccount);
     if(!this.walletService.checkWalletPasswordHash(this.walletPassword)){
@@ -964,7 +1019,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       let key:LokiKey = this.walletService.getKey(this.selectedAccount);
       let secret = this.walletService.getDecryptSecret(this.walletPassword, key);
       this.logger.debug("### Secret: " + secret);
-      let signResult = this.electron.remote.getGlobal("vars").cscAPI.signMessage(this.msgToSign, secret);
+      let signResult = this.electron.remote.getGlobal("vars").cscKeypairs.signMessage(this.msgToSign, secret);
       this.logger.debug("### HOME Sign Result: " + JSON.stringify(signResult));
       this.signPubKey = signResult.public_key;
       this.signSignature = signResult.signature;
@@ -985,33 +1040,188 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       this.notificationService.addMessage({title: 'Message Verification', body: 'Invalid parameters for message signature verification.'});
       this.verificationFinished = false;
     } else {
-      this.verificationResult = this.electron.remote.getGlobal("vars").cscAPI.verifyMessage(this.msgToVerify, this.verifySignature, this.verifyPubKey);
+      this.verificationResult = this.casinocoinService.verifyMessage(this.msgToVerify, this.verifySignature, this.verifyPubKey);
       this.verificationFinished = true;
-      this.logger.debug("### HOME Verify Result: " + this.verificationResult);
+      this.logger.debug('### HOME Verify Result: ' + this.verificationResult);
     }
   }
 
-  resetVerification(){
-    this.msgToVerify = "";
-    this.verifyPubKey = "";
-    this.verifySignature = "";
+  signAndSubmit(txData) {
+    const key: LokiKey = this.walletService.getKey(this.ms_setting_account);
+    const secret = this.walletService.getDecryptSecret(this.walletPassword, key);
+    const signedTx = this.casinocoinService.sign(JSON.stringify(txData), secret);
+    if (typeof signedTx.signedTransaction === 'undefined') {
+      return false;
+    }
+    this.casinocoinService.submitTx(signedTx.signedTransaction)
+  }
+
+  /**
+   * @todo: add some dialog with ledger response and updated account settings
+   */
+  enableMultisigning() {
+    this.signAndSubmit(this.getMultiSignTx());
+    if (this.disableMasterKey === true) {
+      this.signAndSubmit(this.getDisableMasterkeyTx());
+    }
+
+    this.showEnableMultisignDialog = false;
+  }
+
+  getMultiSignTx() {
+    return {
+      Flags: 0,
+      TransactionType: 'SignerListSet',
+      Account: this.ms_setting_account,
+      Sequence: this.ms_setting_sequence,
+      Fee: (this.ms_setting_quorum * 1000000) + '',
+      SignerQuorum: this.ms_setting_quorum,
+      SignerEntries: this.ms_setting_signers.filter(signer => {
+        return signer.weight > 0 && CasinocoinAddressCodec.isValidAccountID(signer.signer)
+      }).map(signer => {
+        return {
+          SignerEntry: {
+            Account: signer.signer,
+            SignerWeight: signer.weight
+          }
+        }
+      })
+    };
+  }
+
+
+  updateMultisignAccountDetails() {
+     this.ms_setting_sequence =  this.walletService.getAccount(this.ms_setting_account).lastSequence;
+  }
+
+  resetVerification() {
+    this.msgToVerify = '';
+    this.verifyPubKey = '';
+    this.verifySignature = '';
     this.verificationFinished = false;
     this.verificationResult = false;
   }
 
-  saveCopyValue(field){
-    this.logger.debug("### HOME saveCopyValue: " + field);
-    if(field === 'signPubKey')
-      this.copiedValue = this.signPubKey;
-    else if(field === 'signSignature')
-      this.copiedValue = this.signSignature;
-    this.copy_context_menu.popup({window: this.electron.remote.getCurrentWindow()});
-    
+  resetEnableMutlisign() {
+    this.ms_setting_signers = [];
+    this.ms_setting_account = '';
+    this.ms_setting_quorum = null;
+
   }
 
-  copyValueToClipboard(){
-    // copy to clipboard
+  addSigner(signer, weight) {
+    if (CasinocoinAddressCodec.isValidAccountID(signer) === false) {
+      return false;
+    }
+
+
+    if (signer === this.ms_setting_account) {
+      return false;
+    }
+
+    if (weight === 0 || weight < 1 || weight > this.ms_setting_quorum) {
+      return false;
+    }
+
+    let totalWeight = 0;
+    for (let i = 0, _len = this.ms_setting_signers.length; i < _len; i++) {
+      totalWeight += this.ms_setting_signers[i].weight;
+
+      if (totalWeight > this.ms_setting_quorum) {
+        return false;
+      }
+    }
+
+    if (totalWeight > this.ms_setting_quorum) {
+      return false;
+    }
+
+    this.ms_setting_signers.push({
+      signer: signer,
+      weight: weight
+    });
+
+    this.signer_account = '';
+    this.signer_weight = null;
+  }
+
+  saveCopyValue(field) {
+    this.logger.debug('### HOME saveCopyValue: ' + field);
+    if (field === 'signPubKey') {
+      this.copiedValue = this.signPubKey;
+    } else if (field === 'signSignature') {
+      this.copiedValue = this.signSignature;
+    }
+    this.copy_context_menu.popup({window: this.electron.remote.getCurrentWindow()});
+
+  }
+
+
+  getDisableMasterkeyTx() {
+    return {
+      TransactionType: 'AccountSet',
+      SetFlag: 4,
+      Account: this.ms_setting_account,
+      Sequence: this.ms_setting_sequence + 1,
+      Fee: 1000000 + ''
+    };
+  }
+
+  copyValueToClipboard() {
     this.electron.clipboard.writeText(this.copiedValue);
   }
 
+  addSignature() {
+    this.signerSignedTxSignatures.push({signature: this.baseMultiSignedTx});
+    this.signerSignedTransactions.push(this.baseMultiSignedTx);
+    this.baseMultiSignedTx = '';
+  }
+
+  combineSignatures() {
+    this.logger.debug('### HOME Multisign combine transaction signatures and submit to ledger ###');
+    const combinedTx = this.casinocoinService.combine(this.signerSignedTransactions);
+    this.casinocoinService.submitTx(combinedTx.signedTransaction);
+  }
+
+  getAccountSettingsForSignature(){
+    const multisignTx = this.electron.remote.getGlobal('vars').cscBinaryCodec.decode(this.multisignTxSignatureToSign.trim().toUpperCase());
+    this.casinocoinService.getSettings(multisignTx.Account);
+  }
+
+
+  updateSignersSelection() {
+    this.logger.debug('### HOME Multisign update select with avaialble signing accounts matching the signers list of the signature ###');
+    const multisignTx = this.electron.remote.getGlobal('vars').cscBinaryCodec.decode(this.multisignTxSignatureToSign.trim().toUpperCase());
+    
+    const accountSettings = this.casinocoinService.accountSettings.find(account => {
+      return (account.accountID === multisignTx.Account)
+    });
+
+    if (accountSettings.hasOwnProperty('signers')) {
+      this.accountsForSigning = this.accounts.filter((account) => {
+        return accountSettings.signers.some((signerAccount) => {
+          return account.value === signerAccount.accountID
+        });
+      });
+    }
+
+  }
+
+  
+
+  viewSignedMutlisignTranscation() {
+    const key: LokiKey = this.walletService.getKey(this.selectedSignerAccount);
+    const secret = this.walletService.getDecryptSecret(this.walletPassword, key);
+    const multisignTx = this.electron.remote.getGlobal('vars').cscBinaryCodec.decode(this.multisignTxSignatureToSign.trim().toUpperCase());
+
+    delete multisignTx.TxnSignature;
+    delete multisignTx.SigningPubKey;
+
+    const signedTx = this.casinocoinService.sign(JSON.stringify(multisignTx), secret, {
+      signAs: this.selectedSignerAccount
+    });
+
+    this.signedMultisignTxSignature = signedTx.signedTransaction;
+    this.showSignedMutlisignTransaction = true;
+  }
 }

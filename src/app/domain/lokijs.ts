@@ -47,6 +47,34 @@ export interface LokiAccount {
     lastTxID: string;
     lastTxLedger: number;
     lastSequence: number;
+    signerQuorum?: number;
+    signers?: Array<LokiSigner>;
+}
+
+export interface LokiAccountSettings {
+    accountID: string,
+    Sequence: number,
+    passwordSpent?: boolean,
+    requireDestinationTag?: boolean,
+    requireAuthorization?: boolean,
+    disallowIncomingCSC?: boolean,
+    disableMasterKey?: boolean,
+    enableTransactionIDTracking?: boolean,
+    noFreeze?: boolean,
+    globalFreeze?: boolean,
+    defaultCasinocoin?: boolean,
+    emailHash?: string|null,
+    messageKey?: string,
+    domain?: string,
+    transferRate?: number|null,
+    regularKey?: string,
+    signers?: Array<LokiSigner>
+    signerQuorum?: number
+}
+
+export interface LokiSigner{
+    accountID:string;
+    weight: number;
 }
 
 export interface LokiLog {
@@ -114,4 +142,9 @@ export interface LokiAddress {
     accountID: string;
     label: string;
     owner: boolean;
+}
+
+export interface LokiSignedTransaction {
+    id: string;
+    signedTransaction: string;
 }
