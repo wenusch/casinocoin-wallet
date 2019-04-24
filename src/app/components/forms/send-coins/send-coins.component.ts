@@ -158,7 +158,17 @@ export class SendCoinsComponent implements OnInit {
     let amount = event.replace(new RegExp(",", 'g'), "");
     // check if a number
     if(!isNaN(amount)){
-      this.amount = amount;
+      //this.amount = amount;
+      amount = amount.split(".");
+      if(amount[1] && amount[1].length > 8){
+        amount[1] = amount[1].substring(0, 8);
+        amount[0] = amount[0] + "." + amount[1];
+      }
+      else if(amount.length > 1){
+        amount[0] = amount[0] + "." + amount[1];
+      }
+      this.amount = amount[0];
+      (document.getElementById("amount") as HTMLInputElement).value = this.amount;
     } else {
       this.amount = "0.00";
     }

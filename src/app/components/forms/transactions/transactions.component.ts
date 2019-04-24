@@ -231,7 +231,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
   getStatusIconClasses(tx: LokiTransaction){
-    if(tx.validated){
+    if(tx.engineResult === 'tesSUCCESS'){
       return ["fa", "fa-check", "color_green"];
     } else if((this.ledgers[0] != undefined) && (tx.lastLedgerSequence > this.ledgers[0].ledger_index)){
       return ["fa", "fa-clock-o", "color_orange"];
@@ -241,7 +241,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
   getStatusTooltipText(tx: LokiTransaction){
-    if(tx.validated){
+    if(tx.engineResult === 'tesSUCCESS'){
       return "Transaction validated and final.";
     } else if((this.ledgers[0] != undefined) && (tx.lastLedgerSequence > this.ledgers[0].ledger_index)){
       return "Transaction not yet validated. Waiting to be included until ledger " + tx.lastLedgerSequence + 
