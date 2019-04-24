@@ -71,7 +71,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showPasswordDialog:boolean = false;
   showPasswordCallback:any;
 
-  walletSettings: WalletSettings = {showNotifications: AppConstants.NOTIFICATION_ENABLED, fiatCurrency: 'USD'};
+  walletSettings: WalletSettings = {showNotifications: false, fiatCurrency: 'USD'};
   fiatCurrencies: SelectItem[] = [];
   notifications: SelectItem[] = [];
   selectedFiatCurrency: string;
@@ -288,14 +288,14 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
             browserWindow.webContents.send('context-menu-event', 'enable-multisign');
           }, enabled: true
         },
-        { label: 'Compose transaction',
-          click(menuItem, browserWindow, event) {
-            browserWindow.webContents.send('context-menu-event', 'compose-transaction');
-          }, enabled: true
-        },
         { label: 'Sign transaction',
           click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('context-menu-event', 'sign-transaction');
+          }, enabled: true
+        },
+        { label: 'Compose transaction',
+          click(menuItem, browserWindow, event) {
+            browserWindow.webContents.send('context-menu-event', 'compose-transaction');
           }, enabled: true
         }
       ]};
@@ -484,9 +484,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.setConnectedMenuItem(true);
     // load wallet settings
     this.walletSettings = this.localStorageService.get(AppConstants.KEY_WALLET_SETTINGS);
-    if(this.walletSettings == null){
+    if (this.walletSettings == null){
       // settings do not exist yet so create
-      this.walletSettings = {fiatCurrency: "USD", showNotifications: AppConstants.NOTIFICATION_ENABLED};
+      this.walletSettings = {fiatCurrency: "USD", showNotifications: false};
       this.localStorageService.set(AppConstants.KEY_WALLET_SETTINGS, this.walletSettings);
     }
     // load fiat currencies and update market value

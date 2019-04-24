@@ -19,22 +19,22 @@ export enum SeverityType {
 
 export interface NotificationType {
     severity?: SeverityType;
-    title: string; 
+    title: string;
     body: string;
 }
 
 @Injectable()
 export class NotificationService {
-    
+
     private messagesSubject = new Subject<NotificationType>();
     private nativeNotificationSupported: boolean;
     private walletSettings: WalletSettings;
- 
+
     constructor(private router: Router,
                 private logger: LogService,
                 private electronService: ElectronService,
                 private messageService: MessageService,
-                private localStorageService: LocalStorageService,) {
+                private localStorageService: LocalStorageService) {
         this.logger.debug("### INIT NotificationService");
         this.nativeNotificationSupported = this.electronService.remote.Notification.isSupported();
         this.logger.debug("### NotificationService - Native Support?: " + this.nativeNotificationSupported);
@@ -42,12 +42,12 @@ export class NotificationService {
 
     addMessage(msg: NotificationType){
         this.walletSettings = this.localStorageService.get(AppConstants.KEY_WALLET_SETTINGS);
-        if(this.walletSettings == null){
-            this.walletSettings = {fiatCurrency: "USD", showNotifications: AppConstants.NOTIFICATION_ENABLED};
+        if (this.walletSettings == null) {
+            this.walletSettings = {fiatCurrency: "USD", showNotifications: false};
             this.localStorageService.set(AppConstants.KEY_WALLET_SETTINGS, this.walletSettings);
         }
         this.logger.debug("### NotificationService: " + JSON.stringify(msg));
-        if(this.walletSettings.showNotifications){
+        if (this.walletSettings.showNotifications) {
             this.electronService.ipcRenderer.send('push-notification', msg);
         }
         /*let notificationOptions: NotificationOptions = {

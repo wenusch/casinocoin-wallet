@@ -355,7 +355,7 @@
 <p-dialog
         [(visible)]="showEnableMultisignDialog"
         [width]="720"
-        [height]="700"
+        [height]="600"
         [closable]="true"
         [modal]="true"
         appendTo="body">
@@ -363,7 +363,7 @@
     <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Enable Multisigning</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-12">
-            <p>Please select the account for enabling multisgining.</p>
+            <p>Please select the account for which you want to enable multisigning.</p>
         </div>
     </div>
     <div class="ui-g ui-fluid">
@@ -382,6 +382,9 @@
                 </p-dropdown>
             </div>
         </div>
+        <div class="ui-g-12">
+            <p>The Quorum is the total required Weight to sign a transaction. The minimal sum of the added signers Weight must be equal or greater than the Quorum.</p>
+        </div>
         <div class="ui-g-2 bold-value">Quorum</div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
@@ -398,30 +401,29 @@
         </div>
 
         <div class="ui-g-2 bold-value">Signers</div>
-        <div class="ui-g-10">
-            <div class="ui-inputgroup">
-                <input
-                        [style]="{'width':'100%'}"
-                        type="text"
-                        placeholder="Signer"
-                        [(ngModel)]="signer_account"
-                        [disabled]="!ms_setting_quorum"
-                        #signerInput>
-                <br/>
-                <input
-                        [style]="{'width':'100%'}"
-                        type="number"
-                        placeholder="Weight"
-                        [(ngModel)]="signer_weight"
-                        [disabled]="!ms_setting_quorum"
-                        min="1"
-                        step="1"
-                        #weightInput>
-
-                <button pButton type="button" (click)="addSigner(signer_account, signer_weight)" icon="icon icon-text"
-                        iconPos="left" label="Add Signer"></button>
-            </div>
-
+        <div class="ui-g-5">
+            <input
+                    style="width: 100%;"
+                    type="text"
+                    placeholder="Signer Account"
+                    [(ngModel)]="signer_account"
+                    [disabled]="!ms_setting_quorum"
+                    #signerInput>
+        </div>
+        <div class="ui-g-2">
+            <input
+                    style="width: 100%;"
+                    type="number"
+                    placeholder="Weight"
+                    [(ngModel)]="signer_weight"
+                    [disabled]="!ms_setting_quorum"
+                    min="1"
+                    step="1"
+                    #weightInput>
+        </div>
+        <div class="ui-g-3">
+            <button pButton type="button" (click)="addSigner(signer_account, signer_weight)" icon="icon icon-text"
+                    iconPos="left" label="Add Signer" style="width: 100%;"></button>
         </div>
 
         <p-dataTable
@@ -441,10 +443,10 @@
 
     <div class="ui-g ui-fluid">
         <div class="ui-g-12">
-            <p>By disabling the masterkey, the mutlisign account will be locked down for sending transactions.</p>
+            <p>By disabling the masterkey, the mutlisign account will be locked down for sending transactions. This is irreverseable but the most secure way to use Multisigning.</p>
         </div>
     </div>
-    <div class="ui-g-10">
+    <div class="ui-g-12">
         <div class="ui-inputgroup">
 
 
@@ -459,7 +461,7 @@
         </div>
 
     </div>
-    <div class="ui-g-10">
+    <div class="ui-g-12">
         <div class="ui-inputgroup">
 
             <span class="ui-inputgroup-addon"><i class="icon icon-key"></i></span>
@@ -479,7 +481,7 @@
                 type="button"
                 (click)="enableMultisigning()"
                 label="Enable mutlisigning"
-                style="float: left; width: 115px;">
+                style="float: left; width: 225px;">
 
         </button>
     </div>
