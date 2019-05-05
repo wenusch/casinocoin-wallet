@@ -175,15 +175,11 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
   loadTXLazy(event: LazyLoadEvent) {
-    this.logger.debug("### Transactions - loadTXLazy");
     setTimeout(() => {
       this.loadingTX = true;
       this.totalTXRecords = this.walletService.getWalletTxCount() ? this.walletService.getWalletTxCount() : 0;
-      this.logger.debug("### Transactions - DB count: " + this.totalTXRecords);
       if(this.transactions !== undefined && this.transactions.length > 0){
-        this.logger.debug("### Transactions - event: " + JSON.stringify(event));
         this.lazyTransactions = this.transactions.slice(event.first, (event.first + event.rows));
-        this.logger.debug("### Transactions - Lazy TX count: " + this.lazyTransactions.length);
       }
       this.loadingTX = false;
     }, 0);
@@ -231,7 +227,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
   getStatusIconClasses(tx: LokiTransaction){
-    if(tx.engineResult === 'tesSUCCESS'){
+    if(tx.validated){
       return ["fa", "fa-check", "color_green"];
     } else if((this.ledgers[0] != undefined) && (tx.lastLedgerSequence > this.ledgers[0].ledger_index)){
       return ["fa", "fa-clock-o", "color_orange"];
@@ -241,7 +237,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   }
 
   getStatusTooltipText(tx: LokiTransaction){
-    if(tx.engineResult === 'tesSUCCESS'){
+    if(tx.validated){
       return "Transaction validated and final.";
     } else if((this.ledgers[0] != undefined) && (tx.lastLedgerSequence > this.ledgers[0].ledger_index)){
       return "Transaction not yet validated. Waiting to be included until ledger " + tx.lastLedgerSequence + 

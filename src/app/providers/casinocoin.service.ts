@@ -756,8 +756,8 @@ export class CasinocoinService implements OnDestroy {
     }
 
     submitTx(txBlob: string) {
-    let submitRequest = {
-      id: 'submitTx',
+        let submitRequest = {
+            id: 'submitTx',
             command: "submit",
             tx_blob: txBlob
         }
@@ -929,9 +929,8 @@ export class CasinocoinService implements OnDestroy {
     getSettings(account: string){
         this.getAccountSettings(account);
     }
-    
+
     combine(signedTransactions: Array<string>): LokiSignedTransaction {
-    
         const txs: any[] = _.map(signedTransactions,  this.electron.remote.getGlobal('vars').cscBinaryCodec.decode)
         const tx = _.omit(txs[0], 'Signers')
         if (!_.every(txs, _tx => _.isEqual(tx, _.omit(_tx, 'Signers')))) {
@@ -939,10 +938,9 @@ export class CasinocoinService implements OnDestroy {
             'txJSON is not the same for all signedTransactions');
         }
 
-
         const unsortedSigners = _.reduce(txs, (accumulator, _tx) =>
         accumulator.concat(_tx.Signers || []), []);
-       
+
         const signers = unsortedSigners.sort((a, b) => {
             const hexA = new BigNumber((Buffer.from( CasinocoinAddressCodec.decodeAddress(a.Signer.Account))).toString('hex'), 16);
             const hexB = new BigNumber((Buffer.from( CasinocoinAddressCodec.decodeAddress(b.Signer.Account))).toString('hex'), 16);
@@ -955,11 +953,10 @@ export class CasinocoinService implements OnDestroy {
         return {signedTransaction, id};
     }
 
-
     hexToString(hex: string): string {
         return hex ? new Buffer(hex, 'hex').toString('utf-8') : undefined
     }
-    
+
     convertStringToHex(inputString: string) {
         if (inputString !== undefined && inputString.length > 0) {
         return new Buffer(inputString, 'utf8').toString('hex').toUpperCase();

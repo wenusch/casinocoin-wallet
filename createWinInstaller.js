@@ -30,7 +30,8 @@ function getInstallerConfig (arch) {
     setupIcon: path.join(rootPath, 'src', 'assets', 'brand', 'casinocoin-icon-256x256.ico'),
     iconUrl: iconUrlPath,
     loadingGif: path.join(rootPath, 'src', 'assets', 'brand', 'setup.gif'),
-    certificateFile: 'C:/Users/a.jochems/Documents/Crypto Service/Comodo/code-signing-cert.p12',
+    // certificateFile: 'C:/Users/a.jochems/Documents/Crypto Service/Comodo/code-signing-cert.p12',
+    certificateFile: '/Users/ajochems/Documents/CSC/CodeSigningCert-CSCOpCo.p12',
     certificatePassword: 'Lziio1wob716A4mLXxrF'
   })
 }

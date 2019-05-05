@@ -58,7 +58,7 @@ export class SendCoinsComponent implements OnInit {
   totalSendFormatted: string = '';
   walletPassword: string;
   showPasswordDialog: boolean = false;
-  showPasswordDialogForSignature: boolean = false;
+  showPasswordDialogForMultisig: boolean = false;
   showAddressSearchDialog: boolean = false;
   signAndSubmitIcon: string = 'fa-check';
   amount_tooltip: string = 'Enter the amount to send only using numbers and a . (dot) indicating a decimal.';
@@ -132,6 +132,7 @@ export class SendCoinsComponent implements OnInit {
     });
 
     this.casinocoinService.accountSettingsSubject.subscribe(settings => {
+      this.logger.debug("### SendCoins - New Account Settings: " + JSON.stringify(settings));
       this.loadSettings(settings);
     });
 
@@ -205,8 +206,9 @@ export class SendCoinsComponent implements OnInit {
   }
 
   onRecipientChange(event){
-    let valid:boolean = CSCUtil.validateAccountID(event);
-    this.logger.debug("### SendCoins - recipient: " + event + " valid: " + valid);
+    this.recipient = this.recipient.trim();
+    let valid: boolean = CSCUtil.validateAccountID(this.recipient);
+    this.logger.debug("### SendCoins - recipient: " + this.recipient + " valid: " + valid);
     this.invalidReceipient = !valid;
     this.checkSendValid();
   }
@@ -427,18 +429,18 @@ export class SendCoinsComponent implements OnInit {
   }
 
 
-  showTxSignatureNow() {
-    this.logger.debug('### Show the multisign signature');
+  showGenerateTxNow() {
+    this.logger.debug('### Show the multisign tx genereration');
     const key: LokiKey = this.walletService.getKey(this.selectedAccount);
     const secret = this.walletService.getDecryptSecret(this.walletPassword, key);
-    this.showPasswordDialogForSignature = false;
+    this.showPasswordDialogForMultisig = false;
     const signedTransaction = this.casinocoinService.sign(JSON.stringify(this.txObject), secret);
     this.multiSignTxSignature = signedTransaction.signedTransaction;
     this.showMultisignTxDialog = true;
     return false;
   }
 
-  showTxSignature() {
+  showGenerateTx() {
     let fee = new Big(this.fees);
     if (this.accountSettings.signers.length > 0) {
        fee = (new Big(this.fees) * (this.accountSettings.signers.length + 1));
@@ -463,8 +465,12 @@ export class SendCoinsComponent implements OnInit {
     this.txObject = this.casinocoinService.createPaymentTx(this.payment);
     this.logger.debug('### Sign: ' + JSON.stringify( this.txObject));
     this.initPasswordCheck();
-    this.showPasswordDialogForSignature = true;
+    this.showPasswordDialogForMultisig = true;
     this.passwordInput.nativeElement.focus();
 
+  }
+
+  copyTxToClipboard(){
+    this.electronService.clipboard.writeText(this.multiSignTxSignature);
   }
 }

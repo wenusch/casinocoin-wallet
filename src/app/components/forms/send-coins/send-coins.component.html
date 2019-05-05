@@ -84,7 +84,7 @@
 
 
     <div class="ui-g-6">
-        <button pButton type="button" (click)="showTxSignature()" icon="icon icon-arrow-right" iconPos="left" label="Show signature"
+        <button pButton type="button" (click)="showGenerateTx()" icon="icon icon-arrow-right" iconPos="left" label="Generate Multisigning Transaction"
                 *ngIf="walletMasterKeyDisabled || multiSignEnabled"
                 [disabled]="!isSendValid || !isConnected"></button>
         <button pButton type="button" (click)="doSendCoins()"  *ngIf="!walletMasterKeyDisabled" icon="icon icon-arrow-right" iconPos="left" label="Send Coins"
@@ -138,19 +138,19 @@
     </p-footer>
 </p-dialog>
 
-<p-dialog [(visible)]="showPasswordDialogForSignature" [width]="480" [height]="325" [closable]="true"
+<p-dialog [(visible)]="showPasswordDialogForMultisig" [width]="520" [height]="350" [closable]="true"
     [modal]="true" appendTo="body">
     <p-header>
         <i class="icon csc-dialog-icon icon-chip"></i>
-        Send CasinoCoins
+        Generate Multisignature Transaction
     </p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
         <div class="ui-g-10">
-            <p>Create a signature for sending <span class="confirm-text">{{amount | toNumber | number:'1.2-8'}}</span>
-                coins to account <span class="confirm-text">{{recipient}}</span> with a fee of <span class="confirm-text">{{fees}}</span>
-                coin.</p>
-            <p>Please enter your wallet password to create and view the transaction signature.</p>
+            <p>Create a multisignature transaction for sending <span class="confirm-text">{{amount | toNumber | number:'1.2-8'}}</span>
+                coins from account <span class="confirm-text">{{selectedAccount}}</span> to account <span class="confirm-text">{{recipient}}</span> 
+                with a fee of <span class="confirm-text">{{fees}}</span> coins.</p>
+            <p>Please enter your wallet password to create and view the transaction.</p>
         </div>
         <div class="ui-g-1"></div>
     </div>
@@ -160,17 +160,16 @@
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon" style="box-sizing: content-box;"><i class="icon icon-key"></i></span>
                 <input type="password" pInputText placeholder="Wallet Password" style="width: 100%; padding-left: 5px;"
-                       [(ngModel)]="walletPassword" (keyup.enter)="showTxSignatureNow()" #passwordInput>
+                       [(ngModel)]="walletPassword" (keyup.enter)="showGenerateTxNow()" #passwordInput>
             </div>
         </div>
         <div class="ui-g-1"></div>
     </div>
     <div class="ui-g ui-fluid">
         <div class="ui-g-1"></div>
-        <div class="ui-g-5">
-            <button pButton type="button" (click)="showTxSignatureNow()" [(icon)]="signAndSubmitIcon" iconPos="right"
-                        label="View signature" style="width: 165px;"></button>
-        <div class="ui-g-1"></div>
+        <div class="ui-g-10">
+            <button pButton type="button" (click)="showGenerateTxNow()" [(icon)]="signAndSubmitIcon" iconPos="right"
+                        label="View Transaction" style="width: 165px; padding-left: 0px !important;"></button>
         </div>
     </div>
     <p-footer *ngIf="footer_visible" class="footer-error">
@@ -178,24 +177,24 @@
     </p-footer>
 </p-dialog>
 
-
-<p-dialog [(visible)]="showMultisignTxDialog" [width]="450" [height]="500" [closable]="true"
+<p-dialog [(visible)]="showMultisignTxDialog" [width]="450" [height]="450" [closable]="true"
           [modal]="true" appendTo="body">
     <p-header>
         <i class="icon csc-dialog-icon icon-chip"></i>
-      Multisign transaction signature
+      Multisignature Transaction
     </p-header>
 
     <div class="ui-g ui-fluid">
-        <p>This is the transaction signature. Let the signers sign the transaction and retrieve all signed transaction
-            signatures. Use "Tools" > "Multisigning" > "Compose transaction" to combine all signatures and
+        <p>This is the transaction generated for multisignature. Let the signers sign the transaction and retrieve all signed transaction
+            signatures. Use "Tools" > "Multisigning" > "Compose Transaction" to combine all signatures and
         submit the transaction to the ledger.</p>
     </div>
     <div class="ui-g ui-fluid">
-        <div class="ui-g-10" style="text-align: right;">
-            <textarea [rows]="10" [cols]="15" [(ngModel)]="multiSignTxSignature" pInputTextarea></textarea>
-            <div class="ui-g-1"></div>
-        </div>
+        <textarea [rows]="10" [cols]="20" [(ngModel)]="multiSignTxSignature" pInputTextarea></textarea>
+    </div>
+    <div class="ui-g ui-fluid" style="padding-top: 10px;">
+        <button pButton type="button" (click)="copyTxToClipboard()" icon="fa fa-copy" iconPos="right"
+                        label="Copy Transaction" style="width: 175px;"></button>
     </div>
 </p-dialog>
 

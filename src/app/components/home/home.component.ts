@@ -157,7 +157,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }> = [];
   disableMasterKey: boolean = false;
   baseMultiSignedTx: string;
-  signerSignedTransactions: Array<string> = [];
   signerSignedTxSignatures: Array<object> = [];
 
   // compose transaction
@@ -165,7 +164,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   showSignTransactionDialog: boolean = false;
   accountsForSigning: SelectItem[] = [];
   selectedSignerAccount: any;
-  showSignedMutlisignTransaction: boolean = false;
+  showTransactionSignature: boolean = false;
   signedMultisignTxSignature: string;
   multisignTxSignatureToSign: string;
   submitThresholdNeeded: number = 0;
@@ -283,17 +282,17 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.tools_context_menu.append(new this.electron.remote.MenuItem(messageSigningMenu));
 
     const multiSigningMenu = { label: 'Multisigning', submenu: [
-        { label: 'Enable multisigning',
+        { label: 'Enable Multisigning',
           click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('context-menu-event', 'enable-multisign');
           }, enabled: true
         },
-        { label: 'Sign transaction',
+        { label: 'Sign Transaction',
           click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('context-menu-event', 'sign-transaction');
           }, enabled: true
         },
-        { label: 'Compose transaction',
+        { label: 'Compose Transaction',
           click(menuItem, browserWindow, event) {
             browserWindow.webContents.send('context-menu-event', 'compose-transaction');
           }, enabled: true
@@ -506,7 +505,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     // Connect to the casinocoin network
     this.casinocoinService.connect().subscribe(connected => {
       // this.casinocoinService.casinocoinConnectedSubject.subscribe( connected => {
-        if(connected == AppConstants.KEY_CONNECTED){
+        if (connected == AppConstants.KEY_CONNECTED){
           this.logger.debug("### HOME Connected ###");
           // subscribe to transaction updates
           this.casinocoinService.transactionSubject.subscribe( tx => {
@@ -518,13 +517,13 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           });
 
           this.casinocoinService.accountSettingsSubject.subscribe( settings => {
-            if(this.showSignTransactionDialog){
+            if (this.showSignTransactionDialog){
               this.updateSignersSelection();
-            }         
+            }
           });
           // this.uiChangeSubject.next(AppConstants.KEY_CONNECTED);
           this.setWalletUIConnected();
-        } else if(connected == AppConstants.KEY_DISCONNECTED){
+        } else if (connected == AppConstants.KEY_DISCONNECTED){
           // this.uiChangeSubject.next(AppConstants.KEY_DISCONNECTED);
           this.setWalletUIDisconnected();
         } else {
@@ -1060,7 +1059,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
    * @todo: add some dialog with ledger response and updated account settings
    */
   enableMultisigning() {
-    this.signAndSubmit(this.getMultiSignTx());
+    const multisigTX = this.getMultiSignTx();
+    this.logger.debug("### HOME Multisig TX: " + JSON.stringify(multisigTX));
+    this.signAndSubmit(multisigTX);
     if (this.disableMasterKey === true) {
       this.signAndSubmit(this.getDisableMasterkeyTx());
     }
@@ -1074,7 +1075,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       TransactionType: 'SignerListSet',
       Account: this.ms_setting_account,
       Sequence: this.ms_setting_sequence,
-      Fee: (this.ms_setting_quorum * 1000000) + '',
+      Fee: this.casinocoinService.serverStateSubject.getValue().validated_ledger.base_fee + '',
       SignerQuorum: this.ms_setting_quorum,
       SignerEntries: this.ms_setting_signers.filter(signer => {
         return signer.weight > 0 && CasinocoinAddressCodec.isValidAccountID(signer.signer)
@@ -1089,9 +1090,31 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     };
   }
 
-
   updateMultisignAccountDetails() {
-     this.ms_setting_sequence =  this.walletService.getAccount(this.ms_setting_account).lastSequence;
+    this.ms_setting_sequence =  this.walletService.getAccount(this.ms_setting_account).lastSequence;
+    // update account settings
+    this.casinocoinService.getSettings(this.ms_setting_account);
+    this.casinocoinService.accountSettingsSubject.subscribe( settings => {
+      this.logger.debug('### HOME updateMultisignAccountDetails: ' + JSON.stringify(settings));
+      if (settings.hasOwnProperty('signerQuorum')) {
+        this.ms_setting_quorum = settings.signerQuorum;
+      } else {
+        this.ms_setting_quorum = null;
+      }
+      if (settings.hasOwnProperty('signers')) {
+        this.ms_setting_signers = [];
+        settings.signers.forEach(item => {
+          this.ms_setting_signers.push( { signer: item.accountID, weight: item.weight} );
+        });
+      } else {
+        this.ms_setting_signers = [];
+      }
+      if (settings.hasOwnProperty('disableMasterKey')) {
+        this.disableMasterKey = settings.disableMasterKey;
+      } else {
+        this.disableMasterKey = false;
+      }
+    });
   }
 
   resetVerification() {
@@ -1106,35 +1129,66 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.ms_setting_signers = [];
     this.ms_setting_account = '';
     this.ms_setting_quorum = null;
+    this.disableMasterKey = false;
 
   }
 
   addSigner(signer, weight) {
     if (CasinocoinAddressCodec.isValidAccountID(signer) === false) {
+      this.electron.remote.dialog.showMessageBox(
+        { message: "You entered an invalid AccountID, it can not be added as a signer.",
+          buttons: ["OK"]
+        });
+      this.signer_account = '';
+      this.signer_weight = null;
       return false;
     }
 
 
     if (signer === this.ms_setting_account) {
+      this.electron.remote.dialog.showMessageBox(
+        { message: "Signer AccountID can not be the same as the AccountID to enable Multisigning for.",
+          buttons: ["OK"]
+        });
+      this.signer_account = '';
+      this.signer_weight = null;
       return false;
     }
 
-    if (weight === 0 || weight < 1 || weight > this.ms_setting_quorum) {
-      return false;
-    }
-
-    let totalWeight = 0;
     for (let i = 0, _len = this.ms_setting_signers.length; i < _len; i++) {
-      totalWeight += this.ms_setting_signers[i].weight;
-
-      if (totalWeight > this.ms_setting_quorum) {
+      if (this.ms_setting_signers[i].signer === signer) {
+        this.electron.remote.dialog.showMessageBox(
+          { message: "Signer AccountID already exists in the signer list.",
+            buttons: ["OK"]
+          });
+        this.signer_account = '';
+        this.signer_weight = null;
         return false;
       }
     }
 
-    if (totalWeight > this.ms_setting_quorum) {
+    if (weight === 0 || weight < 1 || weight > this.ms_setting_quorum) {
+      this.electron.remote.dialog.showMessageBox(
+        { message: "Signer Weight can not be less or equal to 0 or more than the total Quorum.",
+          buttons: ["OK"]
+        });
+      this.signer_weight = null;
       return false;
     }
+
+    // let totalWeight = weight;
+    // for (let i = 0, _len = this.ms_setting_signers.length; i < _len; i++) {
+    //   totalWeight += this.ms_setting_signers[i].weight;
+
+    //   if (totalWeight > this.ms_setting_quorum) {
+    //     this.electron.remote.dialog.showMessageBox(
+    //       { message: "The sum of all Signer Weights can not be more than the total Quorum.",
+    //         buttons: ["OK"]
+    //       });
+    //     this.signer_weight = null;
+    //     return false;
+    //   }
+    // }
 
     this.ms_setting_signers.push({
       signer: signer,
@@ -1143,6 +1197,40 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.signer_account = '';
     this.signer_weight = null;
+  }
+
+  removeSigner(signer) {
+    this.logger.debug('### HOME removeSigner: ' + JSON.stringify(signer));
+    for (let i = 0, _len = this.ms_setting_signers.length; i < _len; i++) {
+      if (this.ms_setting_signers[i].signer === signer.signer) {
+        this.ms_setting_signers.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  removeSignature(signature) {
+    this.logger.debug('### HOME removeSignature: ' + JSON.stringify(signature));
+    for (let i = 0, _len = this.signerSignedTxSignatures.length; i < _len; i++) {
+      this.logger.debug('### HOME removeSignature loop['+i+']: ' + JSON.stringify(this.signerSignedTxSignatures[i]));
+      if (this.signerSignedTxSignatures[i]['signature'] === signature['signature']) {
+        this.logger.debug('### HOME - Remove Signature: ' + i);
+        this.signerSignedTxSignatures.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  multisignButtonDisabled() {
+    let totalWeight = 0;
+    for (let i = 0, _len = this.ms_setting_signers.length; i < _len; i++) {
+      totalWeight += this.ms_setting_signers[i].weight;
+    }
+    if (this.ms_setting_quorum && totalWeight >= this.ms_setting_quorum) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   saveCopyValue(field) {
@@ -1156,14 +1244,14 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   }
 
-
   getDisableMasterkeyTx() {
     return {
       TransactionType: 'AccountSet',
       SetFlag: 4,
       Account: this.ms_setting_account,
-      Sequence: this.ms_setting_sequence + 1,
-      Fee: 1000000 + ''
+      Fee: this.casinocoinService.serverStateSubject.getValue().validated_ledger.base_fee + '',
+      Sequence: this.ms_setting_sequence + 1
+      // Fee: 1000000 + ''
     };
   }
 
@@ -1172,15 +1260,25 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   addSignature() {
-    this.signerSignedTxSignatures.push({signature: this.baseMultiSignedTx});
-    this.signerSignedTransactions.push(this.baseMultiSignedTx);
-    this.baseMultiSignedTx = '';
+    if (this.baseMultiSignedTx.trim().length > 0) {
+      this.signerSignedTxSignatures.push({signature: this.baseMultiSignedTx.trim()});
+      this.baseMultiSignedTx = '';
+    } else {
+      this.baseMultiSignedTx = '';
+    }
   }
 
   combineSignatures() {
     this.logger.debug('### HOME Multisign combine transaction signatures and submit to ledger ###');
-    const combinedTx = this.casinocoinService.combine(this.signerSignedTransactions);
+    const signatureArray: Array<string> = [];
+    this.signerSignedTxSignatures.forEach( item => {
+      signatureArray.push(item['signature']);
+    })
+    const combinedTx = this.casinocoinService.combine(signatureArray);
     this.casinocoinService.submitTx(combinedTx.signedTransaction);
+    this.signerSignedTxSignatures = [];
+    this.baseMultiSignedTx = '';
+    this.showComposeTransactionDialog = false;
   }
 
   getAccountSettingsForSignature(){
@@ -1188,11 +1286,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.casinocoinService.getSettings(multisignTx.Account);
   }
 
-
   updateSignersSelection() {
     this.logger.debug('### HOME Multisign update select with avaialble signing accounts matching the signers list of the signature ###');
     const multisignTx = this.electron.remote.getGlobal('vars').cscBinaryCodec.decode(this.multisignTxSignatureToSign.trim().toUpperCase());
-    
+
     const accountSettings = this.casinocoinService.accountSettings.find(account => {
       return (account.accountID === multisignTx.Account)
     });
@@ -1207,8 +1304,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   }
 
-  
-
   viewSignedMutlisignTranscation() {
     const key: LokiKey = this.walletService.getKey(this.selectedSignerAccount);
     const secret = this.walletService.getDecryptSecret(this.walletPassword, key);
@@ -1222,6 +1317,14 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     });
 
     this.signedMultisignTxSignature = signedTx.signedTransaction;
-    this.showSignedMutlisignTransaction = true;
+    this.showTransactionSignature = true;
+  }
+
+  onSignerChange(event) {
+    this.signer_account = this.signer_account.trim();
+  }
+
+  copySignatureToClipboard() {
+    this.electron.clipboard.writeText(this.signedMultisignTxSignature);
   }
 }

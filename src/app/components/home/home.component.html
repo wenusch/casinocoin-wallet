@@ -355,7 +355,7 @@
 <p-dialog
         [(visible)]="showEnableMultisignDialog"
         [width]="720"
-        [height]="600"
+        [height]="640"
         [closable]="true"
         [modal]="true"
         appendTo="body">
@@ -386,53 +386,56 @@
             <p>The Quorum is the total required Weight to sign a transaction. The minimal sum of the added signers Weight must be equal or greater than the Quorum.</p>
         </div>
         <div class="ui-g-2 bold-value">Quorum</div>
-        <div class="ui-g-10">
-            <div class="ui-inputgroup">
-                <input
-                        [style]="{'width':'100%'}"
-                        type="number"
-                        placeholder="Quorum"
-                        [(ngModel)]="ms_setting_quorum"
-                        [disabled]="!ms_setting_account"
-                        min="1"
-                        step="1"
-                        #quorumInput>
-            </div>
+        <div class="ui-g-2">
+            <input  type="number"
+                    class="fullwidth"
+                    placeholder="Quorum"
+                    [(ngModel)]="ms_setting_quorum"
+                    [disabled]="!ms_setting_account"
+                    min="1"
+                    step="1"
+                    #quorumInput>
         </div>
+        <div class="ui-g-8"></div>
 
-        <div class="ui-g-2 bold-value">Signers</div>
-        <div class="ui-g-5">
-            <input
-                    style="width: 100%;"
-                    type="text"
+        <div class="ui-g-2 bold-value">Signer</div>
+        <div class="ui-g-6">
+            <input  type="text"
+                    class="fullwidth"
                     placeholder="Signer Account"
                     [(ngModel)]="signer_account"
                     [disabled]="!ms_setting_quorum"
+                    (ngModelChange)="onSignerChange($event)"
                     #signerInput>
         </div>
         <div class="ui-g-2">
-            <input
-                    style="width: 100%;"
-                    type="number"
+            <input  type="number"
+                    class="fullwidth"
                     placeholder="Weight"
                     [(ngModel)]="signer_weight"
                     [disabled]="!ms_setting_quorum"
                     min="1"
                     step="1"
+                    oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.value = this.value.replace(/(\..*)\./g, '$1');"
                     #weightInput>
         </div>
-        <div class="ui-g-3">
-            <button pButton type="button" (click)="addSigner(signer_account, signer_weight)" icon="icon icon-text"
-                    iconPos="left" label="Add Signer" style="width: 100%;"></button>
+        <div class="ui-g-2">
+            <button pButton type="button" (click)="addSigner(signer_account, signer_weight)" icon="fa fa-plus"
+                    iconPos="left" label="Add" style="width: 100%;" [disabled]="!ms_setting_quorum" ></button>
         </div>
 
         <p-dataTable
                 [value]="ms_setting_signers"
                 [immutable]="false"
-                scrollable="false"
-                scrollHeight="325px">
+                scrollable="true"
+                scrollHeight="75px">
             <p-column field="signer" header="Signer" [style]="{'width':'125px'}"></p-column>
             <p-column field="weight" header="Weight" [style]="{'width':'30px'}"></p-column>
+            <p-column [style]="{'width':'20px'}">
+                <ng-template let-signer="rowData" pTemplate="body">
+                    <button type="button" pButton (click)="removeSigner(signer)" icon="fa fa-trash-o" style="width: 75%"></button>
+                </ng-template>
+            </p-column>
             <ng-template pTemplate="emptymessage">
                 <p>No signers configured yet.</p>
             </ng-template>
@@ -443,23 +446,16 @@
 
     <div class="ui-g ui-fluid">
         <div class="ui-g-12">
-            <p>By disabling the masterkey, the mutlisign account will be locked down for sending transactions. This is irreverseable but the most secure way to use Multisigning.</p>
+            <p>By disabling the master key, the account you are enabling Multisigning for will be locked down for sending transactions. This is irreverseable but the most secure way to use Multisigning.</p>
         </div>
     </div>
     <div class="ui-g-12">
-        <div class="ui-inputgroup">
-
-
-            <p-checkbox
-                    [disabled]="!(ms_setting_signers.length > 0)"
+        <p-checkbox [disabled]="!(ms_setting_signers.length > 0)"
                     [(ngModel)]="disableMasterKey"
                     (onChange)="updateMultisignAccountDetails()"
                     binary="false"
                     label="Check if you want to disable the master key">
-            </p-checkbox>
-
-        </div>
-
+        </p-checkbox>
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
@@ -481,8 +477,8 @@
                 type="button"
                 (click)="enableMultisigning()"
                 label="Enable mutlisigning"
-                style="float: left; width: 225px;">
-
+                style="float: left; width: 225px;"
+                [disabled]="multisignButtonDisabled()">
         </button>
     </div>
 
@@ -492,13 +488,13 @@
 <p-dialog
         [(visible)]="showComposeTransactionDialog"
         [width]="720"
-        [height]="700"
+        [height]="500"
         [closable]="true"
         [modal]="true"
         appendTo="body">
 
 
-    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Compose transaction</span></p-header>
+    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Compose Transaction</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-12">
             <p>Add all signatures by pasting each one in the field and press "Add signature".</p>
@@ -507,7 +503,7 @@
 
     <!--</div>-->
     <div class="ui-g ui-fluid">
-        <div class="ui-g-2 bold-value">Singed TX</div>
+        <div class="ui-g-2 bold-value">Signature</div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
                 <textarea [rows]="10" [cols]="10" [(ngModel)]="baseMultiSignedTx" pInputTextarea></textarea>
@@ -518,9 +514,14 @@
     <p-dataTable
             [value]="signerSignedTxSignatures"
             [immutable]="false"
-            scrollable="false"
-            scrollHeight="325px">
-        <p-column field="signature" header="Signatures" [style]="{'width':'325px'}"></p-column>
+            scrollable="true"
+            scrollHeight="75px">
+        <p-column field="signature" header="Signatures" [style]="{'width':'325px','white-space':'nowrap','overflow':'hidden','text-overflow':'ellipsis','max-width':'325px'}"></p-column>
+        <p-column [style]="{'width':'25px'}">
+            <ng-template let-signature="rowData" pTemplate="body">
+                <button type="button" pButton (click)="removeSignature(signature)" icon="fa fa-trash-o" style="width: 75%"></button>
+            </ng-template>
+        </p-column>
         <ng-template pTemplate="emptymessage">
             <p>No signatures added yet.</p>
         </ng-template>
@@ -531,14 +532,17 @@
                 type="button"
                 (click)="addSignature()"
                 label="Add signature"
-                style="float: left; width: 115px;">
+                icon="fa fa-plus" iconPos="left"
+                style="float: left; width: 190px;">
         </button>
         <button
                 pButton
                 type="button"
                 (click)="combineSignatures()"
-                label="Combine"
-                style="float: left; width: 115px;">
+                label="Combine and Submit"
+                icon="icon icon-arrow-right" iconPos="left"
+                style="float: left; width: 190px; margin-left: 10ox;"
+                [disabled]="signerSignedTxSignatures.length === 0">
         </button>
     </div>
 </p-dialog>
@@ -547,20 +551,20 @@
 <p-dialog
         [(visible)]="showSignTransactionDialog"
         [width]="720"
-        [height]="700"
+        [height]="500"
         [closable]="true"
         [modal]="true"
         appendTo="body">
 
 
-    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Sign transaction</span></p-header>
+    <p-header><span><i class="icon csc-dialog-icon icon-chip"></i>Sign Multisignature Transaction</span></p-header>
     <div class="ui-g ui-fluid">
         <div class="ui-g-12">
-            <p>Paste the transaction signature, select the signer account and view the signed transaction signature.</p>
+            <p>Paste the transaction you received to sign. Then select your account to sign it with and generate the signature.</p>
         </div>
     </div>
     <div class="ui-g ui-fluid">
-        <div class="ui-g-2 bold-value">Singed TX</div>
+        <div class="ui-g-2 bold-value">Transaction</div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
                 <textarea [rows]="10" [cols]="10" [(ngModel)]="multisignTxSignatureToSign"  (ngModelChange)="getAccountSettingsForSignature()" pInputTextarea></textarea>
@@ -585,48 +589,50 @@
 
     </div>
     <div class="ui-g ui-fluid">
-        <div class="ui-g-1"></div>
+        <div class="ui-g-2"></div>
         <div class="ui-g-10">
             <div class="ui-inputgroup">
                 <span class="ui-inputgroup-addon"><i class="icon icon-key"></i></span>
                 <input type="password" pInputText placeholder="Wallet Password" [(ngModel)]="walletPassword" style="width: 100%; padding-left: 5px;">
             </div>
         </div>
-        <div class="ui-g-1"></div>
     </div>
 
     <div class="ui-g-12" style="text-align: left;">
-        <button
-                pButton
+        <button pButton
                 type="button"
                 (click)="viewSignedMutlisignTranscation()"
-                label="View signature"
-                style="float: left; width: 115px;">
+                label="Generate Signature"
+                icon="icon icon-arrow-right" iconPos="right"
+                style="float: left; width: 175px;">
         </button>
     </div>
 </p-dialog>
 
 
-<p-dialog [(visible)]="showSignedMutlisignTransaction" [width]="450" [height]="500" [closable]="true"
+<p-dialog [(visible)]="showTransactionSignature" [width]="450" [height]="450" [closable]="true"
           [modal]="true" appendTo="body">
     <p-header>
         <i class="icon csc-dialog-icon icon-chip"></i>
-        Signed multisign transaction signature
+        Multisigning Transaction Signature
     </p-header>
 
     <div class="ui-g ui-fluid">
         <p>This is the signed multisign transaction signature. Use this signature along with other signed signatures to
             submit the transaction to the ledger.</p>
     </div>
+    <!--
     <div [hidden]="(submitThresholdNeeded === 0)" class="ui-g ui-fluid">
 
         <p>Weight of {{submitThresholdNeeded}} is needed to submit the transaction.</p>
     </div>
+-->
     <div class="ui-g ui-fluid">
-        <div class="ui-g-10" style="text-align: right;">
-            <textarea [rows]="10" [cols]="15" [(ngModel)]="signedMultisignTxSignature" pInputTextarea></textarea>
-            <div class="ui-g-1"></div>
-        </div>
+        <textarea [rows]="10" [cols]="20" [(ngModel)]="signedMultisignTxSignature" pInputTextarea></textarea>
+    </div>
+    <div class="ui-g ui-fluid" style="padding-top: 10px;">
+        <button pButton type="button" (click)="copySignatureToClipboard()" icon="fa fa-copy" iconPos="right"
+                        label="Copy Signature" style="width: 175px;"></button>
     </div>
 </p-dialog>
 
