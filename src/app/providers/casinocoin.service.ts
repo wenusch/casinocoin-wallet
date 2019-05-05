@@ -46,6 +46,8 @@ export class CasinocoinService implements OnDestroy {
     public transactionSubject = new Subject<LokiTransaction>();
     public lastTransactionHash: string = "";
     public casinocoinConnectedSubject = new BehaviorSubject<boolean>(false);
+    public fullAccountRefresh = false;
+    public accountRefreshCount = 0;
 
     constructor(private logger: LogService, 
                 private wsService: WebsocketService,
@@ -122,6 +124,7 @@ export class CasinocoinService implements OnDestroy {
                                     this.logger.debug("### CasinocoinService Accounts: " + JSON.stringify(subscribeAccounts));
                                     this.subscribeToAccountsStream(subscribeAccounts);
                                     // update all accounts from the network
+                                    this.fullAccountRefresh = true;
                                     this.checkAllAccounts();
                                     // do some checks on all transactions
                                     // this.checkAllTransactions();
@@ -362,6 +365,8 @@ export class CasinocoinService implements OnDestroy {
                         if(walletAccount.balance !== accountTxBalance){
                             // we are missing transactions or have still unvalidated transactions for this account so check all
                             this.getAccountTx(walletAccount.accountID, lastTxLedgerIndex);
+                        } else {
+                            this.accountRefreshCount --;
                         }
                     } else {
                         this.logger.debug("### CasinocoinService - AccountInfo without Refresh Tx");
@@ -460,7 +465,7 @@ export class CasinocoinService implements OnDestroy {
                     // update accounts
                     if(tx.direction == AppConstants.KEY_WALLET_TX_IN){
                         this.getAccountInfo(tx.destination, false);
-                        if(notifyUser){
+                        if(notifyUser && !this.fullAccountRefresh){
                             this.notificationService.addMessage(
                                 {title: 'Incoming CSC Transaction', 
                                 body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(tx.amount), "1.2-8") +
@@ -468,7 +473,7 @@ export class CasinocoinService implements OnDestroy {
                         }
                     } else if(tx.direction == AppConstants.KEY_WALLET_TX_OUT){
                         this.getAccountInfo(tx.accountID, false);
-                        if(notifyUser){
+                        if(notifyUser && !this.fullAccountRefresh){
                             this.notificationService.addMessage(
                                 {title: 'Outgoing CSC Transaction', 
                                 body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(tx.amount), "1.2-8") +
@@ -477,7 +482,7 @@ export class CasinocoinService implements OnDestroy {
                     } else {
                         this.getAccountInfo(tx.destination, false);
                         this.getAccountInfo(tx.accountID, false);
-                        if(notifyUser){
+                        if(notifyUser && !this.fullAccountRefresh){
                             this.notificationService.addMessage(
                                 {title: 'Wallet Transaction', 
                                 body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(tx.amount), "1.2-8") +
@@ -488,6 +493,7 @@ export class CasinocoinService implements OnDestroy {
                 } else if(incommingMessage['id'] == 'getAccountTx'){
                     let accountTxArray: Array<any> = incommingMessage.result.transactions;
                     this.logger.debug("### CasinocoinService - getAccountTx message TX Count: " + accountTxArray.length);
+                    this.logger.debug("### CasinocoinService - getAccountTx Full Refresh: " + this.fullAccountRefresh);
                     // Check all transactions against DB
                     accountTxArray.forEach(element => {
                         // check the TransactionType
@@ -512,6 +518,15 @@ export class CasinocoinService implements OnDestroy {
                     if(incommingMessage.result.marker){
                         this.logger.debug("### CasinocoinService - getAccountTx - Get Next Batch");
                         this.getAccountTx(incommingMessage.result.account, -1, incommingMessage.result.marker);
+                    } else {
+                        // we are done
+                        this.logger.debug("### CasinocoinService - getAccountTx - FINISHED");
+                        this.accountRefreshCount --;
+                        this.logger.debug("### CasinocoinService - getAccountTx - FINISHED - accountRefreshCount: " + this.accountRefreshCount);
+                        if (this.accountRefreshCount <= 0) {
+                            this.logger.debug("### CasinocoinService - getAccountTx - FINISHED - set refresh finished");
+                            this.fullAccountRefresh = false;
+                        }
                     }
                 }
             } else if(incommingMessage.status === 'error'){
@@ -651,6 +666,7 @@ export class CasinocoinService implements OnDestroy {
     checkAllAccounts(){
         // loop over all accounts
         let accounts:Array<LokiAccount> = this.walletService.getAllAccounts();
+        this.accountRefreshCount = accounts.length;
         accounts.forEach((account, index, arr) => {
             // get the account info for every account
             // accounts are already updated in the wallet on receiving
@@ -843,23 +859,29 @@ export class CasinocoinService implements OnDestroy {
         // update accounts
         if(dbTX.direction == AppConstants.KEY_WALLET_TX_IN){
             this.getAccountInfo(dbTX.destination, false);
-            this.notificationService.addMessage(
-                {title: 'Incoming CSC Transaction', 
-                body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                    ' coins from ' + dbTX.accountID + bodyMessage});
+            if (!this.fullAccountRefresh) {
+                this.notificationService.addMessage(
+                    {title: 'Incoming CSC Transaction', 
+                    body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                        ' coins from ' + dbTX.accountID + bodyMessage});
+            }
         } else if(dbTX.direction == AppConstants.KEY_WALLET_TX_OUT){
             this.getAccountInfo(dbTX.accountID, false);
-            this.notificationService.addMessage(
-                {title: 'Outgoing CSC Transaction', 
-                body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                    ' coins to ' + dbTX.destination + bodyMessage});
+            if (!this.fullAccountRefresh) {
+                this.notificationService.addMessage(
+                    {title: 'Outgoing CSC Transaction', 
+                    body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                        ' coins to ' + dbTX.destination + bodyMessage});
+            }
         } else {
             this.getAccountInfo(dbTX.destination, false);
             this.getAccountInfo(dbTX.accountID, false);
-            this.notificationService.addMessage(
-                {title: 'Wallet Transaction', 
-                body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                    ' coins to your own address ' + dbTX.destination + bodyMessage});
+            if (!this.fullAccountRefresh) {
+                this.notificationService.addMessage(
+                    {title: 'Wallet Transaction', 
+                    body: 'You sent '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                        ' coins to your own address ' + dbTX.destination + bodyMessage});
+            }
         }
     }
 
@@ -906,10 +928,12 @@ export class CasinocoinService implements OnDestroy {
                         this.transactionSubject.next(dbTX);
                         // update accounts
                         this.getAccountInfo(dbTX.destination, false);
-                        this.notificationService.addMessage(
-                            {title: 'Incoming CRN Fee Transaction', 
-                            body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
-                                ' coins for CRN Ledger Round ' + dbTX.lastLedgerSequence});
+                        if (!this.fullAccountRefresh) {
+                            this.notificationService.addMessage(
+                                {title: 'Incoming CRN Fee Transaction', 
+                                body: 'You received '+ this.decimalPipe.transform(CSCUtil.dropsToCsc(dbTX.amount), "1.2-8") +
+                                    ' coins for CRN Ledger Round ' + dbTX.lastLedgerSequence});
+                        }
                     } else {
                         this.logger.debug("### CasinocoinService - Account NOT mine: " + node.ModifiedNode.FinalFields.Account);
                     }
