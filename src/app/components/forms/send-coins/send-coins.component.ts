@@ -35,6 +35,7 @@ export class SendCoinsComponent implements OnInit {
   addresses: SelectItem[] = [];
   selectedAccount: string;
   accountSettings: any;
+  recipientSettings: any;
   multiSignEnabled: boolean = false;
   signers: any;
   walletMasterKeyDisabled: boolean = false;
@@ -49,6 +50,8 @@ export class SendCoinsComponent implements OnInit {
   description: string = '';
   invoiceID: string;
   destinationTag: number;
+  destinationTagRequired = false;
+
   amount: string = '';
   payment: PrepareTxPayment;
   fees: string = '';
@@ -136,6 +139,11 @@ export class SendCoinsComponent implements OnInit {
       this.loadSettings(settings);
     });
 
+    this.casinocoinService.recipientSettingsSubject.subscribe(settings => {
+      this.logger.debug("### SendCoins - New Recipient Account Settings: " + JSON.stringify(settings));
+      this.loadRecipientSettings(settings);
+    });
+
     this.sendCoinsform = this.fb.group({
         'recipient': new FormControl('', Validators.required),
         'description': new FormControl(''),
@@ -210,14 +218,21 @@ export class SendCoinsComponent implements OnInit {
     let valid: boolean = CSCUtil.validateAccountID(this.recipient);
     this.logger.debug("### SendCoins - recipient: " + this.recipient + " valid: " + valid);
     this.invalidReceipient = !valid;
+    this.checkTagRequirement();
     this.checkSendValid();
   }
 
-  onDestinationTagChange(event){
-    if((event <= 0) || (event % 1 != 0)){
+  checkTagRequirement() {
+    this.casinocoinService.getAccountSettings( this.recipient, 'getReceiverSettings');
+  }
+
+  onDestinationTagChange(event) {
+    if ((event <= 0) || (event % 1 != 0)){
       this.logger.debug(event + " is not an whole number");
       this.messageService.add({severity:'error', summary:'Destination Tag', detail:'The Destination Tag must be a positive whole number.'});
     }
+
+    this.checkSendValid();
   }
 
   focusDescription(){
@@ -378,12 +393,18 @@ export class SendCoinsComponent implements OnInit {
     this.totalSendFormatted = this.cscAmountPipe.transform(CSCUtil.cscToDrops(this.totalSend), false, true);
   }
 
-  checkSendValid(){
-    if( CSCUtil.validateAccountID(this.recipient) && this.amount){
-      if(this.recipient == this.selectedAccount){
+  checkSendValid() {
+
+
+    if (CSCUtil.validateAccountID(this.recipient) && this.amount) {
+      if (this.recipient == this.selectedAccount) {
+        this.isSendValid = false;
+      } else if (this.destinationTagRequired &&
+        (this.destinationTag === 0 || this.destinationTag == null)) {
+        this.messageService.add({severity:'error', summary:'Destination Tag', detail:'Destination tag is required for sending CSC to this account!'});
         this.isSendValid = false;
       } else if (new Big(CSCUtil.cscToDrops(this.amount)) >= 1) {
-         this.isSendValid = true;
+        this.isSendValid = true;
       } else {
         this.isSendValid = false;
       }
@@ -403,6 +424,14 @@ export class SendCoinsComponent implements OnInit {
     if (settings.hasOwnProperty('signers')) {
       this.multiSignEnabled = true;
       this.signers = settings.signers;
+    }
+  }
+
+  loadRecipientSettings(settings){
+    this.recipientSettings = settings;
+    this.destinationTagRequired = false;
+    if (this.recipientSettings .hasOwnProperty('requireDestinationTag')) {
+      this.destinationTagRequired = (this.recipientSettings.requireDestinationTag);
     }
   }
 

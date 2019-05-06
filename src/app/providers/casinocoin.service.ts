@@ -41,6 +41,7 @@ export class CasinocoinService implements OnDestroy {
     public accounts: Array<LokiAccount> = [];
     public accountSettings: Array<LokiAccountSettings> = [];
     public accountSettingsSubject = new Subject<LokiAccountSettings>();
+    public recipientSettingsSubject = new Subject<LokiAccountSettings>();
     public accountSubject = new Subject<LokiAccount>();
     public transactions: Array<LokiTransaction> = [];
     public transactionSubject = new Subject<LokiTransaction>();
@@ -277,29 +278,11 @@ export class CasinocoinService implements OnDestroy {
                     }
                     this.addLedger(ledgerMessage);
                     this.ledgerSubject.next(ledgerMessage);
+                } else if (incommingMessage['id'].startsWith('getReceiverSettings')){
+                    const recipientSettings = this.mapSettingsResponse(incommingMessage.result.account_data);
+                    this.recipientSettingsSubject.next(recipientSettings);
                 } else if (incommingMessage['id'].startsWith('getAccountSettings')){
-                    let response = incommingMessage.result.account_data;
-                    let accountSettings: LokiAccountSettings = {
-                        accountID: response.Account,
-                        Sequence: response.Sequence
-                    };
-                    if(typeof response.signer_lists !== 'undefined' && response.signer_lists.length >= 1){
-                        response.signer_lists.forEach(signer_list => {
-                            accountSettings.signers = [];
-                            signer_list.SignerEntries.forEach(signer => {
-                                accountSettings.signerQuorum = signer_list.SignerQuorum
-                                accountSettings.signers.push({
-                                    accountID: signer.SignerEntry.Account,
-                                    weight: signer.SignerEntry.SignerWeight
-                                });
-                            });
-                        });
-                    }
-                    accountSettings.disableMasterKey = false;
-                    if(typeof response.Flags !== 'undefined' && response.Flags === 1048576){
-                        accountSettings.disableMasterKey = true;
-                    }
-
+                    const accountSettings =  this.mapSettingsResponse(incommingMessage.result.account_data);
                     this.accountSettings.push(accountSettings);
                     this.accountSettingsSubject.next(accountSettings);
                 } else if (incommingMessage['id'].startsWith('getAccountInfo')){
@@ -585,6 +568,37 @@ export class CasinocoinService implements OnDestroy {
             signer_lists: true
         }
         this.sendCommand(accountInfoRequest);
+    }
+
+    mapSettingsResponse(response) {
+        const recipientAccountSettings: LokiAccountSettings = {
+            accountID: response.Account,
+            Sequence: response.Sequence
+        };
+        if (typeof response.signer_lists !== 'undefined' && response.signer_lists.length >= 1) {
+            response.signer_lists.forEach(signer_list => {
+                recipientAccountSettings.signers = [];
+                signer_list.SignerEntries.forEach(signer => {
+                    recipientAccountSettings.signerQuorum = signer_list.SignerQuorum
+                    recipientAccountSettings.signers.push({
+                        accountID: signer.SignerEntry.Account,
+                        weight: signer.SignerEntry.SignerWeight
+                    });
+                });
+            });
+        }
+
+        recipientAccountSettings.disableMasterKey = false;
+        if (typeof response.Flags !== 'undefined' && response.Flags === 1048576) {
+            recipientAccountSettings.disableMasterKey = true;
+        }
+
+        recipientAccountSettings.requireDestinationTag = false;
+        if (typeof response.Flags !== 'undefined' && response.Flags === 131072) {
+            recipientAccountSettings.requireDestinationTag = true;
+        }
+
+        return recipientAccountSettings;
     }
 
     getAccountInfo(accountID: string, refresh: boolean){
