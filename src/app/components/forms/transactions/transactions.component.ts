@@ -23,7 +23,7 @@ import Big from 'big.js';
 export class TransactionsComponent implements OnInit, AfterViewInit {
 
   @ViewChild('dtTX') dtTX: DataTable;
-  @ViewChild('receipientInput') receipientInput;
+  @ViewChild('recipientInput') recipientInput;
   @ViewChild('descriptionInput') descriptionInput;
   @ViewChild('amountInput') amountInput;
   @ViewChild('accountDropdown') accountDropdown: Dropdown;
@@ -34,7 +34,7 @@ export class TransactionsComponent implements OnInit, AfterViewInit {
   ledgers: LedgerStreamMessages[] = [];
   selectedAccount: string;
   selectedTxRow: LokiTransaction;
-  receipient: string;
+  recipient: string;
   description: string;
   amount: string;
   walletPassword: string;

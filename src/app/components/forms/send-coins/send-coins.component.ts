@@ -68,7 +68,7 @@ export class SendCoinsComponent implements OnInit {
   reserve_tooltip: string = 'The reserve is necessary to keep your account activated.';
   total_tooltip: string = 'Total amount necessary to sent ' + this.amount;
   includeReserve: boolean = false;
-  invalidReceipient: boolean = true;
+  invalidRecipient: boolean = true;
   isSendValid: boolean = true;
   isConnected: boolean = false;
   connected_tooltip: string = '';
@@ -217,7 +217,7 @@ export class SendCoinsComponent implements OnInit {
     this.recipient = this.recipient.trim();
     let valid: boolean = CSCUtil.validateAccountID(this.recipient);
     this.logger.debug("### SendCoins - recipient: " + this.recipient + " valid: " + valid);
-    this.invalidReceipient = !valid;
+    this.invalidRecipient = !valid;
     this.checkTagRequirement();
     this.checkSendValid();
   }

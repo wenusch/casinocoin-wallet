@@ -23,14 +23,14 @@
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="icon icon-text"></i></span>
             <input type="text" pInputText placeholder="Description" [(ngModel)]="description" (keyup.enter)="focusAmount()"
-                    [disabled]="!selectedAccount || invalidReceipient" #descriptionInput>         
+                    [disabled]="!selectedAccount || invalidRecipient" #descriptionInput>
         </div>
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;"><i class="icon icon-tag"></i></span>
             <input type="number" placeholder="Destination Tag" [(ngModel)]="destinationTag" (keyup.enter)="focusAmount()"
-                    [disabled]="!selectedAccount || invalidReceipient" min="1" step="1" (ngModelChange)="onDestinationTagChange($event)"
+                    [disabled]="!selectedAccount || invalidRecipient"  min="1" step="1" (ngModelChange)="onDestinationTagChange($event)"
                     #destinationTagInput>         
         </div>
     </div>
@@ -39,7 +39,7 @@
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">ID</span>
             <input type="text" pInputText placeholder="Invoice ID" [(ngModel)]="invoiceID" (keyup.enter)="focusAmount()"
-                    [disabled]="!selectedAccount || invalidReceipient" #invoiceIDInput>         
+                    [disabled]="!selectedAccount || invalidRecipient" #invoiceIDInput>
         </div>
     </div>
     -->
@@ -47,16 +47,16 @@
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Amount</span>
             <input type="text" pInputText placeholder="Amount" [(ngModel)]="amount" (keyup.enter)="focusFees()"
-                    [disabled]="!selectedAccount || invalidReceipient" (ngModelChange)="onAmountChange($event)" 
+                    [disabled]="!selectedAccount || invalidRecipient" (ngModelChange)="onAmountChange($event)"
                     autocomplete="off" #amountInput id="amount">
-            <button pButton type="button" (click)="sendAllCoins()" label="all" [disabled]="!selectedAccount || invalidReceipient"></button>
+            <button pButton type="button" (click)="sendAllCoins()" label="all" [disabled]="!selectedAccount || invalidRecipient"></button>
         </div>
     </div>
     <div class="ui-g-12">
         <div class="ui-inputgroup">
             <span class="ui-inputgroup-addon" style="box-sizing: content-box; width: 50px;">Fees</span>
             <input type="number" pInputText placeholder="Fees" [(ngModel)]="fees" (keyup.enter)="doSendCoins()"
-                    min="{{minimalFee}}" step="{{minimalFee}}" [disabled]="!selectedAccount || invalidReceipient"
+                    min="{{minimalFee}}" step="{{minimalFee}}" [disabled]="!selectedAccount || invalidRecipient"
                     (ngModelChange)="onFeesChange($event)" #feesInput>         
         </div>
     </div>
